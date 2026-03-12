@@ -4,59 +4,61 @@ import { Button } from "@/components/ui/button";
 
 const solutions = [
   {
-    title: "Security Cameras & CCTV",
+    title: "Cámaras de seguridad y CCTV",
     icon: "📷",
-    description: "Professional surveillance systems for homes and businesses. HD and 4K options with remote viewing.",
-    features: ["Indoor & Outdoor Cameras", "Night Vision", "Remote Viewing App", "Motion Detection", "Cloud Storage"],
+    description: "Sistemas de vigilancia profesional para hogares y negocios. Opciones HD y 4K con visualización remota.",
+    features: ["Cámaras interiores y exteriores", "Visión nocturna", "App de visualización remota", "Detección de movimiento", "Almacenamiento en la nube"],
+    categoryLink: "camaras-seguridad",
   },
   {
-    title: "Alarm Systems",
+    title: "Sistemas de alarma",
     icon: "🚨",
-    description: "Protect your property with modern alarm systems. Wired, wireless, and hybrid options available.",
-    features: ["Intrusion Detection", "Smoke & Fire Alerts", "24/7 Monitoring", "Mobile Notifications", "Battery Backup"],
+    description: "Protege tu propiedad con sistemas de alarma modernos. Opciones cableadas, inalámbricas e híbridas.",
+    features: ["Detección de intrusos", "Alertas de humo y fuego", "Monitoreo 24/7", "Notificaciones móviles", "Batería de respaldo"],
+    categoryLink: "alarmas",
   },
   {
-    title: "Access Control",
+    title: "Control de acceso",
     icon: "🔐",
-    description: "Control who enters your premises with biometric, card reader, and keypad systems.",
-    features: ["Biometric Readers", "RFID Card Systems", "PIN Keypads", "Time & Attendance", "Multi-door Control"],
+    description: "Controla quién entra a tus instalaciones con sistemas biométricos, lectores de tarjeta y teclados.",
+    features: ["Lectores biométricos", "Sistemas RFID", "Teclados PIN", "Control de asistencia", "Control multi-puerta"],
+    categoryLink: "control-acceso",
   },
   {
-    title: "Video Intercom",
+    title: "Videoporteros",
     icon: "🔔",
-    description: "See and speak with visitors before opening the door. Wired and wireless models.",
-    features: ["HD Video", "Two-way Audio", "Smartphone Integration", "Multiple Stations", "Night Vision"],
+    description: "Ve y habla con los visitantes antes de abrir la puerta. Modelos cableados e inalámbricos.",
+    features: ["Video HD", "Audio bidireccional", "Integración con smartphone", "Múltiples estaciones", "Visión nocturna"],
+    categoryLink: "videoporteros",
   },
 ];
 
 const Security = () => {
   return (
     <div>
-      {/* Hero */}
       <section className="bg-gradient-hero py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl">
             <div className="flex items-center gap-2 mb-4">
               <Shield className="w-6 h-6 text-primary" />
-              <span className="text-sm font-semibold text-primary uppercase tracking-wider">Security Solutions</span>
+              <span className="text-sm font-semibold text-primary uppercase tracking-wider">Soluciones de seguridad</span>
             </div>
             <h1 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-4">
-              Complete Security for Your Property
+              Seguridad completa para tu propiedad
             </h1>
             <p className="text-muted-foreground text-lg mb-6">
-              Professional security solutions with expert installation and ongoing support.
+              Soluciones de seguridad profesionales con instalación experta y soporte continuo.
             </p>
             <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Link to="/contact">Get Free Consultation <ArrowRight className="w-4 h-4 ml-2" /></Link>
+              <Link to="/contact">Consulta gratuita <ArrowRight className="w-4 h-4 ml-2" /></Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Solutions */}
       <section className="py-16">
         <div className="container mx-auto px-4 space-y-12">
-          {solutions.map((sol, i) => (
+          {solutions.map((sol) => (
             <div key={sol.title} className="bg-card border border-border rounded-2xl p-6 md:p-8">
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="flex-1">
@@ -64,13 +66,13 @@ const Security = () => {
                   <h2 className="font-display text-xl font-bold text-foreground mt-3 mb-2">{sol.title}</h2>
                   <p className="text-muted-foreground mb-4">{sol.description}</p>
                   <Button asChild variant="outline" size="sm" className="border-border text-foreground hover:bg-secondary">
-                    <Link to={`/products?category=${sol.title.includes("Camera") ? "security-cameras" : sol.title.includes("Alarm") ? "alarms" : sol.title.includes("Access") ? "access-control" : "intercom"}`}>
-                      View Products <ArrowRight className="w-4 h-4 ml-1" />
+                    <Link to={`/products?category=${sol.categoryLink}`}>
+                      Ver productos <ArrowRight className="w-4 h-4 ml-1" />
                     </Link>
                   </Button>
                 </div>
                 <div className="md:w-64 shrink-0">
-                  <h4 className="text-sm font-semibold text-foreground mb-3">Key Features</h4>
+                  <h4 className="text-sm font-semibold text-foreground mb-3">Características clave</h4>
                   <ul className="space-y-2">
                     {sol.features.map((f) => (
                       <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">

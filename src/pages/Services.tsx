@@ -2,18 +2,18 @@ import ServiceCard from "@/components/ServiceCard";
 import { services } from "@/data/products";
 
 const serviceCategories = [
-  { id: "repair", label: "Repair Services", icon: "🔧" },
-  { id: "installation", label: "Installation Services", icon: "📦" },
-  { id: "consulting", label: "Consulting", icon: "💡" },
-  { id: "maintenance", label: "Maintenance", icon: "⚙️" },
+  { id: "reparacion", label: "Servicios de reparación", icon: "🔧" },
+  { id: "instalacion", label: "Servicios de instalación", icon: "📦" },
+  { id: "asesoria", label: "Asesoría", icon: "💡" },
+  { id: "mantenimiento", label: "Mantenimiento", icon: "⚙️" },
 ];
 
 const Services = () => {
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold text-foreground mb-2">Our Services</h1>
+      <h1 className="font-display text-3xl font-bold text-foreground mb-2">Nuestros Servicios</h1>
       <p className="text-muted-foreground mb-10 max-w-2xl">
-        Professional technical services for all your technology needs. From repairs to full system installations.
+        Servicios técnicos profesionales para todas tus necesidades tecnológicas. Desde reparaciones hasta instalaciones completas.
       </p>
 
       {serviceCategories.map((cat) => {
