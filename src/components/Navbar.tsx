@@ -2,14 +2,15 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Search, ShoppingCart, Menu, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import logo from "@/assets/logo-tecno-gz.png";
 
 const navLinks = [
-  { label: "Home", path: "/" },
-  { label: "Products", path: "/products" },
-  { label: "Services", path: "/services" },
-  { label: "Security", path: "/security" },
-  { label: "About", path: "/about" },
-  { label: "Contact", path: "/contact" },
+  { label: "Inicio", path: "/" },
+  { label: "Productos", path: "/products" },
+  { label: "Servicios", path: "/services" },
+  { label: "Seguridad", path: "/security" },
+  { label: "Nosotros", path: "/about" },
+  { label: "Contacto", path: "/contact" },
 ];
 
 const Navbar = () => {
@@ -23,11 +24,9 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center font-display font-bold text-primary-foreground text-sm">
-              TS
-            </div>
+            <img src={logo} alt="Tecno Gz" className="w-9 h-9 rounded-full object-cover" />
             <span className="font-display font-bold text-lg text-foreground hidden sm:block">
-              TechStore
+              Tecno Gz
             </span>
           </Link>
 
@@ -50,14 +49,13 @@ const Navbar = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            {/* Search */}
             {searchOpen ? (
               <div className="absolute left-0 right-0 top-0 h-16 glass flex items-center px-4 gap-2">
                 <Search className="w-5 h-5 text-muted-foreground" />
                 <input
                   autoFocus
                   type="text"
-                  placeholder="Search products..."
+                  placeholder="Buscar productos..."
                   className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground"
                 />
                 <button onClick={() => setSearchOpen(false)}>
@@ -90,7 +88,6 @@ const Navbar = () => {
               <User className="w-5 h-5" />
             </Link>
 
-            {/* Mobile toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               className="p-2 rounded-md text-muted-foreground hover:text-foreground lg:hidden"
@@ -100,7 +97,6 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile menu */}
         {mobileOpen && (
           <nav className="lg:hidden pb-4 border-t border-border mt-1 pt-3 flex flex-col gap-1">
             {navLinks.map((link) => (

@@ -19,7 +19,7 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
         to="/contact"
         className="inline-flex items-center gap-1 text-sm text-primary hover:underline group-hover:gap-2 transition-all"
       >
-        Request Service <ArrowRight className="w-4 h-4" />
+        Solicitar servicio <ArrowRight className="w-4 h-4" />
       </Link>
     </div>
   );
