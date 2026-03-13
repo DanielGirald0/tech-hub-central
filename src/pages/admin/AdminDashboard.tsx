@@ -1,0 +1,66 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Package, Users, ShoppingCart, Wrench, BarChart3 } from "lucide-react";
+import logo from "@/assets/logo-tecno-gz.png";
+
+const AdminDashboard = () => {
+  const [stats, setStats] = useState({ products: 0, orders: 0, users: 0, services: 0 });
+
+  useEffect(() => {
+    Promise.all([
+      supabase.from("products").select("id", { count: "exact", head: true }),
+      supabase.from("orders").select("id", { count: "exact", head: true }),
+      supabase.from("profiles").select("id", { count: "exact", head: true }),
+      supabase.from("service_requests").select("id", { count: "exact", head: true }),
+    ]).then(([p, o, u, s]) => {
+      setStats({ products: p.count || 0, orders: o.count || 0, users: u.count || 0, services: s.count || 0 });
+    });
+  }, []);
+
+  const cards = [
+    { label: "Productos", count: stats.products, icon: Package, href: "/admin/products", color: "text-blue-400" },
+    { label: "Pedidos", count: stats.orders, icon: ShoppingCart, href: "/admin/orders", color: "text-green-400" },
+    { label: "Usuarios", count: stats.users, icon: Users, href: "/admin/users", color: "text-purple-400" },
+    { label: "Servicios", count: stats.services, icon: Wrench, href: "/admin/services", color: "text-orange-400" },
+  ];
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center gap-3 mb-8">
+        <img src={logo} alt="Tecno Gz" className="w-10 h-10 rounded-full" />
+        <div>
+          <h1 className="font-display text-3xl font-bold text-foreground">Panel de Administración</h1>
+          <p className="text-muted-foreground">Tecno Gz — Gestión del sistema</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+        {cards.map((c) => (
+          <Link key={c.label} to={c.href} className="bg-card border border-border rounded-xl p-6 hover:border-primary/30 transition-colors">
+            <div className="flex items-center justify-between mb-4">
+              <c.icon className={`w-8 h-8 ${c.color}`} />
+              <BarChart3 className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <p className="font-display text-3xl font-bold text-foreground">{c.count}</p>
+            <p className="text-sm text-muted-foreground">{c.label}</p>
+          </Link>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {cards.map((c) => (
+          <Link key={c.label} to={c.href} className="bg-card border border-border rounded-xl p-5 flex items-center gap-4 hover:border-primary/30 transition-colors">
+            <c.icon className={`w-6 h-6 ${c.color}`} />
+            <div>
+              <p className="font-medium text-foreground">Gestionar {c.label.toLowerCase()}</p>
+              <p className="text-xs text-muted-foreground">Ver, crear, editar y eliminar</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default AdminDashboard;
