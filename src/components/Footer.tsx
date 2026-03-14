@@ -9,9 +9,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <img src={logo} alt="Tecno Gz" className="w-9 h-9 rounded-full object-cover" />
-              <span className="font-display font-bold text-lg text-foreground">Tecno Gz</span>
+            <div className="flex items-center gap-3 mb-4">
+              <img src={logo} alt="Tecno Gz" className="w-12 h-12 object-contain" />
+              <span className="font-display font-bold text-lg text-foreground uppercase">TECNO GZ</span>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed">
               Expertos en servicio técnico y venta de tecnología. Pasión y servicio de confianza.
