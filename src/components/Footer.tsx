@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
-import logo from "@/assets/logo-tecno-gz.png";
+import logo from "@/assets/logo-tecnogz-official.png";
 
 const Footer = () => {
   return (
