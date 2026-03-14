@@ -28,10 +28,10 @@ const AdminDashboard = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-8">
-        <img src={logo} alt="Tecno Gz" className="w-10 h-10 rounded-full" />
+        <img src={logo} alt="Tecno Gz" className="w-14 h-14 object-contain" />
         <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">Panel de Administración</h1>
-          <p className="text-muted-foreground">Tecno Gz — Gestión del sistema</p>
+          <h1 className="font-display text-3xl font-bold text-foreground uppercase tracking-wider">TECNO GZ</h1>
+          <p className="text-muted-foreground">Panel de Administración</p>
         </div>
       </div>
 

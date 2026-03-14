@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
 import { products, categories, services } from "@/data/products";
+import logo from "@/assets/logo-tecnogz-official.png";
 
 const featuredProducts = products.filter((p) => p.featured);
 const featuredServices = services.slice(0, 4);
