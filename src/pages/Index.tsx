@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
 import { products, categories, services } from "@/data/products";
-import logo from "@/assets/logo-tecnogz-official.png";
 
 const featuredProducts = products.filter((p) => p.featured);
 const featuredServices = services.slice(0, 4);
@@ -32,7 +31,6 @@ const Index = () => {
             transition={{ duration: 0.7 }}
             className="max-w-3xl mx-auto text-center"
           >
-            <img src={logo} alt="Tecno Gz" className="w-32 h-32 md:w-40 md:h-40 object-contain mx-auto mb-6" />
             <h1 className="font-display text-4xl md:text-6xl font-bold text-foreground mb-4 leading-tight uppercase tracking-wider">
               TECNO GZ
             </h1>
