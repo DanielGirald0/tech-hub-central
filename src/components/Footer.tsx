@@ -52,21 +52,24 @@ const Footer = () => {
           <div>
             <h4 className="font-display font-semibold text-foreground mb-4">Contacto</h4>
             <div className="flex flex-col gap-3 text-sm text-muted-foreground">
-              <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 mt-0.5 text-primary" />
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 mt-0.5 text-primary flex-shrink-0" />
                 <span>Centro Comercial La Convención, Cl 49 #48-63 Local 226, Rionegro, Antioquia 054040</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-primary" />
-                <span>+57 (604) 000-0000</span>
+              <div className="flex items-center gap-3">
+                <Phone className="w-5 h-5 text-primary flex-shrink-0" />
+                <span>310 7476909</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-primary" />
-                <span>info@tecnogz.com</span>
+              <div className="flex items-center gap-3">
+                <Mail className="w-5 h-5 text-primary flex-shrink-0" />
+                <span>tecnogz.rionegro@gmail.com</span>
               </div>
-              <div className="flex items-start gap-2">
-                <Clock className="w-4 h-4 mt-0.5 text-primary" />
-                <span>Lun-Sáb: 9AM - 7PM</span>
+              <div className="flex items-start gap-3">
+                <Clock className="w-5 h-5 mt-0.5 text-primary flex-shrink-0" />
+                <div>
+                  <p>Lunes a Viernes: 9:30 AM – 7:00 PM</p>
+                  <p>Sábado: 9:30 AM – 5:00 PM</p>
+                </div>
               </div>
             </div>
           </div>
