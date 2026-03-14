@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, ShoppingCart, Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import logo from "@/assets/logo-tecno-gz.png";
+import logo from "@/assets/logo-tecnogz-official.png";
 
 const navLinks = [
   { label: "Inicio", path: "/" },
