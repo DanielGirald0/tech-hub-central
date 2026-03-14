@@ -30,19 +30,20 @@ const Index = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
-            className="max-w-2xl"
+            className="max-w-3xl mx-auto text-center"
           >
-            <h1 className="font-display text-4xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
-              Tu aliado completo en <span className="text-gradient">tecnología</span>
+            <img src={logo} alt="Tecno Gz" className="w-32 h-32 md:w-40 md:h-40 object-contain mx-auto mb-6" />
+            <h1 className="font-display text-4xl md:text-6xl font-bold text-foreground mb-4 leading-tight uppercase tracking-wider">
+              TECNO GZ
             </h1>
-            <p className="text-lg text-muted-foreground mb-2 font-display italic">
+            <p className="text-xl md:text-2xl text-primary mb-4 font-display font-medium">
               Pasión y servicio de confianza
             </p>
-            <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+            <p className="text-lg text-muted-foreground mb-8 leading-relaxed max-w-xl mx-auto">
               Productos de vanguardia, instalación profesional y servicio técnico experto.
-              Todo lo que tu hogar y negocio necesitan.
+              Todo lo que tu hogar y negocio necesitan en Rionegro, Antioquia.
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 justify-center">
               <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-display">
                 <Link to="/products">Ver productos <ArrowRight className="w-4 h-4 ml-2" /></Link>
               </Button>
