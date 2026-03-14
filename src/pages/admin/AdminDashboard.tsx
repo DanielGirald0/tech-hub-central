@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, Users, ShoppingCart, Wrench, BarChart3 } from "lucide-react";
-import logo from "@/assets/logo-tecno-gz.png";
+import logo from "@/assets/logo-tecnogz-official.png";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({ products: 0, orders: 0, users: 0, services: 0 });
