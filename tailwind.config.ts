@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['Space Grotesk', 'system-ui', 'sans-serif'],
-        body: ['system-ui', '-apple-system', 'sans-serif'],
+        display: ['Iosevka', 'monospace', 'system-ui', 'sans-serif'],
+        body: ['Iosevka', 'monospace', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

@@ -52,7 +52,7 @@ const Contact = () => {
             <h3 className="font-display font-semibold text-foreground mb-4">Visítanos</h3>
             <div className="space-y-4 text-sm text-muted-foreground">
               <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-primary mt-0.5" />
+                <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium text-foreground">Dirección</p>
                   <p>Centro Comercial La Convención</p>
@@ -61,26 +61,25 @@ const Contact = () => {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Phone className="w-5 h-5 text-primary mt-0.5" />
+                <Phone className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium text-foreground">Teléfono</p>
-                  <p>+57 (604) 000-0000</p>
+                  <p className="font-medium text-foreground">Teléfono / WhatsApp</p>
+                  <p>310 7476909</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Mail className="w-5 h-5 text-primary mt-0.5" />
+                <Mail className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium text-foreground">Correo</p>
-                  <p>info@tecnogz.com</p>
+                  <p>tecnogz.rionegro@gmail.com</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-primary mt-0.5" />
+                <Clock className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium text-foreground">Horario</p>
-                  <p>Lunes - Viernes: 9:00 AM - 7:00 PM</p>
-                  <p>Sábado: 10:00 AM - 5:00 PM</p>
-                  <p>Domingo: Cerrado</p>
+                  <p>Lunes a Viernes: 9:30 AM – 7:00 PM</p>
+                  <p>Sábado: 9:30 AM – 5:00 PM</p>
                 </div>
               </div>
             </div>

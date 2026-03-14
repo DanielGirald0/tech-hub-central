@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, ShoppingCart, Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import logo from "@/assets/logo-tecno-gz.png";
+import logo from "@/assets/logo-tecnogz-official.png";
 
 const navLinks = [
   { label: "Inicio", path: "/" },
@@ -35,13 +35,13 @@ const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 glass">
+    <header className="sticky top-0 z-50 glass border-b border-border">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="Tecno Gz" className="w-9 h-9 rounded-full object-cover" />
-            <span className="font-display font-bold text-lg text-foreground hidden sm:block">
-              Tecno Gz
+        <div className="flex items-center justify-between h-20">
+          <Link to="/" className="flex items-center gap-3">
+            <img src={logo} alt="Tecno Gz" className="w-14 h-14 object-contain" />
+            <span className="font-display font-bold text-xl tracking-wider text-foreground hidden sm:block uppercase">
+              TECNO GZ
             </span>
           </Link>
 

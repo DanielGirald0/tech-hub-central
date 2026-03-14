@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Iosevka:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -59,8 +59,8 @@
     --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.5);
     --shadow-elevated: 0 8px 40px -8px hsl(0 0% 0% / 0.6);
 
-    --font-display: 'Space Grotesk', system-ui, sans-serif;
-    --font-body: system-ui, -apple-system, sans-serif;
+    --font-display: 'Iosevka', monospace, system-ui, sans-serif;
+    --font-body: 'Iosevka', monospace, system-ui, sans-serif;
   }
 }
 

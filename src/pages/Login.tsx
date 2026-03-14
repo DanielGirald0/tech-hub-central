@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import logo from "@/assets/logo-tecno-gz.png";
+import logo from "@/assets/logo-tecnogz-official.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -32,9 +32,9 @@ const Login = () => {
     <div className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-card border border-border rounded-2xl p-8">
         <div className="text-center mb-8">
-          <img src={logo} alt="Tecno Gz" className="w-16 h-16 rounded-full mx-auto mb-4" />
-          <h1 className="font-display text-2xl font-bold text-foreground">Iniciar sesión</h1>
-          <p className="text-sm text-muted-foreground mt-1">Accede a tu cuenta de Tecno Gz</p>
+          <img src={logo} alt="Tecno Gz" className="w-24 h-24 object-contain mx-auto mb-4" />
+          <h1 className="font-display text-2xl font-bold text-foreground uppercase tracking-wider">TECNO GZ</h1>
+          <p className="text-sm text-muted-foreground mt-1">Inicia sesión para continuar</p>
         </div>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
