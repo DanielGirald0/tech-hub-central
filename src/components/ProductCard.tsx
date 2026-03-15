@@ -74,12 +74,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
               <span className="text-xs text-muted-foreground line-through ml-2">{formatCOP(originalPrice)}</span>
             )}
           </div>
-          <Button size="sm" disabled={!inStock} onClick={handleAdd} className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 w-8 p-0">
+          <Button size="sm" disabled={!inStock} onClick={(e) => { e.preventDefault(); handleAdd(); }} className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 w-8 p-0">
             <ShoppingCart className="w-4 h-4" />
           </Button>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
