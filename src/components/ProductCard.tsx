@@ -1,4 +1,5 @@
 import { ShoppingCart, Heart } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 
@@ -42,7 +43,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   return (
-    <div className="group bg-card rounded-xl border border-border overflow-hidden shadow-card hover:shadow-glow transition-all duration-300 hover:-translate-y-1">
+    <Link to={`/products/${product.id}`} className="group bg-card rounded-xl border border-border overflow-hidden shadow-card hover:shadow-glow transition-all duration-300 hover:-translate-y-1 block">
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
         <img src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
         {discount > 0 && (
@@ -73,12 +74,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
               <span className="text-xs text-muted-foreground line-through ml-2">{formatCOP(originalPrice)}</span>
             )}
           </div>
-          <Button size="sm" disabled={!inStock} onClick={handleAdd} className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 w-8 p-0">
+          <Button size="sm" disabled={!inStock} onClick={(e) => { e.preventDefault(); handleAdd(); }} className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 w-8 p-0">
             <ShoppingCart className="w-4 h-4" />
           </Button>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

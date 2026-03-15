@@ -11,7 +11,7 @@ const Contact = () => {
     e.preventDefault();
     let text: string;
     if (isServiceRequest) {
-      text = `Hola, quiero solicitar un servicio técnico.\n\nNombre: ${form.name}\nTeléfono: ${form.phone}\nServicio: ${form.serviceType || "No especificado"}\nEquipo: ${form.deviceType || "No especificado"}\nDescripción del problema: ${form.message}`;
+      text = `Hola, quiero solicitar un servicio.\n\nNombre: ${form.name}\nTeléfono: ${form.phone}\nServicio: ${form.serviceType || "No especificado"}\nEquipo: ${form.deviceType || "No especificado"}\nDescripción del problema: ${form.message}`;
     } else {
       text = `Hola, quiero contactarlos.\n\nNombre: ${form.name}\nTeléfono: ${form.phone}\nAsunto: ${form.subject}\nMensaje: ${form.message}`;
     }
