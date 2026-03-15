@@ -16,7 +16,7 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
         <p className="text-sm font-semibold text-primary mb-4">{service.price}</p>
       )}
       <Link
-        to="/contact"
+        to={`/contact?subject=Solicitud+de+servicio`}
         className="inline-flex items-center gap-1 text-sm text-primary hover:underline group-hover:gap-2 transition-all"
       >
         Solicitar servicio <ArrowRight className="w-4 h-4" />
