@@ -1,34 +1,53 @@
+import { useState } from "react";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Contact = () => {
+  const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "Consulta general", serviceType: "", deviceType: "", message: "" });
+
+  const isServiceRequest = form.subject === "Solicitud de servicio";
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    let text: string;
+    if (isServiceRequest) {
+      text = `Hola, quiero solicitar un servicio técnico.\n\nNombre: ${form.name}\nTeléfono: ${form.phone}\nServicio: ${form.serviceType || "No especificado"}\nEquipo: ${form.deviceType || "No especificado"}\nDescripción del problema: ${form.message}`;
+    } else {
+      text = `Hola, quiero contactarlos.\n\nNombre: ${form.name}\nTeléfono: ${form.phone}\nAsunto: ${form.subject}\nMensaje: ${form.message}`;
+    }
+    window.open(`https://wa.me/573107476909?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
+  const update = (field: string, value: string) => setForm((p) => ({ ...p, [field]: value }));
+
+  const inputCls = "w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary";
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold text-foreground mb-2">Contacto</h1>
       <p className="text-muted-foreground mb-10">Nos encantaría saber de ti. Contáctanos en cualquier momento.</p>
 
       <div className="grid lg:grid-cols-2 gap-10">
-        {/* Formulario */}
         <div className="bg-card border border-border rounded-2xl p-6 md:p-8">
           <h2 className="font-display text-xl font-semibold text-foreground mb-6">Envíanos un mensaje</h2>
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Nombre</label>
-                <input className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Tu nombre" />
+                <input className={inputCls} placeholder="Tu nombre" value={form.name} onChange={(e) => update("name", e.target.value)} required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Correo electrónico</label>
-                <input type="email" className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" placeholder="tu@correo.com" />
+                <input type="email" className={inputCls} placeholder="tu@correo.com" value={form.email} onChange={(e) => update("email", e.target.value)} />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Teléfono</label>
-              <input className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" placeholder="+57 300 000 0000" />
+              <input className={inputCls} placeholder="+57 300 000 0000" value={form.phone} onChange={(e) => update("phone", e.target.value)} required />
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Asunto</label>
-              <select className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+              <select className={inputCls} value={form.subject} onChange={(e) => update("subject", e.target.value)}>
                 <option>Consulta general</option>
                 <option>Pregunta sobre producto</option>
                 <option>Solicitud de servicio</option>
@@ -36,17 +55,41 @@ const Contact = () => {
                 <option>Consulta de seguridad</option>
               </select>
             </div>
+
+            {isServiceRequest && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Tipo de servicio</label>
+                  <select className={inputCls} value={form.serviceType} onChange={(e) => update("serviceType", e.target.value)}>
+                    <option value="">Seleccionar...</option>
+                    <option>Servicio técnico de computadores</option>
+                    <option>Servicio técnico de celulares</option>
+                    <option>Servicio técnico de consolas</option>
+                    <option>Instalación de cámaras</option>
+                    <option>Instalación de alarmas</option>
+                    <option>Instalación de control de acceso</option>
+                    <option>Instalación de videoporteros</option>
+                    <option>Asesoría tecnológica</option>
+                    <option>Mantenimiento preventivo</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Tipo de equipo</label>
+                  <input className={inputCls} placeholder="Ej: Portátil HP, iPhone 15, PS5..." value={form.deviceType} onChange={(e) => update("deviceType", e.target.value)} />
+                </div>
+              </>
+            )}
+
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Mensaje</label>
-              <textarea rows={4} className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none" placeholder="¿En qué podemos ayudarte?" />
+              <label className="block text-sm font-medium text-foreground mb-1">{isServiceRequest ? "Descripción del problema" : "Mensaje"}</label>
+              <textarea rows={4} className={`${inputCls} resize-none`} placeholder={isServiceRequest ? "Describe el problema o servicio que necesitas..." : "¿En qué podemos ayudarte?"} value={form.message} onChange={(e) => update("message", e.target.value)} required />
             </div>
             <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-              Enviar mensaje
+              Enviar mensaje por WhatsApp
             </Button>
           </form>
         </div>
 
-        {/* Info */}
         <div className="space-y-6">
           <div className="bg-card border border-border rounded-2xl p-6">
             <h3 className="font-display font-semibold text-foreground mb-4">Visítanos</h3>
@@ -85,16 +128,10 @@ const Contact = () => {
             </div>
           </div>
 
-          {/* Mapa de Rionegro */}
           <div className="bg-card border border-border rounded-2xl overflow-hidden h-64">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.1!2d-75.3743!3d6.1552!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e4690e0fa0b4a1d%3A0x1234567890abcdef!2sCentro+Comercial+La+Convenci%C3%B3n!5e0!3m2!1ses!2sco!4v1234567890"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              title="Ubicación de Tecno Gz"
+              width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" title="Ubicación de Tecno Gz"
             />
           </div>
         </div>
