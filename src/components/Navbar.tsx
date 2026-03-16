@@ -104,6 +104,12 @@ const Navbar = () => {
             </Link>
             <Dropdown label="Productos" links={productSubLinks} active={location.pathname === "/products"} />
             <Dropdown label="Servicios" links={serviceSubLinks} active={location.pathname === "/services"} />
+            <Link
+              to="/about"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname === "/about" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+            >
+              Nosotros
+            </Link>
             {user && userRole === "admin" && (
               <Link
                 to="/admin"
