@@ -171,9 +171,15 @@ const Navbar = () => {
             ))}
 
             <p className="px-3 pt-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Servicios</p>
-            {serviceSubLinks.map((l) => (
-              <Link key={l.label} to={l.path} onClick={() => setMobileOpen(false)} className="px-6 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md">{l.label}</Link>
-            ))}
+            {serviceSubLinks.map((l) =>
+              l.header ? (
+                <p key={l.label} className="px-6 pt-2 pb-1 text-xs font-semibold text-muted-foreground/70">{l.label.replace(/─/g, "").trim()}</p>
+              ) : (
+                <Link key={l.label} to={l.path} onClick={() => setMobileOpen(false)} className="px-8 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md">{l.label}</Link>
+              )
+            )}
+
+            <Link to="/about" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">Nosotros</Link>
 
             {user && userRole === "admin" && (
               <Link to="/admin" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">Admin</Link>

@@ -44,12 +44,48 @@ const About = () => {
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-8 text-center">
+      <div className="bg-card border border-border rounded-2xl p-8 text-center mb-12">
         <h2 className="font-display text-xl font-semibold text-foreground mb-3">Nuestra misión</h2>
         <p className="text-muted-foreground max-w-xl mx-auto leading-relaxed">
           Empoderar a nuestra comunidad con soluciones tecnológicas confiables, servicio excepcional
           y asesoría honesta — haciendo la tecnología accesible y sin complicaciones para todos.
         </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-8 mb-12">
+        <div className="bg-card border border-border rounded-2xl p-8">
+          <h2 className="font-display text-xl font-semibold text-foreground mb-4">📍 Ubicación</h2>
+          <div className="space-y-2 text-muted-foreground text-sm leading-relaxed">
+            <p>Estamos ubicados en <strong className="text-foreground">Rionegro, Antioquia</strong>, en el corazón del oriente antioqueño.</p>
+            <p>Nuestra tienda es de fácil acceso y contamos con un equipo listo para atenderte de manera presencial o remota.</p>
+          </div>
+        </div>
+        <div className="bg-card border border-border rounded-2xl p-8">
+          <h2 className="font-display text-xl font-semibold text-foreground mb-4">📞 Contacto</h2>
+          <div className="space-y-2 text-muted-foreground text-sm leading-relaxed">
+            <p><strong className="text-foreground">Teléfono / WhatsApp:</strong> +57 310 7476909</p>
+            <p><strong className="text-foreground">Ubicación:</strong> Rionegro, Antioquia, Colombia</p>
+            <p>Escríbenos por WhatsApp o visítanos en nuestra tienda para asesoría personalizada.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl p-8">
+        <h2 className="font-display text-xl font-semibold text-foreground mb-3">Nuestros valores</h2>
+        <div className="grid sm:grid-cols-3 gap-6 mt-4">
+          <div className="text-center">
+            <p className="font-display font-bold text-foreground mb-1">Honestidad</p>
+            <p className="text-xs text-muted-foreground">Asesoría transparente y precios justos siempre.</p>
+          </div>
+          <div className="text-center">
+            <p className="font-display font-bold text-foreground mb-1">Calidad</p>
+            <p className="text-xs text-muted-foreground">Productos originales y servicios profesionales garantizados.</p>
+          </div>
+          <div className="text-center">
+            <p className="font-display font-bold text-foreground mb-1">Compromiso</p>
+            <p className="text-xs text-muted-foreground">Nos dedicamos a resolver tus necesidades tecnológicas.</p>
+          </div>
+        </div>
       </div>
     </div>
   );
