@@ -31,7 +31,7 @@ const serviceSubLinks = [
   { label: "Asesoría en seguridad", path: "/services#asesoria" },
 ];
 
-const Dropdown = ({ label, links, active }: { label: string; links: { label: string; path: string }[]; active: boolean }) => {
+const Dropdown = ({ label, links, active }: { label: string; links: { label: string; path: string; header?: boolean }[]; active: boolean }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
