@@ -53,16 +53,20 @@ const Dropdown = ({ label, links, active }: { label: string; links: { label: str
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-xl shadow-lg py-2 z-50">
-          {links.map((link) => (
-            <Link
-              key={link.label}
-              to={link.path}
-              onClick={() => setOpen(false)}
-              className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {links.map((link) =>
+            link.header ? (
+              <p key={link.label} className="px-4 pt-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{link.label.replace(/─/g, "").trim()}</p>
+            ) : (
+              <Link
+                key={link.label}
+                to={link.path}
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                {link.label}
+              </Link>
+            )
+          )}
         </div>
       )}
     </div>
