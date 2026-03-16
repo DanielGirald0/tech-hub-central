@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import Layout from "./components/Layout";
 import ScrollToTop from "./components/ScrollToTop";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
