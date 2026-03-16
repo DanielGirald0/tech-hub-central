@@ -58,7 +58,7 @@ const Footer = () => {
                   href="https://maps.google.com/maps?q=Centro+Comercial+La+Convenci%C3%B3n,+Cl+49+%2348-63+Local+226,+Rionegro,+Antioquia+054040"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-red-500 transition-colors"
+                  className="text-sm text-muted-foreground hover:text-destructive transition-colors"
                 >
                   Centro Comercial La Convención, Cl 49 #48-63 Local 226, Rionegro, Antioquia 054040
                 </a>
