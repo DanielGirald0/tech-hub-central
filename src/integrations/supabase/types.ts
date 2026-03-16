@@ -163,31 +163,52 @@ export type Database = {
       }
       service_requests: {
         Row: {
+          address: string | null
           created_at: string
-          customer_id: string
+          customer_id: string | null
           description: string | null
           device_type: string | null
+          email: string | null
+          full_name: string | null
           id: string
+          message: string | null
+          phone: string | null
+          service_id: string | null
+          service_name: string | null
           service_type: string
           status: string
           updated_at: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
-          customer_id: string
+          customer_id?: string | null
           description?: string | null
           device_type?: string | null
+          email?: string | null
+          full_name?: string | null
           id?: string
+          message?: string | null
+          phone?: string | null
+          service_id?: string | null
+          service_name?: string | null
           service_type: string
           status?: string
           updated_at?: string
         }
         Update: {
+          address?: string | null
           created_at?: string
-          customer_id?: string
+          customer_id?: string | null
           description?: string | null
           device_type?: string | null
+          email?: string | null
+          full_name?: string | null
           id?: string
+          message?: string | null
+          phone?: string | null
+          service_id?: string | null
+          service_name?: string | null
           service_type?: string
           status?: string
           updated_at?: string
