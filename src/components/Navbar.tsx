@@ -17,12 +17,18 @@ const productSubLinks = [
 ];
 
 const serviceSubLinks = [
-  { label: "Servicio técnico", path: "/services" },
+  { label: "── Servicio Técnico ──", path: "", header: true },
+  { label: "Reparación de computadores", path: "/services#reparacion" },
+  { label: "Reparación de celulares", path: "/services#reparacion" },
+  { label: "Reparación de consolas", path: "/services#reparacion" },
+  { label: "Mantenimiento de computadores", path: "/services#mantenimiento" },
+  { label: "Mantenimiento de celulares", path: "/services#mantenimiento" },
+  { label: "── Seguridad Electrónica ──", path: "", header: true },
   { label: "Instalación de cámaras", path: "/services#instalacion" },
   { label: "Instalación de alarmas", path: "/services#instalacion" },
+  { label: "Instalación de videoporteros", path: "/services#instalacion" },
   { label: "Control de acceso", path: "/services#instalacion" },
-  { label: "Videoporteros", path: "/services#instalacion" },
-  { label: "Asesoría tecnológica", path: "/services#asesoria" },
+  { label: "Asesoría en seguridad", path: "/services#asesoria" },
 ];
 
 const Dropdown = ({ label, links, active }: { label: string; links: { label: string; path: string }[]; active: boolean }) => {
