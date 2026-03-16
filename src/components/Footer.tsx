@@ -54,7 +54,14 @@ const Footer = () => {
             <div className="flex flex-col gap-3 text-sm text-muted-foreground">
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 mt-0.5 text-primary flex-shrink-0" />
-                <span>Centro Comercial La Convención, Cl 49 #48-63 Local 226, Rionegro, Antioquia 054040</span>
+                <a 
+                  href="https://maps.google.com/maps?q=Centro+Comercial+La+Convenci%C3%B3n,+Cl+49+%2348-63+Local+226,+Rionegro,+Antioquia+054040"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  Centro Comercial La Convención, Cl 49 #48-63 Local 226, Rionegro, Antioquia 054040
+                </a>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-primary flex-shrink-0" />
