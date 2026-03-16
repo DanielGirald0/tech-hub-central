@@ -17,15 +17,21 @@ const productSubLinks = [
 ];
 
 const serviceSubLinks = [
-  { label: "Servicio técnico", path: "/services" },
+  { label: "── Servicio Técnico ──", path: "", header: true },
+  { label: "Reparación de computadores", path: "/services#reparacion" },
+  { label: "Reparación de celulares", path: "/services#reparacion" },
+  { label: "Reparación de consolas", path: "/services#reparacion" },
+  { label: "Mantenimiento de computadores", path: "/services#mantenimiento" },
+  { label: "Mantenimiento de celulares", path: "/services#mantenimiento" },
+  { label: "── Seguridad Electrónica ──", path: "", header: true },
   { label: "Instalación de cámaras", path: "/services#instalacion" },
   { label: "Instalación de alarmas", path: "/services#instalacion" },
+  { label: "Instalación de videoporteros", path: "/services#instalacion" },
   { label: "Control de acceso", path: "/services#instalacion" },
-  { label: "Videoporteros", path: "/services#instalacion" },
-  { label: "Asesoría tecnológica", path: "/services#asesoria" },
+  { label: "Asesoría en seguridad", path: "/services#asesoria" },
 ];
 
-const Dropdown = ({ label, links, active }: { label: string; links: { label: string; path: string }[]; active: boolean }) => {
+const Dropdown = ({ label, links, active }: { label: string; links: { label: string; path: string; header?: boolean }[]; active: boolean }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -47,16 +53,20 @@ const Dropdown = ({ label, links, active }: { label: string; links: { label: str
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-xl shadow-lg py-2 z-50">
-          {links.map((link) => (
-            <Link
-              key={link.label}
-              to={link.path}
-              onClick={() => setOpen(false)}
-              className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {links.map((link) =>
+            link.header ? (
+              <p key={link.label} className="px-4 pt-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{link.label.replace(/─/g, "").trim()}</p>
+            ) : (
+              <Link
+                key={link.label}
+                to={link.path}
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                {link.label}
+              </Link>
+            )
+          )}
         </div>
       )}
     </div>
@@ -94,6 +104,12 @@ const Navbar = () => {
             </Link>
             <Dropdown label="Productos" links={productSubLinks} active={location.pathname === "/products"} />
             <Dropdown label="Servicios" links={serviceSubLinks} active={location.pathname === "/services"} />
+            <Link
+              to="/about"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname === "/about" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+            >
+              Nosotros
+            </Link>
             {user && userRole === "admin" && (
               <Link
                 to="/admin"
@@ -155,9 +171,15 @@ const Navbar = () => {
             ))}
 
             <p className="px-3 pt-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Servicios</p>
-            {serviceSubLinks.map((l) => (
-              <Link key={l.label} to={l.path} onClick={() => setMobileOpen(false)} className="px-6 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md">{l.label}</Link>
-            ))}
+            {serviceSubLinks.map((l) =>
+              l.header ? (
+                <p key={l.label} className="px-6 pt-2 pb-1 text-xs font-semibold text-muted-foreground/70">{l.label.replace(/─/g, "").trim()}</p>
+              ) : (
+                <Link key={l.label} to={l.path} onClick={() => setMobileOpen(false)} className="px-8 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md">{l.label}</Link>
+              )
+            )}
+
+            <Link to="/about" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">Nosotros</Link>
 
             {user && userRole === "admin" && (
               <Link to="/admin" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">Admin</Link>
