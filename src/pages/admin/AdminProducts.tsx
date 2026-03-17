@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 import { categories } from "@/data/products";
@@ -11,6 +12,8 @@ interface DBProduct {
   id: string;
   name: string;
   description: string | null;
+  full_description: string | null;
+  specifications: any[] | null;
   price: number;
   original_price: number | null;
   category: string;
@@ -22,7 +25,16 @@ interface DBProduct {
   featured: boolean | null;
 }
 
-const emptyProduct = { name: "", description: "", price: 0, original_price: null as number | null, category: "", subcategory: "", brand: "", stock: 0, image_url: "", featured: false };
+interface SpecItem {
+  label: string;
+  value: string;
+}
+
+const emptyProduct = {
+  name: "", description: "", full_description: "", price: 0, original_price: null as number | null,
+  category: "", subcategory: "", brand: "", stock: 0, image_url: "", featured: false,
+  specifications: [] as SpecItem[],
+};
 
 const AdminProducts = () => {
   const [products, setProducts] = useState<DBProduct[]>([]);
@@ -31,7 +43,7 @@ const AdminProducts = () => {
   const [form, setForm] = useState(emptyProduct);
   const { toast } = useToast();
 
-  const load = () => supabase.from("products").select("*").order("created_at", { ascending: false }).then(({ data }) => setProducts(data || []));
+  const load = () => supabase.from("products").select("*").order("created_at", { ascending: false }).then(({ data }) => setProducts((data as any) || []));
   useEffect(() => { load(); }, []);
 
   const formatCOP = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n);
@@ -41,12 +53,18 @@ const AdminProducts = () => {
       toast({ title: "Nombre y categoría son obligatorios", variant: "destructive" });
       return;
     }
+    const payload = {
+      name: form.name, description: form.description, full_description: form.full_description,
+      specifications: form.specifications, price: form.price, original_price: form.original_price,
+      category: form.category, subcategory: form.subcategory, brand: form.brand,
+      stock: form.stock, image_url: form.image_url, featured: form.featured,
+    };
     if (editing) {
-      const { error } = await supabase.from("products").update(form).eq("id", editing.id);
+      const { error } = await supabase.from("products").update(payload as any).eq("id", editing.id);
       if (error) toast({ title: "Error al actualizar", description: error.message, variant: "destructive" });
       else { toast({ title: "Producto actualizado" }); setEditing(null); load(); }
     } else {
-      const { error } = await supabase.from("products").insert(form);
+      const { error } = await supabase.from("products").insert(payload as any);
       if (error) toast({ title: "Error al crear", description: error.message, variant: "destructive" });
       else { toast({ title: "Producto creado" }); setCreating(false); setForm(emptyProduct); load(); }
     }
@@ -61,10 +79,27 @@ const AdminProducts = () => {
   const openEdit = (p: DBProduct) => {
     setEditing(p);
     setCreating(false);
-    setForm({ name: p.name, description: p.description || "", price: p.price, original_price: p.original_price, category: p.category, subcategory: p.subcategory || "", brand: p.brand || "", stock: p.stock, image_url: p.image_url || "", featured: p.featured || false });
+    const specs = Array.isArray(p.specifications) ? p.specifications as SpecItem[] : [];
+    setForm({
+      name: p.name, description: p.description || "", full_description: p.full_description || "",
+      price: p.price, original_price: p.original_price, category: p.category,
+      subcategory: p.subcategory || "", brand: p.brand || "", stock: p.stock,
+      image_url: p.image_url || "", featured: p.featured || false, specifications: specs,
+    });
   };
 
   const closeForm = () => { setEditing(null); setCreating(false); setForm(emptyProduct); };
+
+  const addSpec = () => setForm({ ...form, specifications: [...form.specifications, { label: "", value: "" }] });
+  const updateSpec = (i: number, field: "label" | "value", val: string) => {
+    const specs = [...form.specifications];
+    specs[i] = { ...specs[i], [field]: val };
+    setForm({ ...form, specifications: specs });
+  };
+  const removeSpec = (i: number) => {
+    const specs = form.specifications.filter((_, idx) => idx !== i);
+    setForm({ ...form, specifications: specs });
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -93,12 +128,35 @@ const AdminProducts = () => {
             <div><Label>Precio original</Label><Input type="number" value={form.original_price ?? ""} onChange={(e) => setForm({ ...form, original_price: e.target.value ? Number(e.target.value) : null })} min={0} /></div>
             <div><Label>Stock</Label><Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} min={0} /></div>
             <div><Label>URL de imagen</Label><Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} maxLength={500} /></div>
-            <div className="md:col-span-2"><Label>Descripción</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={1000} /></div>
+            <div className="md:col-span-2"><Label>Descripción corta</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={300} /></div>
+            <div className="md:col-span-2">
+              <Label>Descripción completa</Label>
+              <Textarea value={form.full_description} onChange={(e) => setForm({ ...form, full_description: e.target.value })} maxLength={5000} rows={4} placeholder="Descripción detallada del producto..." />
+            </div>
             <div className="flex items-center gap-2">
               <input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} id="featured" />
               <Label htmlFor="featured">Producto destacado</Label>
             </div>
           </div>
+
+          {/* Specifications */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <Label className="text-base">Características técnicas</Label>
+              <Button type="button" variant="outline" size="sm" onClick={addSpec}><Plus className="w-3 h-3 mr-1" />Agregar</Button>
+            </div>
+            {form.specifications.map((spec, i) => (
+              <div key={i} className="flex gap-2 mb-2">
+                <Input placeholder="Ej: Procesador" value={spec.label} onChange={(e) => updateSpec(i, "label", e.target.value)} className="flex-1" />
+                <Input placeholder="Ej: Intel Core i7" value={spec.value} onChange={(e) => updateSpec(i, "value", e.target.value)} className="flex-1" />
+                <button onClick={() => removeSpec(i)} className="p-2 hover:text-destructive"><X className="w-4 h-4" /></button>
+              </div>
+            ))}
+            {form.specifications.length === 0 && (
+              <p className="text-xs text-muted-foreground">No hay características. Haz clic en "Agregar" para añadir.</p>
+            )}
+          </div>
+
           <div className="flex gap-2 mt-4">
             <Button onClick={handleSave}>{editing ? "Actualizar" : "Crear"}</Button>
             <Button variant="outline" onClick={closeForm}>Cancelar</Button>
