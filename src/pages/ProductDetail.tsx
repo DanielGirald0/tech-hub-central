@@ -56,6 +56,7 @@ const ProductDetail = () => {
   const originalPrice = product.original_price;
   const inStock = product.stock > 0;
   const discount = originalPrice ? Math.round(((originalPrice - product.price) / originalPrice) * 100) : 0;
+  const specs: { label: string; value: string }[] = Array.isArray(product.specifications) ? product.specifications : [];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -115,6 +116,7 @@ const ProductDetail = () => {
             </div>
           )}
 
+          {/* Specifications */}
           <div className="mb-6">
             <h2 className="font-display font-semibold text-foreground mb-2">Especificaciones</h2>
             <div className="grid grid-cols-2 gap-3 text-sm">
@@ -138,6 +140,12 @@ const ProductDetail = () => {
                 <span className="text-muted-foreground">Stock</span>
                 <p className="font-medium text-foreground">{product.stock}</p>
               </div>
+              {specs.map((spec, i) => (
+                <div key={i} className="bg-secondary rounded-lg px-4 py-2.5">
+                  <span className="text-muted-foreground">{spec.label}</span>
+                  <p className="font-medium text-foreground">{spec.value}</p>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -152,6 +160,16 @@ const ProductDetail = () => {
           </Button>
         </div>
       </div>
+
+      {/* Full description */}
+      {product.full_description && (
+        <section className="mb-16">
+          <h2 className="font-display text-xl font-semibold text-foreground mb-4">Descripción completa</h2>
+          <div className="bg-card border border-border rounded-xl p-6">
+            <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{product.full_description}</p>
+          </div>
+        </section>
+      )}
 
       {/* Related */}
       {related.length > 0 && (
