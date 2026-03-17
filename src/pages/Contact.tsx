@@ -130,8 +130,8 @@ const Contact = () => {
 
           <div className="bg-card border border-border rounded-2xl overflow-hidden h-64">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.1!2d-75.3743!3d6.1552!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e4690e0fa0b4a1d%3A0x1234567890abcdef!2sCentro+Comercial+La+Convenci%C3%B3n!5e0!3m2!1ses!2sco!4v1234567890"
-              width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" title="Ubicación de Tecno Gz"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.521260322283!2d-75.37649satisfechos!3d6.155200000000001!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e4690e0fa0b4a1d%3A0x9b7efaboratorio!2sCentro%20Comercial%20La%20Convenci%C3%B3n!5e0!3m2!1ses!2sco!4v1710000000000"
+              width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="Ubicación de Tecno Gz"
             />
           </div>
         </div>
