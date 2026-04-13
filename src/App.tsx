@@ -25,6 +25,8 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminServices from "./pages/admin/AdminServices";
 import NotFound from "./pages/NotFound";
 import ProductDetail from "./pages/ProductDetail";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,8 @@ const App = () => (
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/account" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
