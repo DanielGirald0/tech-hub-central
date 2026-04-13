@@ -1,7 +1,19 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Shield, User, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface UserRow {
   user_id: string;
@@ -15,6 +27,7 @@ interface UserRow {
 const AdminUsers = () => {
   const [users, setUsers] = useState<UserRow[]>([]);
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
 
   const load = async () => {
     const { data, error } = await supabase.rpc("get_all_users");
@@ -26,10 +39,19 @@ const AdminUsers = () => {
 
   const toggleRole = async (userId: string, currentRole: "customer" | "admin") => {
     const newRole = currentRole === "admin" ? "customer" : "admin";
-    // Update existing role
     const { error } = await supabase.from("user_roles").update({ role: newRole }).eq("user_id", userId);
     if (error) toast({ title: "Error al cambiar rol", description: error.message, variant: "destructive" });
     else { toast({ title: `Rol cambiado a ${newRole}` }); load(); }
+  };
+
+  const deleteUser = async (userId: string) => {
+    if (userId === currentUser?.id) {
+      toast({ title: "No puedes eliminarte a ti mismo", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.rpc("delete_user_by_admin", { _user_id: userId });
+    if (error) toast({ title: "Error al eliminar usuario", description: error.message, variant: "destructive" });
+    else { toast({ title: "Usuario eliminado" }); load(); }
   };
 
   return (
@@ -60,9 +82,34 @@ const AdminUsers = () => {
                   </td>
                   <td className="p-3 text-muted-foreground text-xs">{new Date(u.created_at).toLocaleDateString("es-CO")}</td>
                   <td className="p-3 text-right">
-                    <button onClick={() => toggleRole(u.user_id, u.role)} className="text-xs text-primary hover:underline">
-                      {u.role === "admin" ? "Hacer cliente" : "Hacer admin"}
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={() => toggleRole(u.user_id, u.role)} className="text-xs text-primary hover:underline">
+                        {u.role === "admin" ? "Hacer cliente" : "Hacer admin"}
+                      </button>
+                      {u.user_id !== currentUser?.id && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button className="p-1.5 rounded-md text-red-400 hover:bg-red-500/20 transition-colors" title="Eliminar usuario">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Estás seguro de que deseas eliminar este usuario?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Se eliminará permanentemente a <strong>{u.name || u.email}</strong> y todos sus datos asociados. Esta acción no se puede deshacer.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteUser(u.user_id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Eliminar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

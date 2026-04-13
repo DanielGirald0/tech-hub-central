@@ -49,7 +49,10 @@ const Login = () => {
             {loading ? "Ingresando..." : "Iniciar sesión"}
           </Button>
         </form>
-        <p className="text-center text-sm text-muted-foreground mt-6">
+        <div className="flex items-center justify-between text-sm text-muted-foreground mt-4">
+          <Link to="/forgot-password" className="text-primary hover:underline">¿Olvidaste tu contraseña?</Link>
+        </div>
+        <p className="text-center text-sm text-muted-foreground mt-4">
           ¿No tienes cuenta?{" "}
           <Link to="/register" className="text-primary hover:underline">Regístrate aquí</Link>
         </p>

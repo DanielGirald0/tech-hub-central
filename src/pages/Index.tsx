@@ -1,12 +1,13 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Shield, Wrench, Zap, Star } from "lucide-react";
+import { ArrowRight, Shield, Wrench, Zap, Star, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
-import { products, categories, services } from "@/data/products";
+import { categories, services } from "@/data/products";
+import { supabase } from "@/integrations/supabase/client";
 
-const featuredProducts = products.filter((p) => p.featured);
 const featuredServices = services.slice(0, 4);
 
 const testimonials = [
@@ -16,6 +17,18 @@ const testimonials = [
 ];
 
 const Index = () => {
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [loadingFeatured, setLoadingFeatured] = useState(true);
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      const { data } = await supabase.from("products").select("*").eq("featured", true);
+      setFeaturedProducts(data || []);
+      setLoadingFeatured(false);
+    };
+    fetchFeatured();
+  }, []);
+
   return (
     <div>
       {/* Hero */}
@@ -106,9 +119,17 @@ const Index = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {loadingFeatured ? (
+              <div className="col-span-full flex justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : featuredProducts.length > 0 ? (
+              featuredProducts.map((product: any) => (
+                <ProductCard key={product.id} product={product} />
+              ))
+            ) : (
+              <p className="col-span-full text-center text-muted-foreground">No hay productos destacados.</p>
+            )}
           </div>
         </div>
       </section>
