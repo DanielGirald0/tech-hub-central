@@ -1,12 +1,13 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Shield, Wrench, Zap, Star } from "lucide-react";
+import { ArrowRight, Shield, Wrench, Zap, Star, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
-import { products, categories, services } from "@/data/products";
+import { categories, services } from "@/data/products";
+import { supabase } from "@/integrations/supabase/client";
 
-const featuredProducts = products.filter((p) => p.featured);
 const featuredServices = services.slice(0, 4);
 
 const testimonials = [
