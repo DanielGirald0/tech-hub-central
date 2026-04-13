@@ -1,14 +1,26 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const statusOptions = ["pendiente", "en progreso", "completado", "cancelado"];
 
 const statusColors: Record<string, string> = {
-  pendiente: "bg-yellow-500/20 text-yellow-400",
-  "en progreso": "bg-blue-500/20 text-blue-400",
-  completado: "bg-green-500/20 text-green-400",
-  cancelado: "bg-red-500/20 text-red-400",
+  pendiente: "bg-orange-500/20 text-orange-300 border border-orange-500/30",
+  "en progreso": "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+  completado: "bg-green-500/20 text-green-300 border border-green-500/30",
+  cancelado: "bg-red-500/20 text-red-300 border border-red-500/30",
 };
 
 const AdminServices = () => {
@@ -31,6 +43,12 @@ const AdminServices = () => {
     else { toast({ title: "Estado actualizado" }); load(); }
   };
 
+  const deleteRequest = async (id: string) => {
+    const { error } = await supabase.from("service_requests").delete().eq("id", id);
+    if (error) toast({ title: "Error al eliminar", variant: "destructive" });
+    else { toast({ title: "Servicio eliminado" }); load(); }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="font-display text-2xl font-bold text-foreground mb-6">Solicitudes de Servicio</h1>
@@ -45,6 +63,7 @@ const AdminServices = () => {
                 <th className="text-left p-3 text-muted-foreground font-medium">Equipo</th>
                 <th className="text-left p-3 text-muted-foreground font-medium">Estado</th>
                 <th className="text-left p-3 text-muted-foreground font-medium">Fecha</th>
+                <th className="text-left p-3 text-muted-foreground font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -67,16 +86,42 @@ const AdminServices = () => {
                         value={r.status}
                         onChange={(e) => { e.stopPropagation(); updateStatus(r.id, e.target.value); }}
                         onClick={(e) => e.stopPropagation()}
-                        className={`rounded-full px-3 py-1 text-xs font-medium border-0 cursor-pointer ${statusColors[r.status] || "bg-secondary text-foreground"}`}
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold cursor-pointer appearance-none ${statusColors[r.status] || "bg-secondary text-foreground border border-border"}`}
+                        style={{ colorScheme: "dark" }}
                       >
-                        {statusOptions.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                        {statusOptions.map((s) => <option key={s} value={s} className="bg-card text-foreground">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                       </select>
                     </td>
                     <td className="p-3 text-muted-foreground text-xs">{new Date(r.created_at).toLocaleDateString("es-CO")}</td>
+                    <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                      {r.status === "completado" && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button className="p-1.5 rounded-md text-red-400 hover:bg-red-500/20 transition-colors" title="Eliminar servicio">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Estás seguro de que deseas eliminar este servicio?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta acción no se puede deshacer. Se eliminará permanentemente esta solicitud de servicio.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteRequest(r.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Eliminar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </td>
                   </tr>
                   {expanded === r.id && (
                     <tr key={`${r.id}-detail`} className="border-b border-border/50">
-                      <td colSpan={6} className="p-4 bg-secondary/20">
+                      <td colSpan={7} className="p-4 bg-secondary/20">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                           <div>
                             <span className="text-muted-foreground">Dirección:</span>
@@ -93,7 +138,7 @@ const AdminServices = () => {
                 </>
               ))}
               {requests.length === 0 && (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No hay solicitudes.</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No hay solicitudes.</td></tr>
               )}
             </tbody>
           </table>
