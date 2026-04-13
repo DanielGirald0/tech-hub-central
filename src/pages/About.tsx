@@ -5,7 +5,7 @@ const About = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="font-display text-3xl font-bold text-foreground mb-2">Sobre Tecno Gz</h1>
       <p className="text-muted-foreground mb-10 max-w-2xl">
-        Tu aliado tecnológico de confianza con más de 15 años de experiencia sirviendo a nuestra comunidad.
+        Tu aliado tecnológico de confianza con más de 5 años de experiencia sirviendo a nuestra comunidad.
       </p>
 
       <div className="grid md:grid-cols-2 gap-8 mb-16">
@@ -33,7 +33,7 @@ const About = () => {
             { icon: Shield, title: "Confianza", desc: "Distribuidor autorizado de las mejores marcas" },
             { icon: Wrench, title: "Expertos", desc: "Técnicos certificados en nuestro equipo" },
             { icon: Users, title: "5000+", desc: "Clientes satisfechos" },
-            { icon: Award, title: "15 años", desc: "En la industria" },
+            { icon: Award, title: "5+ años", desc: "En la industria" },
           ].map((item) => (
             <div key={item.title} className="bg-card border border-border rounded-xl p-5 text-center">
               <item.icon className="w-8 h-8 text-primary mx-auto mb-2" />

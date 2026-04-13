@@ -61,7 +61,7 @@ const Index = () => {
               { value: "1000+", label: "Productos" },
               { value: "10+", label: "Servicios" },
               { value: "5000+", label: "Clientes felices" },
-              { value: "15+", label: "Años de experiencia" },
+              { value: "5+", label: "Años de experiencia" },
             ].map((stat) => (
               <div key={stat.label}>
                 <p className="font-display text-2xl md:text-3xl font-bold text-primary">{stat.value}</p>
@@ -187,7 +187,7 @@ const Index = () => {
             {[
               { icon: Zap, title: "Servicio rápido", desc: "Reparaciones el mismo día e instalaciones ágiles. Valoramos tu tiempo." },
               { icon: Shield, title: "Calidad garantizada", desc: "Todos nuestros productos y servicios cuentan con garantía y soporte." },
-              { icon: Wrench, title: "Equipo experto", desc: "Técnicos certificados con más de 15 años de experiencia combinada." },
+              { icon: Wrench, title: "Equipo experto", desc: "Técnicos certificados con más de 5 años de experiencia combinada." },
             ].map((item) => (
               <div key={item.title} className="text-center p-6">
                 <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
