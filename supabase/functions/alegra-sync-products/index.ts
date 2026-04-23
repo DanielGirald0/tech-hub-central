@@ -18,7 +18,7 @@ async function fetchAllAlegraItems(): Promise<any[]> {
   const auth = alegraAuth();
   const all: any[] = [];
   let start = 0;
-  const limit = 30;
+  const limit = 100;
   while (true) {
     const res = await fetch(`${ALEGRA_BASE}/items?start=${start}&limit=${limit}`, {
       headers: { Authorization: auth, Accept: "application/json" },
@@ -33,7 +33,7 @@ async function fetchAllAlegraItems(): Promise<any[]> {
     all.push(...items);
     if (items.length < limit) break;
     start += limit;
-    if (start > 5000) break; // safety cap
+    if (start > 10000) break; // safety cap
   }
   return all;
 }
@@ -85,36 +85,32 @@ Deno.serve(async (req) => {
   try {
     const items = await fetchAllAlegraItems();
 
-    for (const item of items) {
-      try {
-        const payload = {
-          alegra_id: String(item.id),
-          sku: item.reference || String(item.id),
-          name: item.name || "Sin nombre",
-          description: item.description || "",
-          price: extractPrice(item),
-          stock: extractStock(item),
-          image_url: extractImage(item),
-          category: extractCategory(item),
-          last_synced_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
+    const now = new Date().toISOString();
+    const payloads = items.map((item) => ({
+      alegra_id: String(item.id),
+      sku: item.reference || String(item.id),
+      name: item.name || "Sin nombre",
+      description: item.description || "",
+      price: extractPrice(item),
+      stock: extractStock(item),
+      image_url: extractImage(item),
+      category: extractCategory(item),
+      last_synced_at: now,
+      updated_at: now,
+    }));
 
-        const { data: existing } = await supabase
-          .from("products")
-          .select("id")
-          .eq("alegra_id", payload.alegra_id)
-          .maybeSingle();
-
-        if (existing) {
-          await supabase.from("products").update(payload).eq("id", existing.id);
-        } else {
-          await supabase.from("products").insert(payload);
-        }
-        synced++;
-      } catch (e) {
-        console.error("Item sync failed", item.id, e);
-        failed++;
+    // Bulk upsert in batches by alegra_id (unique index exists)
+    const BATCH = 200;
+    for (let i = 0; i < payloads.length; i += BATCH) {
+      const chunk = payloads.slice(i, i + BATCH);
+      const { error } = await supabase
+        .from("products")
+        .upsert(chunk, { onConflict: "alegra_id" });
+      if (error) {
+        console.error("Batch upsert failed", i, error.message);
+        failed += chunk.length;
+      } else {
+        synced += chunk.length;
       }
     }
 
