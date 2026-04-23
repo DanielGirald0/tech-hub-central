@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,11 +21,23 @@ const Cart = () => {
   const [submitting, setSubmitting] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    documentType: "CC" as "CC" | "NIT",
+    documentNumber: "",
+    invoiceType: "normal" as "normal" | "electronica",
+  });
 
   const handleCheckout = async () => {
-    if (!form.name || !form.email) {
-      toast({ title: "Datos incompletos", description: "Nombre y email son requeridos", variant: "destructive" });
+    if (!form.name || !form.email || !form.documentNumber || !form.phone) {
+      toast({ title: "Datos incompletos", description: "Nombre, email, teléfono y número de documento son requeridos", variant: "destructive" });
+      return;
+    }
+    if (!/^\d{5,15}$/.test(form.documentNumber.trim())) {
+      toast({ title: "Documento inválido", description: "Ingresa un número de documento válido (solo dígitos)", variant: "destructive" });
       return;
     }
     setSubmitting(true);
