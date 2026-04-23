@@ -14,16 +14,27 @@ function alegraAuth() {
   return "Basic " + btoa(`${email}:${token}`);
 }
 
-async function findOrCreateContact(customer: { name: string; email: string; phone?: string; address?: string }) {
+async function findOrCreateContact(customer: { name: string; email: string; phone?: string; address?: string; documentType?: string; documentNumber?: string }) {
   const auth = alegraAuth();
-  // Search by email
-  const search = await fetch(`${ALEGRA_BASE}/contacts?query=${encodeURIComponent(customer.email)}`, {
-    headers: { Authorization: auth, Accept: "application/json" },
-  });
-  if (search.ok) {
+  const docNumber = (customer.documentNumber || "").trim();
+  const docType = customer.documentType === "NIT" ? "NIT" : "CC";
+
+  // Search by document number first, then by email
+  const queries = [docNumber, customer.email].filter(Boolean);
+  for (const q of queries) {
+    const search = await fetch(`${ALEGRA_BASE}/contacts?query=${encodeURIComponent(q)}`, {
+      headers: { Authorization: auth, Accept: "application/json" },
+    });
+    if (!search.ok) continue;
     const data = await search.json();
     const list = Array.isArray(data) ? data : (data.data || []);
-    const found = list.find((c: any) => (c.email || "").toLowerCase() === customer.email.toLowerCase());
+    const found = list.find((c: any) => {
+      const idNum = c.identification?.number || c.identification || c.identificationObject?.number;
+      return (
+        (docNumber && String(idNum || "") === docNumber) ||
+        (c.email || "").toLowerCase() === customer.email.toLowerCase()
+      );
+    });
     if (found) return found.id;
   }
   // Create
@@ -31,7 +42,7 @@ async function findOrCreateContact(customer: { name: string; email: string; phon
     name: customer.name,
     email: customer.email,
     type: ["client"],
-    identification: { type: "CC", number: String(Date.now()) },
+    identification: { type: docType, number: docNumber || String(Date.now()) },
   };
   if (customer.phone) body.mobile = customer.phone;
   if (customer.address) body.address = { address: customer.address, city: { name: "Rionegro", department: { name: "Antioquia" }, country: "Colombia" } };
@@ -46,12 +57,16 @@ async function findOrCreateContact(customer: { name: string; email: string; phon
   return created.id;
 }
 
-async function createInvoice(contactId: number | string, items: Array<{ alegra_id?: string; name: string; price: number; quantity: number }>) {
+async function createInvoice(
+  contactId: number | string,
+  items: Array<{ alegra_id?: string; name: string; price: number; quantity: number }>,
+  invoiceType: "normal" | "electronica" = "normal",
+) {
   const auth = alegraAuth();
   const today = new Date().toISOString().slice(0, 10);
   const dueDate = new Date(Date.now() + 15 * 86400000).toISOString().slice(0, 10);
 
-  const body = {
+  const body: any = {
     date: today,
     dueDate,
     client: contactId,
@@ -62,6 +77,9 @@ async function createInvoice(contactId: number | string, items: Array<{ alegra_i
       quantity: it.quantity,
     })),
   };
+  if (invoiceType === "electronica") {
+    body.stamp = { generateStamp: true };
+  }
 
   const res = await fetch(`${ALEGRA_BASE}/invoices`, {
     method: "POST",
@@ -158,7 +176,7 @@ Deno.serve(async (req) => {
     let alegraError: string | null = null;
     try {
       const contactId = await findOrCreateContact(customer);
-      const invoice = await createInvoice(contactId, enrichedItems);
+      const invoice = await createInvoice(contactId, enrichedItems, customer.invoiceType === "electronica" ? "electronica" : "normal");
       invoiceId = String(invoice.id);
       invoiceNumber = String(invoice.numberTemplate?.fullNumber || invoice.number || invoice.id);
       await supabase.from("orders").update({
