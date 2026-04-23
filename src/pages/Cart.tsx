@@ -159,8 +159,35 @@ const Cart = () => {
               <Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             <div>
-              <Label htmlFor="phone">Teléfono</Label>
+              <Label htmlFor="phone">Teléfono *</Label>
               <Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="documentType">Tipo de documento *</Label>
+                <Select value={form.documentType} onValueChange={(v: "CC" | "NIT") => setForm({ ...form, documentType: v })}>
+                  <SelectTrigger id="documentType"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CC">Cédula</SelectItem>
+                    <SelectItem value="NIT">NIT</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="documentNumber">Número de documento *</Label>
+                <Input id="documentNumber" inputMode="numeric" value={form.documentNumber}
+                  onChange={(e) => setForm({ ...form, documentNumber: e.target.value.replace(/\D/g, "") })} />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="invoiceType">Tipo de factura *</Label>
+              <Select value={form.invoiceType} onValueChange={(v: "normal" | "electronica") => setForm({ ...form, invoiceType: v })}>
+                <SelectTrigger id="invoiceType"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Factura normal</SelectItem>
+                  <SelectItem value="electronica">Factura electrónica</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="address">Dirección</Label>
