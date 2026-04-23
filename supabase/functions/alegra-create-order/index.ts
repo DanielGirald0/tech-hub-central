@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
     let alegraError: string | null = null;
     try {
       const contactId = await findOrCreateContact(customer);
-      const invoice = await createInvoice(contactId, enrichedItems);
+      const invoice = await createInvoice(contactId, enrichedItems, customer.invoiceType === "electronica" ? "electronica" : "normal");
       invoiceId = String(invoice.id);
       invoiceNumber = String(invoice.numberTemplate?.fullNumber || invoice.number || invoice.id);
       await supabase.from("orders").update({
