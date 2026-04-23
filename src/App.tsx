@@ -23,6 +23,7 @@ import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminServices from "./pages/admin/AdminServices";
+import AdminAlegra from "./pages/admin/AdminAlegra";
 import NotFound from "./pages/NotFound";
 import ProductDetail from "./pages/ProductDetail";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -60,6 +61,7 @@ const App = () => (
                 <Route path="/admin/orders" element={<ProtectedRoute requiredRole="admin"><AdminOrders /></ProtectedRoute>} />
                 <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
                 <Route path="/admin/services" element={<ProtectedRoute requiredRole="admin"><AdminServices /></ProtectedRoute>} />
+                <Route path="/admin/alegra" element={<ProtectedRoute requiredRole="admin"><AdminAlegra /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>
