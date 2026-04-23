@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      alegra_sync_log: {
+        Row: {
+          created_at: string
+          finished_at: string | null
+          id: string
+          items_failed: number | null
+          items_synced: number | null
+          message: string | null
+          started_at: string
+          status: string
+          sync_type: string
+        }
+        Insert: {
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          items_failed?: number | null
+          items_synced?: number | null
+          message?: string | null
+          started_at?: string
+          status?: string
+          sync_type: string
+        }
+        Update: {
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          items_failed?: number | null
+          items_synced?: number | null
+          message?: string | null
+          started_at?: string
+          status?: string
+          sync_type?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           id: string
@@ -55,24 +91,42 @@ export type Database = {
       }
       orders: {
         Row: {
+          alegra_invoice_id: string | null
+          alegra_invoice_number: string | null
           created_at: string
+          customer_address: string | null
+          customer_email: string | null
           customer_id: string
+          customer_name: string | null
+          customer_phone: string | null
           id: string
           status: string
           total_price: number
           updated_at: string
         }
         Insert: {
+          alegra_invoice_id?: string | null
+          alegra_invoice_number?: string | null
           created_at?: string
+          customer_address?: string | null
+          customer_email?: string | null
           customer_id: string
+          customer_name?: string | null
+          customer_phone?: string | null
           id?: string
           status?: string
           total_price?: number
           updated_at?: string
         }
         Update: {
+          alegra_invoice_id?: string | null
+          alegra_invoice_number?: string | null
           created_at?: string
+          customer_address?: string | null
+          customer_email?: string | null
           customer_id?: string
+          customer_name?: string | null
+          customer_phone?: string | null
           id?: string
           status?: string
           total_price?: number
@@ -82,6 +136,7 @@ export type Database = {
       }
       products: {
         Row: {
+          alegra_id: string | null
           brand: string | null
           category: string
           created_at: string
@@ -90,16 +145,19 @@ export type Database = {
           full_description: string | null
           id: string
           image_url: string | null
+          last_synced_at: string | null
           name: string
           original_price: number | null
           price: number
           rating: number | null
+          sku: string | null
           specifications: Json | null
           stock: number
           subcategory: string | null
           updated_at: string
         }
         Insert: {
+          alegra_id?: string | null
           brand?: string | null
           category?: string
           created_at?: string
@@ -108,16 +166,19 @@ export type Database = {
           full_description?: string | null
           id?: string
           image_url?: string | null
+          last_synced_at?: string | null
           name: string
           original_price?: number | null
           price?: number
           rating?: number | null
+          sku?: string | null
           specifications?: Json | null
           stock?: number
           subcategory?: string | null
           updated_at?: string
         }
         Update: {
+          alegra_id?: string | null
           brand?: string | null
           category?: string
           created_at?: string
@@ -126,10 +187,12 @@ export type Database = {
           full_description?: string | null
           id?: string
           image_url?: string | null
+          last_synced_at?: string | null
           name?: string
           original_price?: number | null
           price?: number
           rating?: number | null
+          sku?: string | null
           specifications?: Json | null
           stock?: number
           subcategory?: string | null
