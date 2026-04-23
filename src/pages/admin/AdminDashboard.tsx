@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Users, ShoppingCart, Wrench, BarChart3 } from "lucide-react";
+import { Package, Users, ShoppingCart, Wrench, BarChart3, RefreshCw } from "lucide-react";
 import logo from "@/assets/logo-tecnogz-official.png";
 
 const AdminDashboard = () => {
@@ -23,6 +23,7 @@ const AdminDashboard = () => {
     { label: "Pedidos", count: stats.orders, icon: ShoppingCart, href: "/admin/orders", color: "text-green-400" },
     { label: "Usuarios", count: stats.users, icon: Users, href: "/admin/users", color: "text-purple-400" },
     { label: "Servicios", count: stats.services, icon: Wrench, href: "/admin/services", color: "text-orange-400" },
+    { label: "Alegra Sync", count: 0, icon: RefreshCw, href: "/admin/alegra", color: "text-red-400" },
   ];
 
   return (
