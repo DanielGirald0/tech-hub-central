@@ -1,13 +1,59 @@
-import { ShoppingCart as CartIcon, Trash2, Plus, Minus } from "lucide-react";
+import { ShoppingCart as CartIcon, Trash2, Plus, Minus, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formatCOP = (price: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(price);
 
 const Cart = () => {
   const { items, removeItem, updateQuantity, clearCart, totalPrice } = useCart();
+  const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "" });
+
+  const handleCheckout = async () => {
+    if (!form.name || !form.email) {
+      toast({ title: "Datos incompletos", description: "Nombre y email son requeridos", variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("alegra-create-order", {
+        body: {
+          customer: form,
+          items: items.map((i) => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+        },
+      });
+      if (error) throw error;
+      const result = data as any;
+      if (!result?.success) throw new Error(result?.error || "Error al crear pedido");
+
+      const msg = items.map((i) => `• ${i.name} x${i.quantity} - ${formatCOP(i.price * i.quantity)}`).join("\n");
+      const invoiceLine = result.alegra_invoice_number ? `\nFactura Alegra: ${result.alegra_invoice_number}` : "";
+      const text = encodeURIComponent(
+        `Hola, acabo de realizar un pedido:\n\nNombre: ${form.name}\nEmail: ${form.email}\nTeléfono: ${form.phone}\n\n${msg}\n\nTotal: ${formatCOP(totalPrice)}${invoiceLine}`
+      );
+      toast({ title: "Pedido creado", description: result.alegra_invoice_number ? `Factura ${result.alegra_invoice_number}` : "Pedido registrado" });
+      clearCart();
+      setOpen(false);
+      window.open(`https://wa.me/573107476909?text=${text}`, "_blank");
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "No se pudo procesar el pedido", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -76,15 +122,47 @@ const Cart = () => {
           <Button
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => {
-              const msg = items.map((i) => `• ${i.name} x${i.quantity} - ${formatCOP(i.price * i.quantity)}`).join("\n");
-              const text = encodeURIComponent(`Hola, quiero realizar un pedido:\n\n${msg}\n\nTotal: ${formatCOP(totalPrice)}`);
-              window.open(`https://wa.me/573107476909?text=${text}`, "_blank");
+              setForm((f) => ({ ...f, email: user?.email || f.email }));
+              setOpen(true);
             }}
           >
-            Realizar pedido por WhatsApp
+            Realizar pedido
           </Button>
         </div>
       </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Datos para el pedido</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="name">Nombre completo *</Label>
+              <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="email">Email *</Label>
+              <Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="phone">Teléfono</Label>
+              <Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="address">Dirección</Label>
+              <Textarea id="address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>Cancelar</Button>
+            <Button onClick={handleCheckout} disabled={submitting} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Confirmar y enviar a WhatsApp
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
