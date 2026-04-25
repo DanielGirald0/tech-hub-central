@@ -78,6 +78,7 @@ const Products = () => {
       let query = db
         .from("products")
         .select("*, product_categories(category_id, categories(id, name, slug))")
+        .gt("stock", 0)
         .gte("price", priceRange[0])
         .lte("price", priceRange[1])
         .order("name", { ascending: true })
