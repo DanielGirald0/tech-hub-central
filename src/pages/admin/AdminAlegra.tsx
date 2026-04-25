@@ -109,12 +109,23 @@ const AdminAlegra = () => {
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Estado</p>
           <div className="flex items-center gap-2">
             {lastSync && statusIcon(lastSync.status)}
-            <p className="font-display text-lg text-foreground capitalize">{lastSync?.status || "—"}</p>
+            <p className="font-display text-lg text-foreground">{lastSync ? statusLabel(lastSync.status) : "—"}</p>
           </div>
         </div>
         <div className="bg-card border border-border rounded-xl p-5">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Productos sincronizados</p>
           <p className="font-display text-lg text-foreground">{lastSync?.items_synced ?? 0}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div className="bg-card border border-border rounded-xl p-5">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Última sincronización exitosa</p>
+          <p className="text-sm text-foreground">{lastSuccessfulSync ? new Date(lastSuccessfulSync.started_at).toLocaleString("es-CO") : "Sin registros exitosos"}</p>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Último error</p>
+          <p className="text-sm text-foreground line-clamp-2">{lastError?.message || "Sin errores recientes"}</p>
         </div>
       </div>
 
@@ -130,20 +141,34 @@ const AdminAlegra = () => {
               <th className="text-left p-3 text-muted-foreground font-medium">Estado</th>
               <th className="text-right p-3 text-muted-foreground font-medium">Sincronizados</th>
               <th className="text-right p-3 text-muted-foreground font-medium">Fallidos</th>
+              <th className="text-right p-3 text-muted-foreground font-medium">Tiempo</th>
               <th className="text-left p-3 text-muted-foreground font-medium">Mensaje</th>
             </tr></thead>
             <tbody>
               {logs.map((l) => (
-                <tr key={l.id} className="border-b border-border/50">
-                  <td className="p-3 text-foreground text-xs">{new Date(l.started_at).toLocaleString("es-CO")}</td>
-                  <td className="p-3 text-foreground">{l.sync_type}</td>
-                  <td className="p-3"><div className="flex items-center gap-2">{statusIcon(l.status)}<span className="capitalize">{l.status}</span></div></td>
-                  <td className="p-3 text-right text-foreground">{l.items_synced ?? 0}</td>
-                  <td className="p-3 text-right text-foreground">{l.items_failed ?? 0}</td>
-                  <td className="p-3 text-muted-foreground text-xs max-w-md truncate">{l.message || "—"}</td>
-                </tr>
+                <>
+                  <tr key={l.id} className={`border-b border-border/50 ${rowClass(l.status)}`}>
+                    <td className="p-3 text-foreground text-xs whitespace-nowrap">{new Date(l.started_at).toLocaleString("es-CO")}</td>
+                    <td className="p-3 text-foreground">{l.sync_type}</td>
+                    <td className="p-3"><div className="flex items-center gap-2 whitespace-nowrap">{statusIcon(l.status)}<span>{statusLabel(l.status)}</span></div></td>
+                    <td className="p-3 text-right text-foreground">{l.items_synced ?? 0}</td>
+                    <td className="p-3 text-right text-foreground">{l.items_failed ?? 0}</td>
+                    <td className="p-3 text-right text-foreground whitespace-nowrap">{formatDuration(l.duration_ms)}</td>
+                    <td className="p-3 text-muted-foreground text-xs max-w-lg">
+                      <div className="flex items-start gap-2">
+                        <span className="whitespace-normal">{l.message || "—"}</span>
+                        {l.error_detail && <button onClick={() => setExpandedLogId(expandedLogId === l.id ? null : l.id)} className="shrink-0 text-primary hover:text-primary/80" aria-label="Ver detalles"><ChevronDown className={`w-4 h-4 transition-transform ${expandedLogId === l.id ? "rotate-180" : ""}`} /></button>}
+                      </div>
+                    </td>
+                  </tr>
+                  {expandedLogId === l.id && l.error_detail && (
+                    <tr className="border-b border-border/50 bg-secondary/40">
+                      <td colSpan={7} className="p-4 text-xs text-muted-foreground whitespace-pre-wrap break-words">{l.error_detail}</td>
+                    </tr>
+                  )}
+                </>
               ))}
-              {logs.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Sin sincronizaciones aún.</td></tr>}
+              {logs.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Sin sincronizaciones aún.</td></tr>}
             </tbody>
           </table>
         </div>
