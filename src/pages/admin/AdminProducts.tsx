@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
-import { categories } from "@/data/products";
 
 interface DBProduct {
   id: string;
@@ -23,6 +22,8 @@ interface DBProduct {
   image_url: string | null;
   rating: number | null;
   featured: boolean | null;
+  product_type?: string;
+  product_categories?: { category_id: string }[];
 }
 
 interface SpecItem {
@@ -30,21 +31,29 @@ interface SpecItem {
   value: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 const emptyProduct = {
   name: "", description: "", full_description: "", price: 0, original_price: null as number | null,
   category: "", subcategory: "", brand: "", stock: 0, image_url: "", featured: false,
-  specifications: [] as SpecItem[],
+  product_type: "product", specifications: [] as SpecItem[],
 };
 
 const AdminProducts = () => {
   const [products, setProducts] = useState<DBProduct[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [editing, setEditing] = useState<DBProduct | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState(emptyProduct);
   const { toast } = useToast();
 
-  const load = () => supabase.from("products").select("*").order("created_at", { ascending: false }).then(({ data }) => setProducts((data as any) || []));
-  useEffect(() => { load(); }, []);
+  const load = () => supabase.from("products").select("*, product_categories(category_id)").order("created_at", { ascending: false }).then(({ data }) => setProducts((data as any) || []));
+  const loadCategories = () => supabase.from("categories" as any).select("id,name").eq("active", true).order("name").then(({ data }) => setCategories((data as any) || []));
+  useEffect(() => { load(); loadCategories(); }, []);
 
   const formatCOP = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n);
 
@@ -62,11 +71,18 @@ const AdminProducts = () => {
     if (editing) {
       const { error } = await supabase.from("products").update(payload as any).eq("id", editing.id);
       if (error) toast({ title: "Error al actualizar", description: error.message, variant: "destructive" });
-      else { toast({ title: "Producto actualizado" }); setEditing(null); load(); }
+      else {
+        await supabase.from("product_categories" as any).delete().eq("product_id", editing.id);
+        if (selectedCategoryIds.length > 0) await supabase.from("product_categories" as any).insert(selectedCategoryIds.map((category_id) => ({ product_id: editing.id, category_id })));
+        toast({ title: "Producto actualizado" }); setEditing(null); load();
+      }
     } else {
-      const { error } = await supabase.from("products").insert(payload as any);
+      const { data, error } = await supabase.from("products").insert(payload as any).select("id").single();
       if (error) toast({ title: "Error al crear", description: error.message, variant: "destructive" });
-      else { toast({ title: "Producto creado" }); setCreating(false); setForm(emptyProduct); load(); }
+      else {
+        if (selectedCategoryIds.length > 0) await supabase.from("product_categories" as any).insert(selectedCategoryIds.map((category_id) => ({ product_id: (data as any).id, category_id })));
+        toast({ title: "Producto creado" }); setCreating(false); setForm(emptyProduct); setSelectedCategoryIds([]); load();
+      }
     }
   };
 
@@ -84,11 +100,16 @@ const AdminProducts = () => {
       name: p.name, description: p.description || "", full_description: p.full_description || "",
       price: p.price, original_price: p.original_price, category: p.category,
       subcategory: p.subcategory || "", brand: p.brand || "", stock: p.stock,
-      image_url: p.image_url || "", featured: p.featured || false, specifications: specs,
+      image_url: p.image_url || "", featured: p.featured || false, product_type: p.product_type || "product", specifications: specs,
     });
+    setSelectedCategoryIds((p.product_categories || []).map((link) => link.category_id));
   };
 
-  const closeForm = () => { setEditing(null); setCreating(false); setForm(emptyProduct); };
+  const closeForm = () => { setEditing(null); setCreating(false); setForm(emptyProduct); setSelectedCategoryIds([]); };
+
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategoryIds((current) => current.includes(categoryId) ? current.filter((id) => id !== categoryId) : [...current, categoryId]);
+  };
 
   const addSpec = () => setForm({ ...form, specifications: [...form.specifications, { label: "", value: "" }] });
   const updateSpec = (i: number, field: "label" | "value", val: string) => {
@@ -105,7 +126,7 @@ const AdminProducts = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Gestión de Productos</h1>
-        <Button onClick={() => { setCreating(true); setEditing(null); setForm(emptyProduct); }}><Plus className="w-4 h-4 mr-2" />Nuevo producto</Button>
+        <Button onClick={() => { setCreating(true); setEditing(null); setForm(emptyProduct); setSelectedCategoryIds([]); }}><Plus className="w-4 h-4 mr-2" />Nuevo producto</Button>
       </div>
 
       {(creating || editing) && (
@@ -117,13 +138,19 @@ const AdminProducts = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><Label>Nombre *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={200} /></div>
             <div><Label>Marca</Label><Input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} maxLength={100} /></div>
-            <div><Label>Categoría *</Label>
+            <div><Label>Categoría principal</Label>
               <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
                 <option value="">Seleccionar</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
               </select>
             </div>
-            <div><Label>Subcategoría</Label><Input value={form.subcategory} onChange={(e) => setForm({ ...form, subcategory: e.target.value })} maxLength={100} /></div>
+            <div><Label>Tipo *</Label>
+              <select value={form.product_type} onChange={(e) => setForm({ ...form, product_type: e.target.value })} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
+                <option value="product">Producto</option>
+                <option value="service">Servicio</option>
+              </select>
+            </div>
+<div><Label>Subcategoría</Label><Input value={form.subcategory} onChange={(e) => setForm({ ...form, subcategory: e.target.value })} maxLength={100} /></div>
             <div><Label>Precio (COP) *</Label><Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} min={0} /></div>
             <div><Label>Precio original</Label><Input type="number" value={form.original_price ?? ""} onChange={(e) => setForm({ ...form, original_price: e.target.value ? Number(e.target.value) : null })} min={0} /></div>
             <div><Label>Stock</Label><Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} min={0} /></div>
@@ -137,6 +164,20 @@ const AdminProducts = () => {
               <input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} id="featured" />
               <Label htmlFor="featured">Producto destacado</Label>
             </div>
+          </div>
+
+
+          <div className="mt-6">
+            <Label className="text-base">Categorías del producto</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-3">
+              {categories.map((category) => (
+                <label key={category.id} className="flex items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-sm text-foreground">
+                  <input type="checkbox" checked={selectedCategoryIds.includes(category.id)} onChange={() => toggleCategory(category.id)} />
+                  {category.name}
+                </label>
+              ))}
+            </div>
+            {categories.length === 0 && <p className="text-xs text-muted-foreground mt-2">Crea categorías en el panel de categorías para asignarlas.</p>}
           </div>
 
           {/* Specifications */}
