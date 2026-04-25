@@ -60,9 +60,18 @@ function extractImage(item: any): string {
 }
 
 function extractCategory(item: any): string {
-  if (item.category?.name) return String(item.category.name).toLowerCase();
-  if (item.itemCategory?.name) return String(item.itemCategory.name).toLowerCase();
-  return "general";
+  if (item.category?.name) return String(item.category.name);
+  if (item.itemCategory?.name) return String(item.itemCategory.name);
+  return "General";
+}
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "") || "general";
 }
 
 Deno.serve(async (req) => {
@@ -95,9 +104,15 @@ Deno.serve(async (req) => {
       stock: extractStock(item),
       image_url: extractImage(item),
       category: extractCategory(item),
+      product_type: "product",
       last_synced_at: now,
       updated_at: now,
     }));
+
+    const categoryNames = [...new Set(items.map(extractCategory))];
+    await supabase.from("categories").upsert(categoryNames.map((name) => ({ name, slug: slugify(name), active: true })), { onConflict: "slug" });
+    const { data: categoryRows } = await supabase.from("categories").select("id,slug").in("slug", categoryNames.map(slugify));
+    const categoryIdBySlug = new Map((categoryRows || []).map((category: any) => [category.slug, category.id]));
 
     // Bulk upsert in batches by alegra_id (unique index exists)
     const BATCH = 200;
@@ -113,6 +128,13 @@ Deno.serve(async (req) => {
         synced += chunk.length;
       }
     }
+
+    const alegraIds = payloads.map((product) => product.alegra_id);
+    const { data: syncedProducts } = await supabase.from("products").select("id,alegra_id,category").in("alegra_id", alegraIds);
+    const links = ((syncedProducts || []) as any[])
+      .map((product) => ({ product_id: product.id, category_id: categoryIdBySlug.get(slugify(product.category)) }))
+      .filter((link) => Boolean(link.category_id));
+    if (links.length > 0) await supabase.from("product_categories").upsert(links, { onConflict: "product_id,category_id" });
 
     if (logId) {
       await supabase
