@@ -22,7 +22,7 @@ const Index = () => {
 
   useEffect(() => {
     const fetchFeatured = async () => {
-      const { data } = await supabase.from("products").select("*").eq("featured", true);
+      const { data } = await supabase.from("products").select("*").eq("featured", true).gt("stock", 0);
       setFeaturedProducts(data || []);
       setLoadingFeatured(false);
     };

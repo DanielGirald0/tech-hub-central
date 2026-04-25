@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 
@@ -223,7 +224,13 @@ const AdminProducts = () => {
                   <td className="p-3 text-foreground">{p.name}</td>
                   <td className="p-3 text-muted-foreground">{p.category}</td>
                   <td className="p-3 text-right text-foreground">{formatCOP(p.price)}</td>
-                  <td className="p-3 text-right">{p.stock > 0 ? <span className="text-green-400">{p.stock}</span> : <span className="text-red-400">0</span>}</td>
+                  <td className="p-3 text-right">
+                    {p.stock > 0 ? (
+                      <span className="text-foreground">{p.stock}</span>
+                    ) : (
+                      <Badge variant="destructive">Agotado</Badge>
+                    )}
+                  </td>
                   <td className="p-3 text-right">
                     <button onClick={() => openEdit(p)} className="p-1 hover:text-primary"><Pencil className="w-4 h-4" /></button>
                     <button onClick={() => handleDelete(p.id)} className="p-1 hover:text-destructive ml-2"><Trash2 className="w-4 h-4" /></button>
