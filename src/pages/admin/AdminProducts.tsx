@@ -58,8 +58,8 @@ const AdminProducts = () => {
   const formatCOP = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n);
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.category) {
-      toast({ title: "Nombre y categoría son obligatorios", variant: "destructive" });
+    if (!form.name.trim()) {
+      toast({ title: "El nombre es obligatorio", variant: "destructive" });
       return;
     }
     const payload = {

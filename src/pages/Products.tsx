@@ -37,6 +37,8 @@ const Products = () => {
         const matched = rows.find((cat) => cat.id === categoryParam || cat.slug === categoryParam);
         setSelectedCategory(matched?.id || "");
       }
+      const typeParam = searchParams.get("type") || "";
+      if (["product", "service"].includes(typeParam)) setSelectedType(typeParam);
     };
     loadCategories();
   }, [searchParams]);
