@@ -5,15 +5,11 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import logo from "@/assets/logo-tecnogz-official.png";
-import { categories } from "@/data/products";
 
 const productSubLinks = [
-  { label: "Todas las categorías", path: "/products" },
-  { label: "Computadores", path: "/products?category=computadores" },
-  { label: "Accesorios", path: "/products?category=accesorios-pc" },
-  { label: "Celulares", path: "/products?category=celulares" },
-  { label: "Videojuegos", path: "/products?category=consolas" },
-  { label: "Seguridad electrónica", path: "/products?category=camaras-seguridad" },
+  { label: "Todos los productos", path: "/products" },
+  { label: "Productos", path: "/products?type=product" },
+  { label: "Servicios", path: "/products?type=service" },
 ];
 
 const serviceSubLinks = [

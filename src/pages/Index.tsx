@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
-import { categories, services } from "@/data/products";
+import { services } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";
 
 const featuredServices = services.slice(0, 4);
@@ -80,28 +80,6 @@ const Index = () => {
                 <p className="font-display text-2xl md:text-3xl font-bold text-primary">{stat.value}</p>
                 <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Categories */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-8 text-center">
-            Comprar por categoría
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {categories.slice(0, 10).map((cat) => (
-              <Link
-                key={cat.id}
-                to={`/products?category=${cat.id}`}
-                className="bg-card border border-border rounded-xl p-4 text-center hover:border-primary/30 hover:shadow-glow transition-all duration-300 group"
-              >
-                <span className="text-2xl block mb-2">{cat.icon}</span>
-                <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{cat.name}</p>
-                <p className="text-xs text-muted-foreground mt-1">{cat.count} artículos</p>
-              </Link>
             ))}
           </div>
         </div>

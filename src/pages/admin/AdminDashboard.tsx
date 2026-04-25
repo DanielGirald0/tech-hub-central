@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Users, ShoppingCart, Wrench, BarChart3, RefreshCw } from "lucide-react";
+import { Package, Users, ShoppingCart, Wrench, BarChart3, RefreshCw, Tags } from "lucide-react";
 import logo from "@/assets/logo-tecnogz-official.png";
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({ products: 0, orders: 0, users: 0, services: 0 });
+  const [stats, setStats] = useState({ products: 0, orders: 0, users: 0, services: 0, categories: 0 });
 
   useEffect(() => {
     Promise.all([
@@ -13,13 +13,15 @@ const AdminDashboard = () => {
       supabase.from("orders").select("id", { count: "exact", head: true }),
       supabase.from("profiles").select("id", { count: "exact", head: true }),
       supabase.from("service_requests").select("id", { count: "exact", head: true }),
-    ]).then(([p, o, u, s]) => {
-      setStats({ products: p.count || 0, orders: o.count || 0, users: u.count || 0, services: s.count || 0 });
+      supabase.from("categories" as any).select("id", { count: "exact", head: true }),
+    ]).then(([p, o, u, s, c]) => {
+      setStats({ products: p.count || 0, orders: o.count || 0, users: u.count || 0, services: s.count || 0, categories: c.count || 0 });
     });
   }, []);
 
   const cards = [
     { label: "Productos", count: stats.products, icon: Package, href: "/admin/products", color: "text-blue-400" },
+    { label: "Categorías", count: stats.categories, icon: Tags, href: "/admin/categories", color: "text-primary" },
     { label: "Pedidos", count: stats.orders, icon: ShoppingCart, href: "/admin/orders", color: "text-green-400" },
     { label: "Usuarios", count: stats.users, icon: Users, href: "/admin/users", color: "text-purple-400" },
     { label: "Servicios", count: stats.services, icon: Wrench, href: "/admin/services", color: "text-orange-400" },
