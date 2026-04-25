@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
+const db = supabase as any;
+
 interface Category {
   id: string;
   name: string;
@@ -38,9 +40,9 @@ const AdminCategories = () => {
   );
 
   const loadCategories = async () => {
-    const { data, error } = await supabase.from("categories" as any).select("*").order("name");
+    const { data, error } = await db.from("categories").select("*").order("name");
     if (error) toast({ title: "Error al cargar categorías", description: error.message, variant: "destructive" });
-    else setCategories((data as Category[]) || []);
+    else setCategories((data as unknown as Category[]) || []);
   };
 
   useEffect(() => {
@@ -85,8 +87,8 @@ const AdminCategories = () => {
 
     const payload = { name, slug, description: form.description.trim(), active: form.active };
     const request = editing
-      ? supabase.from("categories" as any).update(payload).eq("id", editing.id)
-      : supabase.from("categories" as any).insert(payload);
+      ? db.from("categories").update(payload).eq("id", editing.id)
+      : db.from("categories").insert(payload);
 
     const { error } = await request;
     if (error) {
@@ -100,7 +102,7 @@ const AdminCategories = () => {
   };
 
   const handleDelete = async (category: Category) => {
-    const { error } = await supabase.from("categories" as any).delete().eq("id", category.id);
+    const { error } = await db.from("categories").delete().eq("id", category.id);
     if (error) toast({ title: "No se pudo eliminar", description: error.message, variant: "destructive" });
     else {
       toast({ title: "Categoría eliminada" });
