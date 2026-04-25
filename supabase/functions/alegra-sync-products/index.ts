@@ -40,11 +40,15 @@ async function fetchAllAlegraItems(): Promise<any[]> {
   while (true) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
-    const res = await fetch(`${ALEGRA_BASE}/items?start=${start}&limit=${limit}`, {
-      headers: { Authorization: auth, Accept: "application/json" },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
+    let res: Response;
+    try {
+      res = await fetch(`${ALEGRA_BASE}/items?start=${start}&limit=${limit}`, {
+        headers: { Authorization: auth, Accept: "application/json" },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     if (!res.ok) {
       const txt = await res.text();
       throw new Error(`Alegra API ${res.status}: ${txt}`);
