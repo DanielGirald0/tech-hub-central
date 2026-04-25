@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { RefreshCw, CheckCircle2, AlertCircle, Clock, ChevronDown } from "lucide-react";
 
 interface SyncLog {
   id: string;
@@ -11,13 +11,33 @@ interface SyncLog {
   message: string | null;
   items_synced: number | null;
   items_failed: number | null;
+  items_processed?: number | null;
+  duration_ms?: number | null;
+  error_detail?: string | null;
   started_at: string;
   finished_at: string | null;
 }
 
+const statusLabel = (status: string) => {
+  const normalized = status.toLowerCase();
+  if (["success", "completed", "complete"].includes(normalized)) return "Completado";
+  if (normalized === "partial") return "Parcial";
+  if (normalized === "running") return "En proceso";
+  if (normalized === "error") return "Error";
+  return status;
+};
+
+const formatDuration = (ms?: number | null) => {
+  if (!ms) return "—";
+  if (ms < 1000) return `${ms} ms`;
+  const seconds = Math.round(ms / 1000);
+  return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${seconds % 60} s`;
+};
+
 const AdminAlegra = () => {
   const [logs, setLogs] = useState<SyncLog[]>([]);
   const [syncing, setSyncing] = useState(false);
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const loadLogs = async () => {
@@ -37,7 +57,7 @@ const AdminAlegra = () => {
       const { data, error } = await supabase.functions.invoke("alegra-sync-products");
       if (error) throw error;
       if ((data as any)?.success) {
-        toast({ title: "Sincronización completa", description: `${(data as any).synced} productos sincronizados.` });
+        toast({ title: "Sincronización completada correctamente", description: `${(data as any).synced} productos sincronizados.` });
       } else {
         toast({ title: "Error en sincronización", description: (data as any)?.error || "Error desconocido", variant: "destructive" });
       }
@@ -50,11 +70,19 @@ const AdminAlegra = () => {
   };
 
   const lastSync = logs[0];
+  const lastSuccessfulSync = logs.find((log) => ["success", "completed", "complete"].includes(log.status.toLowerCase()));
+  const lastError = logs.find((log) => log.status === "error" || log.status === "partial");
   const statusIcon = (s: string) => {
-    if (s === "success") return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+    if (["success", "completed", "complete"].includes(s)) return <CheckCircle2 className="w-4 h-4 text-success" />;
     if (s === "error") return <AlertCircle className="w-4 h-4 text-destructive" />;
-    if (s === "running") return <Clock className="w-4 h-4 text-blue-500 animate-pulse" />;
-    return <AlertCircle className="w-4 h-4 text-orange-500" />;
+    if (s === "running") return <Clock className="w-4 h-4 text-primary animate-pulse" />;
+    return <AlertCircle className="w-4 h-4 text-warning" />;
+  };
+  const rowClass = (s: string) => {
+    if (["success", "completed", "complete"].includes(s)) return "bg-success/5";
+    if (s === "error") return "bg-destructive/10";
+    if (s === "partial") return "bg-warning/10";
+    return "";
   };
 
   return (
