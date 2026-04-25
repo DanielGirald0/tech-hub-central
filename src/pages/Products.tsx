@@ -1,131 +1,184 @@
-import { useState, useMemo, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Filter, Loader2 } from "lucide-react";
+import { Filter, Loader2, Search, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
-import { products as staticProducts, categories } from "@/data/products";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+const MAX_PRICE = 20000000;
 
 const Products = () => {
   const [searchParams] = useSearchParams();
-  const initialCategory = searchParams.get("category") || "";
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
-  const [sortBy, setSortBy] = useState("featured");
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [dbProducts, setDbProducts] = useState<any[] | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, MAX_PRICE]);
 
-  // Sync category from URL
   useEffect(() => {
-    setSelectedCategory(searchParams.get("category") || "");
+    const loadCategories = async () => {
+      const { data } = await supabase.from("categories" as any).select("id,name,slug").eq("active", true).order("name");
+      const rows = (data as Category[]) || [];
+      setCategories(rows);
+      const categoryParam = searchParams.get("category") || "";
+      if (categoryParam) {
+        const matched = rows.find((cat) => cat.id === categoryParam || cat.slug === categoryParam);
+        setSelectedCategory(matched?.id || "");
+      }
+    };
+    loadCategories();
   }, [searchParams]);
 
-  // Fetch from database
   useEffect(() => {
-    const fetchProducts = async () => {
+    const timer = window.setTimeout(() => setDebouncedSearch(searchTerm.trim()), 250);
+    return () => window.clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    const loadProducts = async () => {
       setLoading(true);
-      const { data, error } = await supabase.from("products").select("*");
-      if (!error && data && data.length > 0) {
-        setDbProducts(data);
+      let productIds: string[] | null = null;
+
+      if (selectedCategory) {
+        const { data: links, error: linksError } = await supabase
+          .from("product_categories" as any)
+          .select("product_id")
+          .eq("category_id", selectedCategory);
+
+        if (linksError) {
+          setProducts([]);
+          setLoading(false);
+          return;
+        }
+
+        productIds = ((links as { product_id: string }[]) || []).map((link) => link.product_id);
+        if (productIds.length === 0) {
+          setProducts([]);
+          setLoading(false);
+          return;
+        }
       }
+
+      let query = supabase
+        .from("products")
+        .select("*, product_categories(category_id, categories(id, name, slug))")
+        .gte("price", priceRange[0])
+        .lte("price", priceRange[1])
+        .order("name", { ascending: true })
+        .limit(120);
+
+      if (productIds) query = query.in("id", productIds);
+      if (selectedType) query = query.eq("product_type" as any, selectedType);
+      if (debouncedSearch) {
+        const term = debouncedSearch.replace(/[%_]/g, "");
+        query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%,full_description.ilike.%${term}%,sku.ilike.%${term}%`);
+      }
+
+      const { data, error } = await query;
+      setProducts(error ? [] : data || []);
       setLoading(false);
     };
-    fetchProducts();
-  }, []);
 
-  const allProducts = dbProducts && dbProducts.length > 0 ? dbProducts : staticProducts;
+    loadProducts();
+  }, [selectedCategory, selectedType, priceRange, debouncedSearch]);
 
-  const filtered = useMemo(() => {
-    let result = [...allProducts];
-    if (selectedCategory) result = result.filter((p: any) => p.category === selectedCategory);
-    if (sortBy === "price-low") result.sort((a: any, b: any) => a.price - b.price);
-    if (sortBy === "price-high") result.sort((a: any, b: any) => b.price - a.price);
-    if (sortBy === "rating") result.sort((a: any, b: any) => (b.rating ?? 0) - (a.rating ?? 0));
-    return result;
-  }, [allProducts, selectedCategory, sortBy]);
+  const activeFilters = useMemo(
+    () => Boolean(selectedCategory || selectedType || searchTerm || priceRange[0] > 0 || priceRange[1] < MAX_PRICE),
+    [selectedCategory, selectedType, searchTerm, priceRange],
+  );
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setSelectedCategory("");
+    setSelectedType("");
+    setPriceRange([0, MAX_PRICE]);
+  };
+
+  const formatCOP = (value: number) =>
+    new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
+
+  const Filters = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="font-display font-semibold text-foreground text-sm mb-3 uppercase tracking-wider">Categoría</h3>
+        <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
+          <option value="">Todas</option>
+          {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+        </select>
+      </div>
+      <div>
+        <h3 className="font-display font-semibold text-foreground text-sm mb-3 uppercase tracking-wider">Tipo</h3>
+        <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
+          <option value="">Todos</option>
+          <option value="product">Producto</option>
+          <option value="service">Servicio</option>
+        </select>
+      </div>
+      <div>
+        <h3 className="font-display font-semibold text-foreground text-sm mb-3 uppercase tracking-wider">Precio</h3>
+        <Slider value={priceRange} min={0} max={MAX_PRICE} step={50000} onValueChange={(value) => setPriceRange(value as [number, number])} />
+        <div className="flex items-center justify-between gap-3 mt-3 text-xs text-muted-foreground">
+          <span>{formatCOP(priceRange[0])}</span>
+          <span>{formatCOP(priceRange[1])}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mt-3">
+          <Input type="number" min={0} value={priceRange[0]} onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])} />
+          <Input type="number" min={0} value={priceRange[1]} onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])} />
+        </div>
+      </div>
+      {activeFilters && (
+        <Button variant="outline" size="sm" onClick={resetFilters} className="w-full border-border text-foreground">
+          <X className="w-4 h-4 mr-2" />Limpiar filtros
+        </Button>
+      )}
+    </div>
+  );
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="font-display text-3xl font-bold text-foreground mb-2">Productos</h1>
-      <p className="text-muted-foreground mb-8">Explora nuestro catálogo completo de productos tecnológicos</p>
+      <h1 className="font-display text-3xl font-bold text-foreground mb-2 uppercase tracking-wider">Productos</h1>
+      <p className="text-muted-foreground mb-6">Explora nuestro catálogo sincronizado y encuentra tecnología en segundos.</p>
+
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar por nombre, SKU o descripción" className="pl-10 h-11" />
+      </div>
 
       <div className="flex gap-6">
-        <aside className="hidden lg:block w-60 shrink-0">
-          <div className="sticky top-24 space-y-6">
-            <div>
-              <h3 className="font-display font-semibold text-foreground text-sm mb-3">Categoría</h3>
-              <div className="space-y-1">
-                <button onClick={() => setSelectedCategory("")} className={`block w-full text-left text-sm px-3 py-1.5 rounded-md transition-colors ${!selectedCategory ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                  Todos los productos
-                </button>
-                {categories.map((cat) => (
-                  <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={`block w-full text-left text-sm px-3 py-1.5 rounded-md transition-colors ${selectedCategory === cat.id ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground"}`}>
-                    {cat.icon} {cat.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h3 className="font-display font-semibold text-foreground text-sm mb-3">Ordenar por</h3>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
-                <option value="featured">Destacados</option>
-                <option value="price-low">Precio: Menor a mayor</option>
-                <option value="price-high">Precio: Mayor a menor</option>
-                <option value="rating">Mejor valorados</option>
-              </select>
-            </div>
-          </div>
+        <aside className="hidden lg:block w-64 shrink-0">
+          <div className="sticky top-24 bg-card border border-border rounded-xl p-5"><Filters /></div>
         </aside>
 
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-4 lg:hidden">
-            <Button variant="outline" size="sm" onClick={() => setFiltersOpen(!filtersOpen)} className="border-border text-foreground">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-4 gap-3">
+            <Button variant="outline" size="sm" onClick={() => setFiltersOpen(!filtersOpen)} className="border-border text-foreground lg:hidden">
               <Filter className="w-4 h-4 mr-2" /> Filtros
             </Button>
-            <span className="text-sm text-muted-foreground">{filtered.length} productos</span>
+            <span className="text-sm text-muted-foreground ml-auto">{products.length} productos encontrados</span>
           </div>
 
-          {filtersOpen && (
-            <div className="lg:hidden mb-6 bg-card border border-border rounded-xl p-4 space-y-4">
-              <div>
-                <h3 className="font-display font-semibold text-foreground text-sm mb-2">Categoría</h3>
-                <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
-                  <option value="">Todos los productos</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <h3 className="font-display font-semibold text-foreground text-sm mb-2">Ordenar por</h3>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
-                  <option value="featured">Destacados</option>
-                  <option value="price-low">Precio: Menor a mayor</option>
-                  <option value="price-high">Precio: Mayor a menor</option>
-                  <option value="rating">Mejor valorados</option>
-                </select>
-              </div>
-            </div>
-          )}
-
-          <div className="hidden lg:flex items-center justify-between mb-4">
-            <span className="text-sm text-muted-foreground">{filtered.length} productos encontrados</span>
-          </div>
+          {filtersOpen && <div className="lg:hidden mb-6 bg-card border border-border rounded-xl p-4"><Filters /></div>}
 
           {loading ? (
-            <div className="flex justify-center py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+          ) : products.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              {products.map((product) => <ProductCard key={product.id} product={product} />)}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              {filtered.map((product: any) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
-
-          {!loading && filtered.length === 0 && (
-            <div className="text-center py-16">
+            <div className="text-center py-16 bg-card border border-border rounded-xl">
               <p className="text-muted-foreground">No se encontraron productos con esos criterios.</p>
             </div>
           )}
