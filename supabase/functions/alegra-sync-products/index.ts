@@ -18,7 +18,7 @@ async function fetchAllAlegraItems(): Promise<any[]> {
   const auth = alegraAuth();
   const all: any[] = [];
   let start = 0;
-  const limit = 100;
+  const limit = 30;
   while (true) {
     const res = await fetch(`${ALEGRA_BASE}/items?start=${start}&limit=${limit}`, {
       headers: { Authorization: auth, Accept: "application/json" },
