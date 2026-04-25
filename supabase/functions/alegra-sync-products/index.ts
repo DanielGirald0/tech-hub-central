@@ -7,6 +7,24 @@ const corsHeaders = {
 
 const ALEGRA_BASE = "https://api.alegra.com/api/v1";
 
+function translateError(error: unknown): { message: string; detail: string } {
+  const detail = error instanceof Error ? error.message : String(error);
+  if (/idle_timeout|timeout|tiempo|150s/i.test(detail)) {
+    return { message: "Error: tiempo de espera excedido al conectar con Alegra.", detail };
+  }
+  if (/Alegra API 400|code\":903|limite|l[ií]mite|par[aá]metro/i.test(detail)) {
+    return { message: "Error en la sincronización: límite de consulta excedido o parámetro inválido.", detail };
+  }
+  if (/credentials|credenciales|configured/i.test(detail)) {
+    return { message: "No se sincronizaron productos. Verifica configuración o credenciales.", detail };
+  }
+  return { message: `Error en la sincronización: ${detail}`, detail };
+}
+
+function elapsedMs(startedAt: number): number {
+  return Date.now() - startedAt;
+}
+
 function alegraAuth() {
   const email = Deno.env.get("ALEGRA_EMAIL");
   const token = Deno.env.get("ALEGRA_API_TOKEN");
@@ -20,9 +38,17 @@ async function fetchAllAlegraItems(): Promise<any[]> {
   let start = 0;
   const limit = 30;
   while (true) {
-    const res = await fetch(`${ALEGRA_BASE}/items?start=${start}&limit=${limit}`, {
-      headers: { Authorization: auth, Accept: "application/json" },
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    let res: Response;
+    try {
+      res = await fetch(`${ALEGRA_BASE}/items?start=${start}&limit=${limit}`, {
+        headers: { Authorization: auth, Accept: "application/json" },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     if (!res.ok) {
       const txt = await res.text();
       throw new Error(`Alegra API ${res.status}: ${txt}`);
@@ -77,9 +103,22 @@ function slugify(value: string): string {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const startedMs = Date.now();
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
+
+  await supabase
+    .from("alegra_sync_log")
+    .update({
+      status: "error",
+      message: "Error: tiempo de espera excedido al conectar con Alegra.",
+      error_detail: "La sincronización anterior quedó en proceso y fue marcada como fallida para permitir reintentos.",
+      finished_at: new Date().toISOString(),
+    })
+    .eq("status", "running")
+    .lt("started_at", new Date(Date.now() - 5 * 60 * 1000).toISOString());
 
   const { data: logRow } = await supabase
     .from("alegra_sync_log")
@@ -93,6 +132,7 @@ Deno.serve(async (req) => {
 
   try {
     const items = await fetchAllAlegraItems();
+    if (items.length === 0) throw new Error("No se sincronizaron productos. Verifica configuración o credenciales.");
 
     const now = new Date().toISOString();
     const payloads = items.map((item) => ({
@@ -117,6 +157,7 @@ Deno.serve(async (req) => {
     // Bulk upsert in batches by alegra_id (unique index exists)
     const BATCH = 200;
     for (let i = 0; i < payloads.length; i += BATCH) {
+      if (elapsedMs(startedMs) > 130000) throw new Error("timeout: tiempo de espera excedido al conectar con Alegra.");
       const chunk = payloads.slice(i, i + BATCH);
       const { error } = await supabase
         .from("products")
@@ -137,14 +178,21 @@ Deno.serve(async (req) => {
     if (links.length > 0) await supabase.from("product_categories").upsert(links, { onConflict: "product_id,category_id" });
 
     if (logId) {
+      const duration = elapsedMs(startedMs);
       await supabase
         .from("alegra_sync_log")
         .update({
           status: failed === 0 ? "success" : "partial",
           items_synced: synced,
           items_failed: failed,
+          items_processed: items.length,
+          duration_ms: duration,
           finished_at: new Date().toISOString(),
-          message: `Synced ${synced} products${failed ? `, ${failed} failed` : ""}`,
+          message: failed === 0
+            ? `Sincronización completada correctamente. ${synced} productos sincronizados en ${Math.round(duration / 1000)}s.`
+            : `Sincronización parcial. ${synced} productos sincronizados, ${failed} productos fallidos. Razón principal: error al guardar lotes de productos.`,
+          error_detail: failed ? "Uno o más lotes no pudieron guardarse en la base de datos." : null,
+          technical_details: { total: items.length, synced, failed, duration_ms: duration },
         })
         .eq("id", logId);
     }
@@ -155,15 +203,21 @@ Deno.serve(async (req) => {
     );
   } catch (e: any) {
     console.error("Sync error", e);
+    const translated = translateError(e);
+    const duration = elapsedMs(startedMs);
     if (logId) {
       await supabase
         .from("alegra_sync_log")
         .update({
           status: "error",
-          message: e.message || String(e),
+          message: translated.message,
+          error_detail: translated.detail,
           finished_at: new Date().toISOString(),
           items_synced: synced,
           items_failed: failed,
+          items_processed: synced + failed,
+          duration_ms: duration,
+          technical_details: { error: translated.detail, synced, failed, duration_ms: duration },
         })
         .eq("id", logId);
     }
