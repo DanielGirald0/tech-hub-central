@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 
+const db = supabase as any;
+
 interface Category {
   id: string;
   name: string;
@@ -29,8 +31,8 @@ const Products = () => {
 
   useEffect(() => {
     const loadCategories = async () => {
-      const { data } = await supabase.from("categories" as any).select("id,name,slug").eq("active", true).order("name");
-      const rows = (data as Category[]) || [];
+      const { data } = await db.from("categories").select("id,name,slug").eq("active", true).order("name");
+      const rows = (data as unknown as Category[]) || [];
       setCategories(rows);
       const categoryParam = searchParams.get("category") || "";
       if (categoryParam) {
@@ -65,7 +67,7 @@ const Products = () => {
           return;
         }
 
-        productIds = ((links as { product_id: string }[]) || []).map((link) => link.product_id);
+        productIds = ((links as unknown as { product_id: string }[]) || []).map((link) => link.product_id);
         if (productIds.length === 0) {
           setProducts([]);
           setLoading(false);
@@ -73,7 +75,7 @@ const Products = () => {
         }
       }
 
-      let query = supabase
+      let query = db
         .from("products")
         .select("*, product_categories(category_id, categories(id, name, slug))")
         .gte("price", priceRange[0])
@@ -82,7 +84,7 @@ const Products = () => {
         .limit(120);
 
       if (productIds) query = query.in("id", productIds);
-      if (selectedType) query = query.eq("product_type" as any, selectedType);
+      if (selectedType) query = query.eq("product_type", selectedType);
       if (debouncedSearch) {
         const term = debouncedSearch.replace(/[%_]/g, "");
         query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%,full_description.ilike.%${term}%,sku.ilike.%${term}%`);
