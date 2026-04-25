@@ -17,36 +17,48 @@ export type Database = {
       alegra_sync_log: {
         Row: {
           created_at: string
+          duration_ms: number | null
+          error_detail: string | null
           finished_at: string | null
           id: string
           items_failed: number | null
+          items_processed: number | null
           items_synced: number | null
           message: string | null
           started_at: string
           status: string
           sync_type: string
+          technical_details: Json | null
         }
         Insert: {
           created_at?: string
+          duration_ms?: number | null
+          error_detail?: string | null
           finished_at?: string | null
           id?: string
           items_failed?: number | null
+          items_processed?: number | null
           items_synced?: number | null
           message?: string | null
           started_at?: string
           status?: string
           sync_type: string
+          technical_details?: Json | null
         }
         Update: {
           created_at?: string
+          duration_ms?: number | null
+          error_detail?: string | null
           finished_at?: string | null
           id?: string
           items_failed?: number | null
+          items_processed?: number | null
           items_synced?: number | null
           message?: string | null
           started_at?: string
           status?: string
           sync_type?: string
+          technical_details?: Json | null
         }
         Relationships: []
       }
