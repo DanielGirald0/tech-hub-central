@@ -38,9 +38,13 @@ async function fetchAllAlegraItems(): Promise<any[]> {
   let start = 0;
   const limit = 30;
   while (true) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
     const res = await fetch(`${ALEGRA_BASE}/items?start=${start}&limit=${limit}`, {
       headers: { Authorization: auth, Accept: "application/json" },
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
     if (!res.ok) {
       const txt = await res.text();
       throw new Error(`Alegra API ${res.status}: ${txt}`);
@@ -101,6 +105,17 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceKey);
 
+  await supabase
+    .from("alegra_sync_log")
+    .update({
+      status: "error",
+      message: "Error: tiempo de espera excedido al conectar con Alegra.",
+      error_detail: "La sincronización anterior quedó en proceso y fue marcada como fallida para permitir reintentos.",
+      finished_at: new Date().toISOString(),
+    })
+    .eq("status", "running")
+    .lt("started_at", new Date(Date.now() - 5 * 60 * 1000).toISOString());
+
   const { data: logRow } = await supabase
     .from("alegra_sync_log")
     .insert({ sync_type: "products", status: "running" })
@@ -113,6 +128,7 @@ Deno.serve(async (req) => {
 
   try {
     const items = await fetchAllAlegraItems();
+    if (items.length === 0) throw new Error("No se sincronizaron productos. Verifica configuración o credenciales.");
 
     const now = new Date().toISOString();
     const payloads = items.map((item) => ({
@@ -137,6 +153,7 @@ Deno.serve(async (req) => {
     // Bulk upsert in batches by alegra_id (unique index exists)
     const BATCH = 200;
     for (let i = 0; i < payloads.length; i += BATCH) {
+      if (elapsedMs(startedMs) > 130000) throw new Error("timeout: tiempo de espera excedido al conectar con Alegra.");
       const chunk = payloads.slice(i, i + BATCH);
       const { error } = await supabase
         .from("products")
