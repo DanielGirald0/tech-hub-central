@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -73,15 +73,17 @@ const AdminAlegra = () => {
   const lastSuccessfulSync = logs.find((log) => ["success", "completed", "complete"].includes(log.status.toLowerCase()));
   const lastError = logs.find((log) => log.status === "error" || log.status === "partial");
   const statusIcon = (s: string) => {
-    if (["success", "completed", "complete"].includes(s)) return <CheckCircle2 className="w-4 h-4 text-success" />;
-    if (s === "error") return <AlertCircle className="w-4 h-4 text-destructive" />;
-    if (s === "running") return <Clock className="w-4 h-4 text-primary animate-pulse" />;
+    const normalized = s.toLowerCase();
+    if (["success", "completed", "complete"].includes(normalized)) return <CheckCircle2 className="w-4 h-4 text-success" />;
+    if (normalized === "error") return <AlertCircle className="w-4 h-4 text-destructive" />;
+    if (normalized === "running") return <Clock className="w-4 h-4 text-primary animate-pulse" />;
     return <AlertCircle className="w-4 h-4 text-warning" />;
   };
   const rowClass = (s: string) => {
-    if (["success", "completed", "complete"].includes(s)) return "bg-success/5";
-    if (s === "error") return "bg-destructive/10";
-    if (s === "partial") return "bg-warning/10";
+    const normalized = s.toLowerCase();
+    if (["success", "completed", "complete"].includes(normalized)) return "bg-success/5";
+    if (normalized === "error") return "bg-destructive/10";
+    if (normalized === "partial") return "bg-warning/10";
     return "";
   };
 
@@ -146,8 +148,8 @@ const AdminAlegra = () => {
             </tr></thead>
             <tbody>
               {logs.map((l) => (
-                <>
-                  <tr key={l.id} className={`border-b border-border/50 ${rowClass(l.status)}`}>
+                <Fragment key={l.id}>
+                  <tr className={`border-b border-border/50 ${rowClass(l.status)}`}>
                     <td className="p-3 text-foreground text-xs whitespace-nowrap">{new Date(l.started_at).toLocaleString("es-CO")}</td>
                     <td className="p-3 text-foreground">{l.sync_type}</td>
                     <td className="p-3"><div className="flex items-center gap-2 whitespace-nowrap">{statusIcon(l.status)}<span>{statusLabel(l.status)}</span></div></td>
@@ -166,7 +168,7 @@ const AdminAlegra = () => {
                       <td colSpan={7} className="p-4 text-xs text-muted-foreground whitespace-pre-wrap break-words">{l.error_detail}</td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
               {logs.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Sin sincronizaciones aún.</td></tr>}
             </tbody>
