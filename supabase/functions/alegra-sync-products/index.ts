@@ -189,7 +189,9 @@ Deno.serve(async (req) => {
       }];
     });
 
-    const categoryNames = [...new Set(items.map(extractCategory))];
+    if (payloads.length === 0) throw new Error("No se importaron productos porque Alegra no envió referencias válidas.");
+
+    const categoryNames = [...new Set(payloads.map((product) => product.category))];
     await supabase.from("categories").upsert(categoryNames.map((name) => ({ name, slug: slugify(name), active: true })), { onConflict: "slug" });
     const { data: categoryRows } = await supabase.from("categories").select("id,slug").in("slug", categoryNames.map(slugify));
     const categoryIdBySlug = new Map((categoryRows || []).map((category: any) => [category.slug, category.id]));
@@ -232,7 +234,7 @@ Deno.serve(async (req) => {
             ? `Sincronización completada correctamente. ${synced} productos sincronizados en ${Math.round(duration / 1000)}s.`
             : `Sincronización parcial. ${synced} productos sincronizados, ${failed} productos fallidos. Razón principal: error al guardar lotes de productos.`,
           error_detail: failed ? "Uno o más lotes no pudieron guardarse en la base de datos." : null,
-          technical_details: { total: items.length, synced, failed, duration_ms: duration },
+          technical_details: { total: items.length, synced, failed, skipped_without_reference: failed, duration_ms: duration },
         })
         .eq("id", logId);
     }
