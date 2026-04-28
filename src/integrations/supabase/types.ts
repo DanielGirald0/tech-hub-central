@@ -212,11 +212,13 @@ export type Database = {
       products: {
         Row: {
           alegra_id: string | null
+          base_price: number | null
           brand: string | null
           category: string
           created_at: string
           description: string | null
           featured: boolean | null
+          final_price: number | null
           full_description: string | null
           id: string
           image_url: string | null
@@ -226,19 +228,23 @@ export type Database = {
           price: number
           product_type: string
           rating: number | null
+          reference: string | null
           sku: string | null
           specifications: Json | null
           stock: number
           subcategory: string | null
+          tax_percentage: number
           updated_at: string
         }
         Insert: {
           alegra_id?: string | null
+          base_price?: number | null
           brand?: string | null
           category?: string
           created_at?: string
           description?: string | null
           featured?: boolean | null
+          final_price?: number | null
           full_description?: string | null
           id?: string
           image_url?: string | null
@@ -248,19 +254,23 @@ export type Database = {
           price?: number
           product_type?: string
           rating?: number | null
+          reference?: string | null
           sku?: string | null
           specifications?: Json | null
           stock?: number
           subcategory?: string | null
+          tax_percentage?: number
           updated_at?: string
         }
         Update: {
           alegra_id?: string | null
+          base_price?: number | null
           brand?: string | null
           category?: string
           created_at?: string
           description?: string | null
           featured?: boolean | null
+          final_price?: number | null
           full_description?: string | null
           id?: string
           image_url?: string | null
@@ -270,10 +280,12 @@ export type Database = {
           price?: number
           product_type?: string
           rating?: number | null
+          reference?: string | null
           sku?: string | null
           specifications?: Json | null
           stock?: number
           subcategory?: string | null
+          tax_percentage?: number
           updated_at?: string
         }
         Relationships: []
