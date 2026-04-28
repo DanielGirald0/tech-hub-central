@@ -19,6 +19,11 @@ interface DBProduct {
   category: string;
   subcategory: string | null;
   brand: string | null;
+  reference?: string | null;
+  sku?: string | null;
+  base_price?: number | null;
+  final_price?: number | null;
+  tax_percentage?: number | null;
   stock: number;
   image_url: string | null;
   rating: number | null;
@@ -39,7 +44,7 @@ interface Category {
 
 const emptyProduct = {
   name: "", description: "", full_description: "", price: 0, original_price: null as number | null,
-  category: "", subcategory: "", brand: "", stock: 0, image_url: "", featured: false,
+  category: "", subcategory: "", brand: "", reference: "", stock: 0, image_url: "", featured: false,
   product_type: "product", specifications: [] as SpecItem[],
 };
 
@@ -66,7 +71,8 @@ const AdminProducts = () => {
     const payload = {
       name: form.name, description: form.description, full_description: form.full_description,
       specifications: form.specifications, price: form.price, original_price: form.original_price,
-      category: form.category, subcategory: form.subcategory, brand: form.brand,
+      base_price: form.price, final_price: form.price, reference: form.reference, sku: form.reference,
+      category: form.category, subcategory: form.subcategory, brand: form.brand, product_type: form.product_type,
       stock: form.stock, image_url: form.image_url, featured: form.featured,
     };
     if (editing) {
@@ -99,8 +105,8 @@ const AdminProducts = () => {
     const specs = Array.isArray(p.specifications) ? p.specifications as SpecItem[] : [];
     setForm({
       name: p.name, description: p.description || "", full_description: p.full_description || "",
-      price: p.price, original_price: p.original_price, category: p.category,
-      subcategory: p.subcategory || "", brand: p.brand || "", stock: p.stock,
+      price: p.final_price ?? p.price, original_price: p.original_price, category: p.category,
+      subcategory: p.subcategory || "", brand: p.brand || "", reference: p.reference || p.sku || "", stock: p.stock,
       image_url: p.image_url || "", featured: p.featured || false, product_type: p.product_type || "product", specifications: specs,
     });
     setSelectedCategoryIds((p.product_categories || []).map((link) => link.category_id));
@@ -139,6 +145,7 @@ const AdminProducts = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><Label>Nombre *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={200} /></div>
             <div><Label>Marca</Label><Input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} maxLength={100} /></div>
+            <div><Label>Referencia</Label><Input value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} maxLength={100} /></div>
             <div><Label>Categoría principal</Label>
               <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
                 <option value="">Seleccionar</option>
@@ -152,7 +159,7 @@ const AdminProducts = () => {
               </select>
             </div>
 <div><Label>Subcategoría</Label><Input value={form.subcategory} onChange={(e) => setForm({ ...form, subcategory: e.target.value })} maxLength={100} /></div>
-            <div><Label>Precio (COP) *</Label><Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} min={0} /></div>
+            <div><Label>Precio con IVA (COP) *</Label><Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} min={0} /></div>
             <div><Label>Precio original</Label><Input type="number" value={form.original_price ?? ""} onChange={(e) => setForm({ ...form, original_price: e.target.value ? Number(e.target.value) : null })} min={0} /></div>
             <div><Label>Stock</Label><Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} min={0} /></div>
             <div><Label>URL de imagen</Label><Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} maxLength={500} /></div>
@@ -212,6 +219,7 @@ const AdminProducts = () => {
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left p-3 text-muted-foreground font-medium">Producto</th>
+                <th className="text-left p-3 text-muted-foreground font-medium">Referencia</th>
                 <th className="text-left p-3 text-muted-foreground font-medium">Categoría</th>
                 <th className="text-right p-3 text-muted-foreground font-medium">Precio</th>
                 <th className="text-right p-3 text-muted-foreground font-medium">Stock</th>
@@ -222,8 +230,12 @@ const AdminProducts = () => {
               {products.map((p) => (
                 <tr key={p.id} className="border-b border-border/50 hover:bg-secondary/30">
                   <td className="p-3 text-foreground">{p.name}</td>
+                  <td className="p-3 text-muted-foreground">{p.reference || p.sku || "—"}</td>
                   <td className="p-3 text-muted-foreground">{p.category}</td>
-                  <td className="p-3 text-right text-foreground">{formatCOP(p.price)}</td>
+                  <td className="p-3 text-right text-foreground">
+                    <div>{formatCOP(p.final_price ?? p.price)}</div>
+                    <div className="text-xs text-muted-foreground">IVA incluido</div>
+                  </td>
                   <td className="p-3 text-right">
                     {p.stock > 0 ? (
                       <span className="text-foreground">{p.stock}</span>
@@ -237,7 +249,7 @@ const AdminProducts = () => {
                   </td>
                 </tr>
               ))}
-              {products.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No hay productos en la base de datos.</td></tr>}
+              {products.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No hay productos en la base de datos.</td></tr>}
             </tbody>
           </table>
         </div>

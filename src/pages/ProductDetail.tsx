@@ -56,7 +56,8 @@ const ProductDetail = () => {
   const image = product.image_url || "/placeholder.svg";
   const originalPrice = product.original_price;
   const inStock = product.stock > 0;
-  const discount = originalPrice ? Math.round(((originalPrice - product.price) / originalPrice) * 100) : 0;
+  const displayPrice = product.final_price ?? product.price;
+  const discount = originalPrice ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100) : 0;
   const specs: { label: string; value: string }[] = Array.isArray(product.specifications) ? product.specifications : [];
 
   return (
@@ -95,11 +96,12 @@ const ProductDetail = () => {
           </div>
 
           <div className="flex items-end gap-3 mb-6">
-            <span className="font-display font-bold text-3xl text-primary">{formatCOP(product.price)}</span>
-            {originalPrice && originalPrice > product.price && (
+            <span className="font-display font-bold text-3xl text-primary">{formatCOP(displayPrice)}</span>
+            {originalPrice && originalPrice > displayPrice && (
               <span className="text-lg text-muted-foreground line-through">{formatCOP(originalPrice)}</span>
             )}
           </div>
+          <p className="text-xs text-muted-foreground -mt-4 mb-6">Precio incluye IVA</p>
 
           <div className="flex items-center gap-2 mb-6">
             <Package className="w-4 h-4 text-muted-foreground" />
@@ -137,6 +139,12 @@ const ProductDetail = () => {
                   <p className="font-medium text-foreground">{product.brand}</p>
                 </div>
               )}
+              {(product.reference || product.sku) && (
+                <div className="bg-secondary rounded-lg px-4 py-2.5">
+                  <span className="text-muted-foreground">Referencia</span>
+                  <p className="font-medium text-foreground">{product.reference || product.sku}</p>
+                </div>
+              )}
               <div className="bg-secondary rounded-lg px-4 py-2.5">
                 <span className="text-muted-foreground">Stock</span>
                 <p className="font-medium text-foreground">{product.stock}</p>
@@ -153,7 +161,7 @@ const ProductDetail = () => {
           <Button
             size="lg"
             disabled={!inStock}
-            onClick={() => addItem({ id: product.id, name: product.name, price: product.price, image })}
+            onClick={() => addItem({ id: product.id, name: product.name, price: displayPrice, image })}
             className="w-full mt-auto bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <ShoppingCart className="w-5 h-5 mr-2" />

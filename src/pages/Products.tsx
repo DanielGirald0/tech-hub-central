@@ -79,8 +79,8 @@ const Products = () => {
         .from("products")
         .select("*, product_categories(category_id, categories(id, name, slug))")
         .gt("stock", 0)
-        .gte("price", priceRange[0])
-        .lte("price", priceRange[1])
+        .gte("final_price", priceRange[0])
+        .lte("final_price", priceRange[1])
         .order("name", { ascending: true })
         .limit(120);
 
@@ -88,7 +88,7 @@ const Products = () => {
       if (selectedType) query = query.eq("product_type", selectedType);
       if (debouncedSearch) {
         const term = debouncedSearch.replace(/[%_]/g, "");
-        query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%,full_description.ilike.%${term}%,sku.ilike.%${term}%`);
+        query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%,full_description.ilike.%${term}%,sku.ilike.%${term}%,reference.ilike.%${term}%`);
       }
 
       const { data, error } = await query;

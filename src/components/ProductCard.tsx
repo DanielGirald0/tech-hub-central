@@ -8,6 +8,7 @@ interface ProductCardProduct {
   name: string;
   category?: string;
   price: number;
+  final_price?: number | null;
   originalPrice?: number | null;
   original_price?: number | null;
   image?: string;
@@ -33,13 +34,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const inStock = product.inStock ?? (product.stock !== undefined ? product.stock > 0 : true);
   const rating = product.rating ?? 0;
   const brand = product.brand ?? "";
+  const displayPrice = product.final_price ?? product.price;
 
   const discount = originalPrice
-    ? Math.round(((originalPrice - product.price) / originalPrice) * 100)
+    ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
     : 0;
 
   const handleAdd = () => {
-    addItem({ id: product.id, name: product.name, price: product.price, image });
+    addItem({ id: product.id, name: product.name, price: displayPrice, image });
   };
 
   return (
@@ -69,8 +71,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
         </div>
         <div className="flex items-end justify-between">
           <div>
-            <span className="font-display font-bold text-lg text-primary">{formatCOP(product.price)}</span>
-            {originalPrice && originalPrice > product.price && (
+            <span className="font-display font-bold text-lg text-primary">{formatCOP(displayPrice)}</span>
+            {originalPrice && originalPrice > displayPrice && (
               <span className="text-xs text-muted-foreground line-through ml-2">{formatCOP(originalPrice)}</span>
             )}
           </div>
