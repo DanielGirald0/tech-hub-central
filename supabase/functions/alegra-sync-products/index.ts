@@ -72,6 +72,34 @@ function extractPrice(item: any): number {
   return Number(item.price ?? 0);
 }
 
+function extractReference(item: any): string {
+  return String(item.reference || item.code || item.sku || "").trim();
+}
+
+function extractTaxPercentage(item: any): number {
+  const sources = [item.tax, item.taxes, item.price?.[0]?.tax, item.price?.[0]?.taxes].flat().filter(Boolean);
+  const percentage = sources.reduce((sum: number, tax: any) => sum + Number(tax.percentage ?? tax.rate ?? tax.percent ?? 0), 0);
+  return Number.isFinite(percentage) ? percentage / 100 : 0;
+}
+
+function priceIncludesTax(item: any): boolean {
+  const priceRow = Array.isArray(item.price) ? item.price[0] : item.price;
+  return Boolean(item.priceIncludesTax || item.taxIncluded || item.includeTax || priceRow?.taxIncluded || priceRow?.includeTax);
+}
+
+function calculatePricing(item: any): { basePrice: number; taxPercentage: number; finalPrice: number } {
+  const rawPrice = extractPrice(item);
+  const taxPercentage = extractTaxPercentage(item);
+  const includesTax = priceIncludesTax(item);
+  const basePrice = includesTax && taxPercentage > 0 ? rawPrice / (1 + taxPercentage) : rawPrice;
+  const finalPrice = includesTax ? rawPrice : basePrice * (1 + taxPercentage);
+  return {
+    basePrice: Math.round(basePrice),
+    taxPercentage: Number((taxPercentage * 100).toFixed(2)),
+    finalPrice: Math.round(finalPrice),
+  };
+}
+
 function extractStock(item: any): number {
   if (item.inventory?.availableQuantity !== undefined) return Number(item.inventory.availableQuantity);
   if (item.inventory?.quantity !== undefined) return Number(item.inventory.quantity);
@@ -135,19 +163,31 @@ Deno.serve(async (req) => {
     if (items.length === 0) throw new Error("No se sincronizaron productos. Verifica configuración o credenciales.");
 
     const now = new Date().toISOString();
-    const payloads = items.map((item) => ({
-      alegra_id: String(item.id),
-      sku: item.reference || String(item.id),
-      name: item.name || "Sin nombre",
-      description: item.description || "",
-      price: extractPrice(item),
-      stock: extractStock(item),
-      image_url: extractImage(item),
-      category: extractCategory(item),
-      product_type: "product",
-      last_synced_at: now,
-      updated_at: now,
-    }));
+    const payloads = items.flatMap((item) => {
+      const reference = extractReference(item);
+      if (!reference) {
+        failed += 1;
+        return [];
+      }
+      const pricing = calculatePricing(item);
+      return [{
+        alegra_id: String(item.id),
+        sku: reference,
+        reference,
+        name: item.name || "Sin nombre",
+        description: item.description || "",
+        base_price: pricing.basePrice,
+        tax_percentage: pricing.taxPercentage,
+        final_price: pricing.finalPrice,
+        price: pricing.finalPrice,
+        stock: extractStock(item),
+        image_url: extractImage(item),
+        category: extractCategory(item),
+        product_type: "product",
+        last_synced_at: now,
+        updated_at: now,
+      }];
+    });
 
     const categoryNames = [...new Set(items.map(extractCategory))];
     await supabase.from("categories").upsert(categoryNames.map((name) => ({ name, slug: slugify(name), active: true })), { onConflict: "slug" });
