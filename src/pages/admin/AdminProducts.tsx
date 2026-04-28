@@ -44,7 +44,7 @@ interface Category {
 
 const emptyProduct = {
   name: "", description: "", full_description: "", price: 0, original_price: null as number | null,
-  category: "", subcategory: "", brand: "", stock: 0, image_url: "", featured: false,
+  category: "", subcategory: "", brand: "", reference: "", stock: 0, image_url: "", featured: false,
   product_type: "product", specifications: [] as SpecItem[],
 };
 
@@ -71,7 +71,8 @@ const AdminProducts = () => {
     const payload = {
       name: form.name, description: form.description, full_description: form.full_description,
       specifications: form.specifications, price: form.price, original_price: form.original_price,
-      category: form.category, subcategory: form.subcategory, brand: form.brand,
+      base_price: form.price, final_price: form.price, reference: form.reference, sku: form.reference,
+      category: form.category, subcategory: form.subcategory, brand: form.brand, product_type: form.product_type,
       stock: form.stock, image_url: form.image_url, featured: form.featured,
     };
     if (editing) {
@@ -104,8 +105,8 @@ const AdminProducts = () => {
     const specs = Array.isArray(p.specifications) ? p.specifications as SpecItem[] : [];
     setForm({
       name: p.name, description: p.description || "", full_description: p.full_description || "",
-      price: p.price, original_price: p.original_price, category: p.category,
-      subcategory: p.subcategory || "", brand: p.brand || "", stock: p.stock,
+      price: p.final_price ?? p.price, original_price: p.original_price, category: p.category,
+      subcategory: p.subcategory || "", brand: p.brand || "", reference: p.reference || p.sku || "", stock: p.stock,
       image_url: p.image_url || "", featured: p.featured || false, product_type: p.product_type || "product", specifications: specs,
     });
     setSelectedCategoryIds((p.product_categories || []).map((link) => link.category_id));
