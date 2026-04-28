@@ -19,6 +19,11 @@ interface DBProduct {
   category: string;
   subcategory: string | null;
   brand: string | null;
+  reference?: string | null;
+  sku?: string | null;
+  base_price?: number | null;
+  final_price?: number | null;
+  tax_percentage?: number | null;
   stock: number;
   image_url: string | null;
   rating: number | null;
@@ -212,6 +217,7 @@ const AdminProducts = () => {
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left p-3 text-muted-foreground font-medium">Producto</th>
+                <th className="text-left p-3 text-muted-foreground font-medium">Referencia</th>
                 <th className="text-left p-3 text-muted-foreground font-medium">Categoría</th>
                 <th className="text-right p-3 text-muted-foreground font-medium">Precio</th>
                 <th className="text-right p-3 text-muted-foreground font-medium">Stock</th>
@@ -222,8 +228,12 @@ const AdminProducts = () => {
               {products.map((p) => (
                 <tr key={p.id} className="border-b border-border/50 hover:bg-secondary/30">
                   <td className="p-3 text-foreground">{p.name}</td>
+                  <td className="p-3 text-muted-foreground">{p.reference || p.sku || "—"}</td>
                   <td className="p-3 text-muted-foreground">{p.category}</td>
-                  <td className="p-3 text-right text-foreground">{formatCOP(p.price)}</td>
+                  <td className="p-3 text-right text-foreground">
+                    <div>{formatCOP(p.final_price ?? p.price)}</div>
+                    <div className="text-xs text-muted-foreground">IVA incluido</div>
+                  </td>
                   <td className="p-3 text-right">
                     {p.stock > 0 ? (
                       <span className="text-foreground">{p.stock}</span>
@@ -237,7 +247,7 @@ const AdminProducts = () => {
                   </td>
                 </tr>
               ))}
-              {products.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No hay productos en la base de datos.</td></tr>}
+              {products.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No hay productos en la base de datos.</td></tr>}
             </tbody>
           </table>
         </div>
