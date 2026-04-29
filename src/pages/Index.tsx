@@ -35,10 +35,22 @@ const Index = () => {
         return;
       }
 
+      const { data: links } = await supabase
+        .from("product_categories" as any)
+        .select("product_id")
+        .eq("category_id", (category as any).id);
+
+      const productIds = ((links as any[]) || []).map((link) => link.product_id);
+      if (productIds.length === 0) {
+        setFeaturedProducts([]);
+        setLoadingFeatured(false);
+        return;
+      }
+
       const { data } = await supabase
         .from("products")
-        .select("*, product_categories!inner(category_id)")
-        .eq("product_categories.category_id", (category as any).id)
+        .select("*")
+        .in("id", productIds)
         .gt("stock", 0)
         .order("name", { ascending: true })
         .limit(8);
