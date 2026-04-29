@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ChevronRight, ShoppingCart, Loader2, Package, Star } from "lucide-react";
+import { ChevronRight, ShoppingCart, Loader2, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
@@ -88,13 +88,6 @@ const ProductDetail = () => {
         <div className="flex flex-col">
           {product.brand && <p className="text-sm text-muted-foreground mb-1">{product.brand}</p>}
           <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">{product.name}</h1>
-
-          <div className="flex items-center gap-1 mb-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} className={`w-4 h-4 ${i < Math.floor(product.rating || 0) ? "text-warning fill-warning" : "text-muted"}`} />
-            ))}
-            <span className="text-sm text-muted-foreground ml-2">{product.rating ?? 0} / 5</span>
-          </div>
 
           <div className="flex flex-col sm:flex-row sm:items-end gap-1 sm:gap-3 mb-6">
             <span className="font-display font-bold text-3xl text-primary leading-tight">{formatCOP(displayPrice)}</span>
