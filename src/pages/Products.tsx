@@ -24,7 +24,6 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [appliedCategory, setAppliedCategory] = useState("");
@@ -52,11 +51,6 @@ const Products = () => {
     };
     loadCategories();
   }, [searchParams]);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setDebouncedSearch(searchTerm.trim()), 250);
-    return () => window.clearTimeout(timer);
-  }, [searchTerm]);
 
   useEffect(() => {
     const loadProducts = async () => {
