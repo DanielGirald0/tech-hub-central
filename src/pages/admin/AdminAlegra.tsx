@@ -14,6 +14,13 @@ interface SyncLog {
   items_processed?: number | null;
   duration_ms?: number | null;
   error_detail?: string | null;
+  technical_details?: {
+    failed_products?: Array<{ reference?: string; name?: string; reason?: string; timestamp?: string }>;
+    total?: number;
+    synced?: number;
+    failed?: number;
+    error?: string;
+  } | null;
   started_at: string;
   finished_at: string | null;
 }
@@ -33,6 +40,8 @@ const formatDuration = (ms?: number | null) => {
   const seconds = Math.round(ms / 1000);
   return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)} min ${seconds % 60} s`;
 };
+
+const failedProductsFromLog = (log: SyncLog) => log.technical_details?.failed_products || [];
 
 const AdminAlegra = () => {
   const [logs, setLogs] = useState<SyncLog[]>([]);
