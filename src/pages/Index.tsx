@@ -26,7 +26,7 @@ const Index = () => {
         .from("categories" as any)
         .select("id")
         .eq("active", true)
-        .ilike("name", "Destacados")
+        .or("name.ilike.Destacados,slug.eq.destacados")
         .maybeSingle();
 
       if (!(category as any)?.id) {
@@ -52,8 +52,7 @@ const Index = () => {
         .select("*")
         .in("id", productIds)
         .gt("stock", 0)
-        .order("name", { ascending: true })
-        .limit(8);
+        .order("name", { ascending: true });
 
       setFeaturedProducts(data || []);
       setLoadingFeatured(false);
