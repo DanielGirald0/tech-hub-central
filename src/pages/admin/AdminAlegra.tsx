@@ -167,14 +167,35 @@ const AdminAlegra = () => {
                     <td className="p-3 text-right text-foreground whitespace-nowrap">{formatDuration(l.duration_ms)}</td>
                     <td className="p-3 text-muted-foreground text-xs max-w-lg">
                       <div className="flex items-start gap-2">
-                        <span className="whitespace-normal">{l.message || "—"}</span>
-                        {l.error_detail && <button onClick={() => setExpandedLogId(expandedLogId === l.id ? null : l.id)} className="shrink-0 text-primary hover:text-primary/80" aria-label="Ver detalles"><ChevronDown className={`w-4 h-4 transition-transform ${expandedLogId === l.id ? "rotate-180" : ""}`} /></button>}
+                        <span className="whitespace-pre-wrap break-words">{l.message || "—"}</span>
+                        {(l.error_detail || failedProductsFromLog(l).length > 0) && <button onClick={() => setExpandedLogId(expandedLogId === l.id ? null : l.id)} className="shrink-0 text-primary hover:text-primary/80" aria-label="Ver detalles"><ChevronDown className={`w-4 h-4 transition-transform ${expandedLogId === l.id ? "rotate-180" : ""}`} /></button>}
                       </div>
                     </td>
                   </tr>
-                  {expandedLogId === l.id && l.error_detail && (
+                  {expandedLogId === l.id && (l.error_detail || failedProductsFromLog(l).length > 0) && (
                     <tr className="border-b border-border/50 bg-secondary/40">
-                      <td colSpan={7} className="p-4 text-xs text-muted-foreground whitespace-pre-wrap break-words">{l.error_detail}</td>
+                      <td colSpan={7} className="p-4">
+                        {failedProductsFromLog(l).length > 0 ? (
+                          <div className="space-y-3">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-foreground">Productos con error</p>
+                            <div className="grid gap-2">
+                              {failedProductsFromLog(l).map((failure, index) => (
+                                <div key={`${failure.reference}-${index}`} className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-xs">
+                                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                    <span className="font-semibold text-destructive">Ref: {failure.reference || "Sin referencia"}</span>
+                                    <span className="text-muted-foreground">{failure.timestamp ? new Date(failure.timestamp).toLocaleString("es-CO") : "—"}</span>
+                                  </div>
+                                  <p className="mt-1 text-foreground">Nombre: {failure.name || "Sin nombre"}</p>
+                                  <p className="mt-1 text-muted-foreground whitespace-pre-wrap break-words">Motivo: {failure.reason || "Error no especificado"}</p>
+                                </div>
+                              ))}
+                            </div>
+                            {l.error_detail && <pre className="text-xs text-muted-foreground whitespace-pre-wrap break-words">{l.error_detail}</pre>}
+                          </div>
+                        ) : (
+                          <pre className="text-xs text-muted-foreground whitespace-pre-wrap break-words">{l.error_detail}</pre>
+                        )}
+                      </td>
                     </tr>
                   )}
                 </Fragment>
