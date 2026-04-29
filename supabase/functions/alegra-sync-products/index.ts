@@ -15,7 +15,7 @@ type FailedProductLog = {
 };
 
 function failedProductLine(failure: FailedProductLog): string {
-  return `Ref: ${failure.reference} | Nombre: ${failure.name || "Sin nombre"} | Motivo: ${failure.reason}`;
+  return `Ref: ${failure.reference || "Sin referencia"} | Nombre: ${failure.name || "Sin nombre"} | Motivo: ${failure.reason}`;
 }
 
 function buildFailureMessage(prefix: string, failures: FailedProductLog[]): string {
@@ -188,13 +188,12 @@ Deno.serve(async (req) => {
       const name = item.name || "Sin nombre";
       const fallbackReference = reference || `Sin referencia${item.id ? ` (Alegra ID: ${item.id})` : ""}`;
       try {
-        if (!reference) throw new Error("falta referencia obligatoria");
         if (!item.name) throw new Error("falta nombre obligatorio");
         const pricing = calculatePricing(item);
         return [{
           alegra_id: String(item.id),
-          sku: reference,
-          reference,
+          sku: reference || null,
+          reference: reference || null,
           name,
           description: item.description || "",
           base_price: pricing.basePrice,
@@ -216,7 +215,7 @@ Deno.serve(async (req) => {
       }
     });
 
-    if (payloads.length === 0) throw new Error("No se importaron productos porque Alegra no envió referencias válidas.");
+    if (payloads.length === 0) throw new Error("No se importaron productos porque Alegra no envió productos válidos.");
 
     const categoryNames = [...new Set(payloads.map((product) => product.category))];
     await supabase.from("categories").upsert(categoryNames.map((name) => ({ name, slug: slugify(name), active: true })), { onConflict: "slug" });
