@@ -130,6 +130,42 @@ const AdminProducts = () => {
     setForm({ ...form, specifications: specs });
   };
 
+  const ProductForm = () => (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><Label>Nombre *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={200} /></div>
+        <div><Label>Marca</Label><Input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} maxLength={100} /></div>
+        <div><Label>Referencia</Label><Input value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} maxLength={100} /></div>
+        <div><Label>Categoría principal</Label>
+          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
+            <option value="">Seleccionar</option>
+            {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+          </select>
+        </div>
+        <div><Label>Tipo *</Label>
+          <select value={form.product_type} onChange={(e) => setForm({ ...form, product_type: e.target.value })} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
+            <option value="product">Producto</option>
+            <option value="service">Servicio</option>
+          </select>
+        </div>
+        <div><Label>Subcategoría</Label><Input value={form.subcategory} onChange={(e) => setForm({ ...form, subcategory: e.target.value })} maxLength={100} /></div>
+        <div><Label>Precio con IVA (COP) *</Label><Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} min={0} /></div>
+        <div><Label>Precio original</Label><Input type="number" value={form.original_price ?? ""} onChange={(e) => setForm({ ...form, original_price: e.target.value ? Number(e.target.value) : null })} min={0} /></div>
+        <div><Label>Stock</Label><Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} min={0} /></div>
+        <div><Label>URL de imagen</Label><Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} maxLength={500} /></div>
+        <div className="md:col-span-2"><Label>Descripción corta</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={300} /></div>
+        <div className="md:col-span-2">
+          <Label>Descripción completa</Label>
+          <Textarea value={form.full_description} onChange={(e) => setForm({ ...form, full_description: e.target.value })} maxLength={5000} rows={4} placeholder="Descripción detallada del producto..." />
+        </div>
+        <div className="flex items-center gap-2">
+          <input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} id="featured" />
+          <Label htmlFor="featured">Producto destacado</Label>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
