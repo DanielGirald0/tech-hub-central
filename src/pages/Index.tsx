@@ -22,7 +22,27 @@ const Index = () => {
 
   useEffect(() => {
     const fetchFeatured = async () => {
-      const { data } = await supabase.from("products").select("*").eq("featured", true).gt("stock", 0);
+      const { data: category } = await supabase
+        .from("categories" as any)
+        .select("id")
+        .eq("active", true)
+        .ilike("name", "Destacados")
+        .maybeSingle();
+
+      if (!(category as any)?.id) {
+        setFeaturedProducts([]);
+        setLoadingFeatured(false);
+        return;
+      }
+
+      const { data } = await supabase
+        .from("products")
+        .select("*, product_categories!inner(category_id)")
+        .eq("product_categories.category_id", (category as any).id)
+        .gt("stock", 0)
+        .order("name", { ascending: true })
+        .limit(8);
+
       setFeaturedProducts(data || []);
       setLoadingFeatured(false);
     };
