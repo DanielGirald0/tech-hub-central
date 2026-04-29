@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, X } from "lucide-react";
 
@@ -26,7 +27,6 @@ interface DBProduct {
   tax_percentage?: number | null;
   stock: number;
   image_url: string | null;
-  rating: number | null;
   featured: boolean | null;
   product_type?: string;
   product_categories?: { category_id: string }[];
