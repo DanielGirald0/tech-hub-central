@@ -14,6 +14,8 @@ interface ProductCardProduct {
   image?: string;
   image_url?: string | null;
   brand?: string | null;
+  reference?: string | null;
+  sku?: string | null;
   inStock?: boolean;
   stock?: number;
   rating?: number | null;
@@ -35,6 +37,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const rating = product.rating ?? 0;
   const brand = product.brand ?? "";
   const displayPrice = product.final_price ?? product.price;
+  const reference = product.reference || product.sku;
 
   const discount = originalPrice
     ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
@@ -70,10 +73,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <span className="text-xs text-muted-foreground ml-1">{rating}</span>
         </div>
         <div className="flex items-end justify-between">
-          <div>
-            <span className="font-display font-bold text-lg text-primary">{formatCOP(displayPrice)}</span>
+          <div className="min-w-0 pr-2">
+            <span className="block font-display font-bold text-lg text-primary leading-tight">{formatCOP(displayPrice)}</span>
+            {reference && (
+              <span className="block text-[11px] text-muted-foreground/80 leading-snug truncate">Ref: {reference}</span>
+            )}
             {originalPrice && originalPrice > displayPrice && (
-              <span className="text-xs text-muted-foreground line-through ml-2">{formatCOP(originalPrice)}</span>
+              <span className="block text-xs text-muted-foreground line-through mt-0.5">{formatCOP(originalPrice)}</span>
             )}
           </div>
           <Button size="sm" disabled={!inStock} onClick={(e) => { e.preventDefault(); handleAdd(); }} className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 w-8 p-0">
