@@ -181,9 +181,14 @@ const Products = () => {
       <h1 className="font-display text-3xl font-bold text-foreground mb-2 uppercase tracking-wider">Productos</h1>
       <p className="text-muted-foreground mb-6">Explora nuestro catálogo sincronizado y encuentra tecnología en segundos.</p>
 
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar por nombre, SKU o descripción" className="pl-10 h-11" />
+      <div className="flex flex-col sm:flex-row gap-2 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar por nombre, SKU o descripción" className="pl-10 h-11" />
+        </div>
+        <Button onClick={applyFilters} className="bg-primary text-primary-foreground hover:bg-primary/90 h-11">
+          Aplicar filtros
+        </Button>
       </div>
 
       <div className="flex gap-6">
