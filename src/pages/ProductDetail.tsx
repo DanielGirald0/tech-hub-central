@@ -57,6 +57,7 @@ const ProductDetail = () => {
   const originalPrice = product.original_price;
   const inStock = product.stock > 0;
   const displayPrice = product.final_price ?? product.price;
+  const reference = product.reference || product.sku;
   const discount = originalPrice ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100) : 0;
   const specs: { label: string; value: string }[] = Array.isArray(product.specifications) ? product.specifications : [];
 
@@ -95,10 +96,13 @@ const ProductDetail = () => {
             <span className="text-sm text-muted-foreground ml-2">{product.rating ?? 0} / 5</span>
           </div>
 
-          <div className="flex items-end gap-3 mb-6">
-            <span className="font-display font-bold text-3xl text-primary">{formatCOP(displayPrice)}</span>
+          <div className="flex flex-col sm:flex-row sm:items-end gap-1 sm:gap-3 mb-6">
+            <span className="font-display font-bold text-3xl text-primary leading-tight">{formatCOP(displayPrice)}</span>
+            {reference && (
+              <span className="text-xs sm:text-sm text-muted-foreground/80 leading-6 sm:pb-0.5">Ref: {reference}</span>
+            )}
             {originalPrice && originalPrice > displayPrice && (
-              <span className="text-lg text-muted-foreground line-through">{formatCOP(originalPrice)}</span>
+              <span className="text-lg text-muted-foreground line-through sm:pb-0.5">{formatCOP(originalPrice)}</span>
             )}
           </div>
           <p className="text-xs text-muted-foreground -mt-4 mb-6">Precio incluye IVA</p>
