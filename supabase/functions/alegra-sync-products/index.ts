@@ -280,13 +280,19 @@ Deno.serve(async (req) => {
     console.error("Sync error", e);
     const translated = translateError(e);
     const duration = elapsedMs(startedMs);
+    const errorMessage = failedProducts.length > 0
+      ? buildFailureMessage(translated.message, failedProducts)
+      : translated.message;
+    const errorDetail = failedProducts.length > 0
+      ? buildFailureMessage("Error al sincronizar los siguientes productos:", failedProducts)
+      : translated.detail;
     if (logId) {
       await supabase
         .from("alegra_sync_log")
         .update({
           status: "error",
-          message: translated.message,
-          error_detail: translated.detail,
+          message: errorMessage,
+          error_detail: errorDetail,
           finished_at: new Date().toISOString(),
           items_synced: synced,
           items_failed: failed,
