@@ -68,10 +68,11 @@ const AdminProducts = () => {
       toast({ title: "El nombre es obligatorio", variant: "destructive" });
       return;
     }
+    const reference = form.reference.trim() || null;
     const payload = {
       name: form.name, description: form.description, full_description: form.full_description,
       specifications: form.specifications, price: form.price, original_price: form.original_price,
-      base_price: form.price, final_price: form.price, reference: form.reference, sku: form.reference,
+      base_price: form.price, final_price: form.price, reference, sku: reference,
       category: form.category, subcategory: form.subcategory, brand: form.brand, product_type: form.product_type,
       stock: form.stock, image_url: form.image_url, featured: form.featured,
     };
