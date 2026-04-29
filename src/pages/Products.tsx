@@ -24,10 +24,13 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [appliedCategory, setAppliedCategory] = useState("");
   const [selectedType, setSelectedType] = useState("");
+  const [appliedType, setAppliedType] = useState("");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, MAX_PRICE]);
+  const [appliedPriceRange, setAppliedPriceRange] = useState<[number, number]>([0, MAX_PRICE]);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -38,28 +41,27 @@ const Products = () => {
       if (categoryParam) {
         const matched = rows.find((cat) => cat.id === categoryParam || cat.slug === categoryParam);
         setSelectedCategory(matched?.id || "");
+        setAppliedCategory(matched?.id || "");
       }
       const typeParam = searchParams.get("type") || "";
-      if (["product", "service"].includes(typeParam)) setSelectedType(typeParam);
+      if (["product", "service"].includes(typeParam)) {
+        setSelectedType(typeParam);
+        setAppliedType(typeParam);
+      }
     };
     loadCategories();
   }, [searchParams]);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setDebouncedSearch(searchTerm.trim()), 250);
-    return () => window.clearTimeout(timer);
-  }, [searchTerm]);
 
   useEffect(() => {
     const loadProducts = async () => {
       setLoading(true);
       let productIds: string[] | null = null;
 
-      if (selectedCategory) {
+      if (appliedCategory) {
         const { data: links, error: linksError } = await supabase
           .from("product_categories" as any)
           .select("product_id")
-          .eq("category_id", selectedCategory);
+          .eq("category_id", appliedCategory);
 
         if (linksError) {
           setProducts([]);
@@ -79,15 +81,15 @@ const Products = () => {
         .from("products")
         .select("*, product_categories(category_id, categories(id, name, slug))")
         .gt("stock", 0)
-        .gte("final_price", priceRange[0])
-        .lte("final_price", priceRange[1])
+        .gte("final_price", appliedPriceRange[0])
+        .lte("final_price", appliedPriceRange[1])
         .order("name", { ascending: true })
         .limit(120);
 
       if (productIds) query = query.in("id", productIds);
-      if (selectedType) query = query.eq("product_type", selectedType);
-      if (debouncedSearch) {
-        const term = debouncedSearch.replace(/[%_]/g, "");
+      if (appliedType) query = query.eq("product_type", appliedType);
+      if (appliedSearch) {
+        const term = appliedSearch.replace(/[%_]/g, "");
         query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%,full_description.ilike.%${term}%,sku.ilike.%${term}%,reference.ilike.%${term}%`);
       }
 
@@ -97,7 +99,7 @@ const Products = () => {
     };
 
     loadProducts();
-  }, [selectedCategory, selectedType, priceRange, debouncedSearch]);
+  }, [appliedCategory, appliedType, appliedPriceRange, appliedSearch]);
 
   const activeFilters = useMemo(
     () => Boolean(selectedCategory || selectedType || searchTerm || priceRange[0] > 0 || priceRange[1] < MAX_PRICE),
@@ -109,6 +111,18 @@ const Products = () => {
     setSelectedCategory("");
     setSelectedType("");
     setPriceRange([0, MAX_PRICE]);
+    setAppliedSearch("");
+    setAppliedCategory("");
+    setAppliedType("");
+    setAppliedPriceRange([0, MAX_PRICE]);
+  };
+
+  const applyFilters = () => {
+    setAppliedSearch(searchTerm.trim());
+    setAppliedCategory(selectedCategory);
+    setAppliedType(selectedType);
+    setAppliedPriceRange(priceRange);
+    setFiltersOpen(false);
   };
 
   const formatCOP = (value: number) =>
@@ -143,11 +157,16 @@ const Products = () => {
           <Input type="number" min={0} value={priceRange[1]} onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])} />
         </div>
       </div>
-      {activeFilters && (
-        <Button variant="outline" size="sm" onClick={resetFilters} className="w-full border-border text-foreground">
-          <X className="w-4 h-4 mr-2" />Limpiar filtros
+      <div className="grid grid-cols-1 gap-2">
+        <Button size="sm" onClick={applyFilters} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+          Aplicar filtros
         </Button>
-      )}
+        {activeFilters && (
+          <Button variant="outline" size="sm" onClick={resetFilters} className="w-full border-border text-foreground">
+            <X className="w-4 h-4 mr-2" />Limpiar filtros
+          </Button>
+        )}
+      </div>
     </div>
   );
 
@@ -156,9 +175,14 @@ const Products = () => {
       <h1 className="font-display text-3xl font-bold text-foreground mb-2 uppercase tracking-wider">Productos</h1>
       <p className="text-muted-foreground mb-6">Explora nuestro catálogo sincronizado y encuentra tecnología en segundos.</p>
 
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar por nombre, SKU o descripción" className="pl-10 h-11" />
+      <div className="flex flex-col sm:flex-row gap-2 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar por nombre, SKU o descripción" className="pl-10 h-11" />
+        </div>
+        <Button onClick={applyFilters} className="bg-primary text-primary-foreground hover:bg-primary/90 h-11">
+          Aplicar filtros
+        </Button>
       </div>
 
       <div className="flex gap-6">
