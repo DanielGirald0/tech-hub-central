@@ -7,6 +7,22 @@ const corsHeaders = {
 
 const ALEGRA_BASE = "https://api.alegra.com/api/v1";
 
+type FailedProductLog = {
+  reference: string;
+  name: string;
+  reason: string;
+  timestamp: string;
+};
+
+function failedProductLine(failure: FailedProductLog): string {
+  return `Ref: ${failure.reference} | Nombre: ${failure.name || "Sin nombre"} | Motivo: ${failure.reason}`;
+}
+
+function buildFailureMessage(prefix: string, failures: FailedProductLog[]): string {
+  if (failures.length === 0) return prefix;
+  return `${prefix}\n\n${failures.map(failedProductLine).join("\n")}`;
+}
+
 function translateError(error: unknown): { message: string; detail: string } {
   const detail = error instanceof Error ? error.message : String(error);
   if (/idle_timeout|timeout|tiempo|150s/i.test(detail)) {
@@ -93,6 +109,9 @@ function calculatePricing(item: any): { basePrice: number; taxPercentage: number
   const includesTax = priceIncludesTax(item);
   const basePrice = includesTax && taxPercentage > 0 ? rawPrice / (1 + taxPercentage) : rawPrice;
   const finalPrice = includesTax ? rawPrice : basePrice * (1 + taxPercentage);
+  if (!Number.isFinite(rawPrice) || rawPrice <= 0 || !Number.isFinite(finalPrice) || finalPrice <= 0) {
+    throw new Error("precio inválido");
+  }
   return {
     basePrice: Math.round(basePrice),
     taxPercentage: Number((taxPercentage * 100).toFixed(2)),
@@ -157,6 +176,7 @@ Deno.serve(async (req) => {
 
   let synced = 0;
   let failed = 0;
+  const failedProducts: FailedProductLog[] = [];
 
   try {
     const items = await fetchAllAlegraItems();
@@ -165,28 +185,35 @@ Deno.serve(async (req) => {
     const now = new Date().toISOString();
     const payloads = items.flatMap((item) => {
       const reference = extractReference(item);
-      if (!reference) {
+      const name = item.name || "Sin nombre";
+      const fallbackReference = reference || `Sin referencia${item.id ? ` (Alegra ID: ${item.id})` : ""}`;
+      try {
+        if (!reference) throw new Error("falta referencia obligatoria");
+        if (!item.name) throw new Error("falta nombre obligatorio");
+        const pricing = calculatePricing(item);
+        return [{
+          alegra_id: String(item.id),
+          sku: reference,
+          reference,
+          name,
+          description: item.description || "",
+          base_price: pricing.basePrice,
+          tax_percentage: pricing.taxPercentage,
+          final_price: pricing.finalPrice,
+          price: pricing.finalPrice,
+          stock: extractStock(item),
+          image_url: extractImage(item),
+          category: extractCategory(item),
+          product_type: "product",
+          last_synced_at: now,
+          updated_at: now,
+        }];
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "error de validación";
         failed += 1;
+        failedProducts.push({ reference: fallbackReference, name, reason, timestamp: new Date().toISOString() });
         return [];
       }
-      const pricing = calculatePricing(item);
-      return [{
-        alegra_id: String(item.id),
-        sku: reference,
-        reference,
-        name: item.name || "Sin nombre",
-        description: item.description || "",
-        base_price: pricing.basePrice,
-        tax_percentage: pricing.taxPercentage,
-        final_price: pricing.finalPrice,
-        price: pricing.finalPrice,
-        stock: extractStock(item),
-        image_url: extractImage(item),
-        category: extractCategory(item),
-        product_type: "product",
-        last_synced_at: now,
-        updated_at: now,
-      }];
     });
 
     if (payloads.length === 0) throw new Error("No se importaron productos porque Alegra no envió referencias válidas.");
@@ -207,6 +234,12 @@ Deno.serve(async (req) => {
       if (error) {
         console.error("Batch upsert failed", i, error.message);
         failed += chunk.length;
+        chunk.forEach((product) => failedProducts.push({
+          reference: product.reference || product.sku || "Sin referencia",
+          name: product.name || "Sin nombre",
+          reason: `error de base de datos: ${error.message}`,
+          timestamp: new Date().toISOString(),
+        }));
       } else {
         synced += chunk.length;
       }
@@ -232,9 +265,9 @@ Deno.serve(async (req) => {
           finished_at: new Date().toISOString(),
           message: failed === 0
             ? `Sincronización completada correctamente. ${synced} productos sincronizados en ${Math.round(duration / 1000)}s.`
-            : `Sincronización parcial. ${synced} productos sincronizados, ${failed} productos fallidos. Razón principal: error al guardar lotes de productos.`,
-          error_detail: failed ? "Uno o más lotes no pudieron guardarse en la base de datos." : null,
-          technical_details: { total: items.length, synced, failed, skipped_without_reference: failed, duration_ms: duration },
+            : buildFailureMessage(`Sincronización parcial. Total procesados: ${items.length}. Exitosos: ${synced}. Fallidos: ${failed}. Productos con error:`, failedProducts),
+          error_detail: failed ? buildFailureMessage("Error al sincronizar los siguientes productos:", failedProducts) : null,
+          technical_details: { total: items.length, synced, failed, failed_products: failedProducts, duration_ms: duration },
         })
         .eq("id", logId);
     }
@@ -247,19 +280,25 @@ Deno.serve(async (req) => {
     console.error("Sync error", e);
     const translated = translateError(e);
     const duration = elapsedMs(startedMs);
+    const errorMessage = failedProducts.length > 0
+      ? buildFailureMessage(translated.message, failedProducts)
+      : translated.message;
+    const errorDetail = failedProducts.length > 0
+      ? buildFailureMessage("Error al sincronizar los siguientes productos:", failedProducts)
+      : translated.detail;
     if (logId) {
       await supabase
         .from("alegra_sync_log")
         .update({
           status: "error",
-          message: translated.message,
-          error_detail: translated.detail,
+          message: errorMessage,
+          error_detail: errorDetail,
           finished_at: new Date().toISOString(),
           items_synced: synced,
           items_failed: failed,
           items_processed: synced + failed,
           duration_ms: duration,
-          technical_details: { error: translated.detail, synced, failed, duration_ms: duration },
+          technical_details: { error: translated.detail, synced, failed, failed_products: failedProducts, duration_ms: duration },
         })
         .eq("id", logId);
     }
