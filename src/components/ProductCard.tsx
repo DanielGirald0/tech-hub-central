@@ -18,7 +18,6 @@ interface ProductCardProduct {
   sku?: string | null;
   inStock?: boolean;
   stock?: number;
-  rating?: number | null;
 }
 
 interface ProductCardProps {
@@ -34,7 +33,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const image = product.image || product.image_url || "/placeholder.svg";
   const originalPrice = product.originalPrice ?? product.original_price;
   const inStock = product.inStock ?? (product.stock !== undefined ? product.stock > 0 : true);
-  const rating = product.rating ?? 0;
   const brand = product.brand ?? "";
   const displayPrice = product.final_price ?? product.price;
   const reference = product.reference || product.sku;
@@ -66,13 +64,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       <div className="p-4">
         {brand && <p className="text-xs text-muted-foreground mb-1">{brand}</p>}
         <h3 className="font-display font-semibold text-sm text-foreground line-clamp-2 mb-2 min-h-[2.5rem]">{product.name}</h3>
-        <div className="flex items-center gap-1 mb-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <span key={i} className={`text-xs ${i < Math.floor(rating) ? "text-warning" : "text-muted"}`}>★</span>
-          ))}
-          <span className="text-xs text-muted-foreground ml-1">{rating}</span>
-        </div>
-        <div className="flex items-end justify-between">
+        <div className="flex items-end justify-between mt-3">
           <div className="min-w-0 pr-2">
             <span className="block font-display font-bold text-lg text-primary leading-tight">{formatCOP(displayPrice)}</span>
             {reference && (
