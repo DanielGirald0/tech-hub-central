@@ -173,43 +173,12 @@ const AdminProducts = () => {
         <Button onClick={() => { setCreating(true); setEditing(null); setForm(emptyProduct); setSelectedCategoryIds([]); }}><Plus className="w-4 h-4 mr-2" />Nuevo producto</Button>
       </div>
 
-      {(creating || editing) && (
-        <div className="bg-card border border-border rounded-xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-semibold text-foreground">{editing ? "Editar producto" : "Nuevo producto"}</h2>
-            <button onClick={closeForm}><X className="w-5 h-5 text-muted-foreground" /></button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><Label>Nombre *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={200} /></div>
-            <div><Label>Marca</Label><Input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} maxLength={100} /></div>
-            <div><Label>Referencia</Label><Input value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} maxLength={100} /></div>
-            <div><Label>Categoría principal</Label>
-              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
-                <option value="">Seleccionar</option>
-                {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
-              </select>
-            </div>
-            <div><Label>Tipo *</Label>
-              <select value={form.product_type} onChange={(e) => setForm({ ...form, product_type: e.target.value })} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
-                <option value="product">Producto</option>
-                <option value="service">Servicio</option>
-              </select>
-            </div>
-<div><Label>Subcategoría</Label><Input value={form.subcategory} onChange={(e) => setForm({ ...form, subcategory: e.target.value })} maxLength={100} /></div>
-            <div><Label>Precio con IVA (COP) *</Label><Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} min={0} /></div>
-            <div><Label>Precio original</Label><Input type="number" value={form.original_price ?? ""} onChange={(e) => setForm({ ...form, original_price: e.target.value ? Number(e.target.value) : null })} min={0} /></div>
-            <div><Label>Stock</Label><Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} min={0} /></div>
-            <div><Label>URL de imagen</Label><Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} maxLength={500} /></div>
-            <div className="md:col-span-2"><Label>Descripción corta</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={300} /></div>
-            <div className="md:col-span-2">
-              <Label>Descripción completa</Label>
-              <Textarea value={form.full_description} onChange={(e) => setForm({ ...form, full_description: e.target.value })} maxLength={5000} rows={4} placeholder="Descripción detallada del producto..." />
-            </div>
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} id="featured" />
-              <Label htmlFor="featured">Producto destacado</Label>
-            </div>
-          </div>
+      <Dialog open={creating || Boolean(editing)} onOpenChange={(open) => { if (!open) closeForm(); }}>
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-4xl overflow-y-auto border-border bg-card p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle className="font-display text-foreground">{editing ? "Editar producto" : "Nuevo producto"}</DialogTitle>
+          </DialogHeader>
+          <ProductForm />
 
 
           <div className="mt-6">
@@ -243,12 +212,12 @@ const AdminProducts = () => {
             )}
           </div>
 
-          <div className="flex gap-2 mt-4">
-            <Button onClick={handleSave}>{editing ? "Actualizar" : "Crear"}</Button>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-6">
             <Button variant="outline" onClick={closeForm}>Cancelar</Button>
+            <Button onClick={handleSave}>{editing ? "Guardar cambios" : "Crear producto"}</Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
