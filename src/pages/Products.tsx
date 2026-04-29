@@ -124,7 +124,7 @@ const Products = () => {
   };
 
   const applyFilters = () => {
-    setAppliedSearch(debouncedSearch);
+    setAppliedSearch(searchTerm.trim());
     setAppliedCategory(selectedCategory);
     setAppliedType(selectedType);
     setAppliedPriceRange(priceRange);
