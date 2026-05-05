@@ -80,17 +80,36 @@ const Dashboard = () => {
         <div className="space-y-4">
           {orders.length === 0 ? (
             <p className="text-muted-foreground text-center py-12">No tienes pedidos aún.</p>
-          ) : orders.map((o) => (
-            <div key={o.id} className="bg-card border border-border rounded-xl p-4 flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground">{formatCOP(o.total_price)}</p>
-                <p className="text-sm text-muted-foreground">{new Date(o.created_at).toLocaleDateString("es-CO")}</p>
+          ) : orders.map((o) => {
+            const showPay = o.delivery_type === "domicilio" && o.status === "recibido" && o.payment_status !== "pagado";
+            return (
+              <div key={o.id} className="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="font-medium text-foreground">{formatCOP(o.total_price)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {o.delivery_type === "domicilio" ? `Domicilio (${formatCOP(o.delivery_cost || 0)})` : "Recoger en tienda"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString("es-CO")}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${o.status === "completado" ? "bg-green-500/10 text-green-500" : o.status === "cancelado" ? "bg-red-500/10 text-red-500" : o.status === "recibido" ? "bg-purple-500/10 text-purple-400" : o.status === "en proceso" ? "bg-blue-500/10 text-blue-400" : "bg-yellow-500/10 text-yellow-500"}`}>
+                    {o.status}
+                  </span>
+                  {showPay && (
+                    <Button
+                      size="sm"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                      onClick={() => {
+                        toast({ title: "Pago pendiente", description: `Total a pagar: ${formatCOP(o.total_price)}. Próximamente integraremos pagos en línea.` });
+                      }}
+                    >
+                      Pagar pedido
+                    </Button>
+                  )}
+                </div>
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${o.status === "completado" ? "bg-green-500/10 text-green-500" : o.status === "cancelado" ? "bg-red-500/10 text-red-500" : "bg-yellow-500/10 text-yellow-500"}`}>
-                {o.status}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
