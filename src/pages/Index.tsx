@@ -22,14 +22,14 @@ const Index = () => {
 
   useEffect(() => {
     const fetchFeatured = async () => {
-      const { data: category } = await supabase
+      const { data: categories } = await supabase
         .from("categories" as any)
         .select("id")
         .eq("active", true)
-        .or("name.ilike.Destacados,slug.eq.destacados")
-        .maybeSingle();
+        .or("name.ilike.destacad%,slug.ilike.destacad%");
 
-      if (!(category as any)?.id) {
+      const categoryIds = ((categories as any[]) || []).map((c) => c.id);
+      if (categoryIds.length === 0) {
         setFeaturedProducts([]);
         setLoadingFeatured(false);
         return;
@@ -38,7 +38,7 @@ const Index = () => {
       const { data: links } = await supabase
         .from("product_categories" as any)
         .select("product_id")
-        .eq("category_id", (category as any).id);
+        .in("category_id", categoryIds);
 
       const productIds = ((links as any[]) || []).map((link) => link.product_id);
       if (productIds.length === 0) {
