@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { customer, items } = await req.json();
+    const { customer, items, delivery } = await req.json();
     if (!customer?.name || !customer?.email || !Array.isArray(items) || items.length === 0) {
       return new Response(JSON.stringify({ error: "Invalid payload" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -138,7 +138,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const total = enrichedItems.reduce((s, i) => s + i.price * i.quantity, 0);
+    const subtotal = enrichedItems.reduce((s, i) => s + i.price * i.quantity, 0);
+    const deliveryType = delivery?.type === "domicilio" ? "domicilio" : "tienda";
+    const deliveryCost = deliveryType === "domicilio" ? Math.max(10000, Number(delivery?.cost ?? 10000)) : 0;
+    const total = subtotal + deliveryCost;
 
     // 1. Create local order
     const { data: order, error: orderErr } = await supabase
@@ -146,6 +149,9 @@ Deno.serve(async (req) => {
       .insert({
         customer_id: userId,
         total_price: total,
+        subtotal,
+        delivery_type: deliveryType,
+        delivery_cost: deliveryCost,
         status: "pendiente",
         customer_name: customer.name,
         customer_email: customer.email,
