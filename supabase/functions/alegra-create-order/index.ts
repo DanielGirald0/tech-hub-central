@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
         subtotal,
         delivery_type: deliveryType,
         delivery_cost: deliveryCost,
-        status: "pendiente",
+        status: "pendiente de pago",
         customer_name: customer.name,
         customer_email: customer.email,
         customer_phone: customer.phone || "",

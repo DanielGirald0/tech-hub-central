@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const statusOptions = ["pendiente", "en proceso", "recibido", "completado", "cancelado"];
+const statusOptions = ["pendiente de pago", "en proceso", "recibido", "completado", "cancelado"];
 
 const statusColors: Record<string, string> = {
-  pendiente: "bg-orange-500/20 text-orange-300 border border-orange-500/30",
+  "pendiente de pago": "bg-orange-500/20 text-orange-300 border border-orange-500/30",
   "en proceso": "bg-blue-500/20 text-blue-300 border border-blue-500/30",
   recibido: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
   completado: "bg-green-500/20 text-green-300 border border-green-500/30",
