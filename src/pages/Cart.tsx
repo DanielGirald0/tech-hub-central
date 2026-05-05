@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,11 +30,20 @@ const Cart = () => {
     documentType: "CC" as "CC" | "NIT",
     documentNumber: "",
     invoiceType: "normal" as "normal" | "electronica",
+    deliveryType: "tienda" as "tienda" | "domicilio",
   });
+
+  const DELIVERY_COST = 10000;
+  const deliveryCost = form.deliveryType === "domicilio" ? DELIVERY_COST : 0;
+  const grandTotal = totalPrice + deliveryCost;
 
   const handleCheckout = async () => {
     if (!form.name || !form.email || !form.documentNumber || !form.phone) {
       toast({ title: "Datos incompletos", description: "Nombre, email, teléfono y número de documento son requeridos", variant: "destructive" });
+      return;
+    }
+    if (form.deliveryType === "domicilio" && !form.address.trim()) {
+      toast({ title: "Dirección requerida", description: "Ingresa la dirección de entrega para domicilio", variant: "destructive" });
       return;
     }
     if (!/^\d{5,15}$/.test(form.documentNumber.trim())) {
@@ -46,6 +56,7 @@ const Cart = () => {
         body: {
           customer: form,
           items: items.map((i) => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+          delivery: { type: form.deliveryType, cost: deliveryCost },
         },
       });
       if (error) throw error;
@@ -54,8 +65,9 @@ const Cart = () => {
 
       const msg = items.map((i) => `• ${i.name} x${i.quantity} - ${formatCOP(i.price * i.quantity)}`).join("\n");
       const invoiceLine = result.alegra_invoice_number ? `\nFactura Alegra: ${result.alegra_invoice_number}` : "";
+      const deliveryLine = form.deliveryType === "domicilio" ? `\nDomicilio: ${formatCOP(deliveryCost)}` : "\nEntrega: Recoger en tienda";
       const text = encodeURIComponent(
-        `Hola, acabo de realizar un pedido:\n\nNombre: ${form.name}\nEmail: ${form.email}\nTeléfono: ${form.phone}\n\n${msg}\n\nTotal: ${formatCOP(totalPrice)}${invoiceLine}`
+        `Hola, acabo de realizar un pedido:\n\nNombre: ${form.name}\nEmail: ${form.email}\nTeléfono: ${form.phone}${deliveryLine}\n\n${msg}\n\nSubtotal: ${formatCOP(totalPrice)}\nTotal: ${formatCOP(grandTotal)}${invoiceLine}`
       );
       toast({ title: "Pedido creado", description: result.alegra_invoice_number ? `Factura ${result.alegra_invoice_number}` : "Pedido registrado" });
       clearCart();
@@ -124,13 +136,30 @@ const Cart = () => {
               <span>{formatCOP(totalPrice)}</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
-              <span>Envío</span>
-              <span>Por calcular</span>
+              <span>Domicilio</span>
+              <span>{form.deliveryType === "domicilio" ? formatCOP(deliveryCost) : "—"}</span>
             </div>
             <div className="border-t border-border pt-2 flex justify-between font-bold text-foreground">
               <span>Total</span>
-              <span className="text-primary">{formatCOP(totalPrice)}</span>
+              <span className="text-primary">{formatCOP(grandTotal)}</span>
             </div>
+          </div>
+          <div className="mb-4">
+            <Label className="mb-2 block">Tipo de entrega</Label>
+            <RadioGroup
+              value={form.deliveryType}
+              onValueChange={(v: "tienda" | "domicilio") => setForm({ ...form, deliveryType: v })}
+              className="gap-2"
+            >
+              <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                <RadioGroupItem value="tienda" id="dt-tienda" />
+                <span>Recoger en tienda</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                <RadioGroupItem value="domicilio" id="dt-domicilio" />
+                <span>Domicilio (+{formatCOP(DELIVERY_COST)})</span>
+              </label>
+            </RadioGroup>
           </div>
           <Button
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90"

@@ -14,11 +14,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const statusOptions = ["pendiente", "en progreso", "completado", "cancelado"];
+const statusOptions = ["pendiente", "en proceso", "recibido", "completado", "cancelado"];
 
 const statusColors: Record<string, string> = {
   pendiente: "bg-orange-500/20 text-orange-300 border border-orange-500/30",
-  "en progreso": "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+  "en proceso": "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+  recibido: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
   completado: "bg-green-500/20 text-green-300 border border-green-500/30",
   cancelado: "bg-red-500/20 text-red-300 border border-red-500/30",
 };
