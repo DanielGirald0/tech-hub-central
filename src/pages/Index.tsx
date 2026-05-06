@@ -1,20 +1,15 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Shield, Wrench, Zap, Star, Loader2 } from "lucide-react";
+import { ArrowRight, Shield, Wrench, Zap, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
 import { services } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";
+import GoogleReviews from "@/components/GoogleReviews";
 
 const featuredServices = services.slice(0, 4);
-
-const testimonials = [
-  { name: "Carlos M.", text: "¡Excelente servicio! Instalaron mi sistema de cámaras en una tarde. Muy profesionales.", rating: 5 },
-  { name: "María L.", text: "La mejor tienda de tecnología de la zona. Muy buenos precios y el equipo sabe lo que hace.", rating: 5 },
-  { name: "David R.", text: "Me repararon el portátil el mismo día. Servicio rápido y confiable.", rating: 4 },
-];
 
 const Index = () => {
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
@@ -231,27 +226,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-16 bg-card/50">
-        <div className="container mx-auto px-4">
-          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-10 text-center">
-            Lo que dicen nuestros clientes
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <div key={i} className="bg-card rounded-xl border border-border p-6">
-                <div className="flex gap-0.5 mb-3">
-                  {Array.from({ length: t.rating }).map((_, j) => (
-                    <Star key={j} className="w-4 h-4 fill-warning text-warning" />
-                  ))}
-                </div>
-                <p className="text-sm text-muted-foreground mb-4 italic">"{t.text}"</p>
-                <p className="font-display font-semibold text-foreground text-sm">{t.name}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Google Reviews */}
+      <GoogleReviews />
 
       {/* Newsletter */}
       <section className="py-16">
