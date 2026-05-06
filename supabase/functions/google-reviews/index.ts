@@ -1,4 +1,8 @@
-import { corsHeaders } from "@supabase/supabase-js/cors";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
 
 const API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY");
 const PLACE_ID = Deno.env.get("GOOGLE_PLACE_ID");
