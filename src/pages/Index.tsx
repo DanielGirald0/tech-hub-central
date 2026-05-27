@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Shield, Wrench, Zap, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -8,52 +7,39 @@ import ServiceCard from "@/components/ServiceCard";
 import { services } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";
 import GoogleReviews from "@/components/GoogleReviews";
+import { useQuery } from "@tanstack/react-query";
 
 const featuredServices = services.slice(0, 4);
 
+const fetchFeaturedProducts = async () => {
+  // Single query: products joined to product_categories joined to categories
+  // filtered to categories whose name/slug starts with "destacad".
+  const { data, error } = await supabase
+    .from("products")
+    .select("*, product_categories!inner(categories!inner(name,slug,active))")
+    .gt("stock", 0)
+    .eq("product_categories.categories.active", true)
+    .or("name.ilike.destacad%,slug.ilike.destacad%", {
+      foreignTable: "product_categories.categories",
+    })
+    .order("name", { ascending: true })
+    .limit(8);
+  if (error) return [];
+  // Dedupe in case a product is in multiple matching categories
+  const seen = new Set<string>();
+  return (data || []).filter((p: any) => {
+    if (seen.has(p.id)) return false;
+    seen.add(p.id);
+    return true;
+  });
+};
+
 const Index = () => {
-  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
-  const [loadingFeatured, setLoadingFeatured] = useState(true);
-
-  useEffect(() => {
-    const fetchFeatured = async () => {
-      const { data: categories } = await supabase
-        .from("categories" as any)
-        .select("id")
-        .eq("active", true)
-        .or("name.ilike.destacad%,slug.ilike.destacad%");
-
-      const categoryIds = ((categories as any[]) || []).map((c) => c.id);
-      if (categoryIds.length === 0) {
-        setFeaturedProducts([]);
-        setLoadingFeatured(false);
-        return;
-      }
-
-      const { data: links } = await supabase
-        .from("product_categories" as any)
-        .select("product_id")
-        .in("category_id", categoryIds);
-
-      const productIds = ((links as any[]) || []).map((link) => link.product_id);
-      if (productIds.length === 0) {
-        setFeaturedProducts([]);
-        setLoadingFeatured(false);
-        return;
-      }
-
-      const { data } = await supabase
-        .from("products")
-        .select("*")
-        .in("id", productIds)
-        .gt("stock", 0)
-        .order("name", { ascending: true });
-
-      setFeaturedProducts(data || []);
-      setLoadingFeatured(false);
-    };
-    fetchFeatured();
-  }, []);
+  const { data: featuredProducts = [], isLoading: loadingFeatured } = useQuery({
+    queryKey: ["featured-products"],
+    queryFn: fetchFeaturedProducts,
+    staleTime: 10 * 60 * 1000,
+  });
 
   return (
     <div>
