@@ -12,26 +12,27 @@ import { useQuery } from "@tanstack/react-query";
 const featuredServices = services.slice(0, 4);
 
 const fetchFeaturedProducts = async () => {
-  // Single query: products joined to product_categories joined to categories
-  // filtered to categories whose name/slug starts with "destacad".
-  const { data, error } = await supabase
+  const { data: cats } = await supabase
+    .from("categories" as any)
+    .select("id")
+    .eq("active", true)
+    .or("name.ilike.destacad%,slug.ilike.destacad%");
+  const categoryIds = ((cats as any[]) || []).map((c) => c.id);
+  if (!categoryIds.length) return [];
+  const { data: links } = await supabase
+    .from("product_categories" as any)
+    .select("product_id")
+    .in("category_id", categoryIds);
+  const productIds = Array.from(new Set(((links as any[]) || []).map((l) => l.product_id)));
+  if (!productIds.length) return [];
+  const { data } = await supabase
     .from("products")
-    .select("*, product_categories!inner(categories!inner(name,slug,active))")
+    .select("*")
+    .in("id", productIds)
     .gt("stock", 0)
-    .eq("product_categories.categories.active", true)
-    .or("name.ilike.destacad%,slug.ilike.destacad%", {
-      foreignTable: "product_categories.categories",
-    })
     .order("name", { ascending: true })
     .limit(8);
-  if (error) return [];
-  // Dedupe in case a product is in multiple matching categories
-  const seen = new Set<string>();
-  return (data || []).filter((p: any) => {
-    if (seen.has(p.id)) return false;
-    seen.add(p.id);
-    return true;
-  });
+  return data || [];
 };
 
 const Index = () => {
