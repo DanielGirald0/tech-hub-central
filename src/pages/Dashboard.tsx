@@ -62,6 +62,8 @@ const Dashboard = () => {
     }
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: "cancelado" } : o)));
     toast({ title: "Pedido cancelado" });
+    const text = encodeURIComponent(`Hola, he cancelado el pedido #${id.slice(0, 8)}`);
+    window.open(`https://wa.me/573107476909?text=${text}`, "_blank");
   };
 
   const tabs = [
