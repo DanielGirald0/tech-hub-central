@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Star, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import LocalReviews from "@/components/LocalReviews";
 
 interface Review {
   author: string;
@@ -129,6 +130,7 @@ const GoogleReviews = () => {
           </div>
         )}
       </div>
+      <LocalReviews />
     </section>
   );
 };
