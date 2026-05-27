@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { ShoppingCart, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,15 @@ const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <Link to={`/products/${product.id}`} className="group bg-card rounded-xl border border-border overflow-hidden shadow-card hover:shadow-glow transition-all duration-300 hover:-translate-y-1 block">
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
-        <img src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+        <img
+          src={image}
+          alt={product.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+          decoding="async"
+          width={400}
+          height={300}
+        />
         {discount > 0 && (
           <span className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-md">-{discount}%</span>
         )}
@@ -83,4 +92,4 @@ const ProductCard = ({ product }: ProductCardProps) => {
   );
 };
 
-export default ProductCard;
+export default memo(ProductCard);
