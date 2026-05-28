@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Loader2, Package } from "lucide-react";
 import { REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus } from "@/lib/repairs";
@@ -38,6 +39,12 @@ const TrackRepair = () => {
   const [order, setOrder] = useState<OrderResult | null>(null);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [showCTA, setShowCTA] = useState(false);
+  const [params] = useSearchParams();
+
+  useEffect(() => {
+    const q = params.get("q");
+    if (q) setOrderNumber(q);
+  }, [params]);
 
   const search = async (e: React.FormEvent) => {
     e.preventDefault();
