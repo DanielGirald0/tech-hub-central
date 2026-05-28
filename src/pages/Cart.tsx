@@ -1,4 +1,5 @@
 import { ShoppingCart as CartIcon, Trash2, Plus, Minus, Loader2 } from "lucide-react";
+import BackButton from "@/components/BackButton";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,7 @@ const Cart = () => {
   if (items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
+      <BackButton />
         <h1 className="font-display text-3xl font-bold text-foreground mb-8">Carrito de compras</h1>
         <div className="bg-card border border-border rounded-2xl p-8 md:p-12 text-center">
           <CartIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />

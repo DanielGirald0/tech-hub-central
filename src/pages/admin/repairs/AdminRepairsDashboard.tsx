@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import BackButton from "@/components/BackButton";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Wrench, Plus, Users, ClipboardList, Activity } from "lucide-react";
@@ -41,6 +42,7 @@ const AdminRepairsDashboard = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <BackButton />
       <div className="flex items-start justify-between flex-wrap gap-4 mb-8">
         <div>
           <h1 className="font-display text-3xl font-bold text-foreground uppercase tracking-wider flex items-center gap-3">

@@ -2,6 +2,9 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Loader2, Package } from "lucide-react";
 import { REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus } from "@/lib/repairs";
+import { useAuth } from "@/contexts/AuthContext";
+import RegisterCTAModal from "@/components/RegisterCTAModal";
+import BackButton from "@/components/BackButton";
 
 interface OrderResult {
   order_number: string;
@@ -27,12 +30,14 @@ interface HistoryRow {
 }
 
 const TrackRepair = () => {
+  const { user } = useAuth();
   const [orderNumber, setOrderNumber] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<OrderResult | null>(null);
   const [history, setHistory] = useState<HistoryRow[]>([]);
+  const [showCTA, setShowCTA] = useState(false);
 
   const search = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,10 +58,14 @@ const TrackRepair = () => {
     const o = Array.isArray(orderData) ? orderData[0] : orderData;
     setOrder(o as OrderResult);
     setHistory((histData as HistoryRow[]) || []);
+    if (!user) {
+      setTimeout(() => setShowCTA(true), 800);
+    }
   };
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-3xl">
+      <BackButton />
       <div className="text-center mb-8">
         <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground uppercase tracking-wider mb-2">
           Seguimiento de Orden
@@ -161,6 +170,8 @@ const TrackRepair = () => {
           )}
         </div>
       )}
+
+      <RegisterCTAModal open={showCTA} onClose={() => setShowCTA(false)} />
     </div>
   );
 };

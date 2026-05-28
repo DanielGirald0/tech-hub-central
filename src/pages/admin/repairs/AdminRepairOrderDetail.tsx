@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import BackButton from "@/components/BackButton";
 import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -127,6 +128,7 @@ const AdminRepairOrderDetail = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <BackButton />
       <Link to="/admin/repairs/orders" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4">
         <ArrowLeft className="w-4 h-4" /> Volver
       </Link>

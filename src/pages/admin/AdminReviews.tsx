@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import BackButton from "@/components/BackButton";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Star, Check, Trash2, Loader2 } from "lucide-react";
@@ -56,6 +57,7 @@ const AdminReviews = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <BackButton />
       <h1 className="font-display text-3xl font-bold text-foreground uppercase tracking-wider mb-6">
         Reseñas
       </h1>

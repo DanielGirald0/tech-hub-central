@@ -1,8 +1,10 @@
 import { Shield, Wrench, Users, Award } from "lucide-react";
+import BackButton from "@/components/BackButton";
 
 const About = () => {
   return (
     <div className="container mx-auto px-4 py-8">
+      <BackButton />
       <h1 className="font-display text-3xl font-bold text-foreground mb-2">Sobre Tecno Gz</h1>
       <p className="text-muted-foreground mb-10 max-w-2xl">
         Tu aliado tecnológico de confianza con más de 5 años de experiencia sirviendo a nuestra comunidad.

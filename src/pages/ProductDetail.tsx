@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import BackButton from "@/components/BackButton";
 import { useParams, Link } from "react-router-dom";
 import { ChevronRight, ShoppingCart, Loader2, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +48,7 @@ const ProductDetail = () => {
   if (!product) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
+      <BackButton />
         <p className="text-muted-foreground text-lg">Producto no encontrado.</p>
         <Link to="/products" className="text-primary underline mt-4 inline-block">Volver a productos</Link>
       </div>

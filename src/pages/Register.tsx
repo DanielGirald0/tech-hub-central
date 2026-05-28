@@ -11,6 +11,7 @@ const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [documentNumber, setDocumentNumber] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -24,11 +25,12 @@ const Register = () => {
       return;
     }
     setLoading(true);
+    const docDigits = documentNumber.replace(/\D/g, "");
     const { error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: {
-        data: { name: name.trim(), phone: phone.trim() },
+        data: { name: name.trim(), phone: phone.trim(), document_number: docDigits || null },
         emailRedirectTo: window.location.origin,
       },
     });
@@ -36,7 +38,12 @@ const Register = () => {
     if (error) {
       toast({ title: "Error al registrarse", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "¡Cuenta creada!", description: "Revisa tu correo para confirmar tu cuenta." });
+      toast({
+        title: "¡Cuenta creada!",
+        description: docDigits
+          ? "Revisa tu correo. Vincularemos automáticamente tus órdenes de servicio anteriores."
+          : "Revisa tu correo para confirmar tu cuenta.",
+      });
       navigate("/login");
     }
   };
@@ -61,6 +68,20 @@ const Register = () => {
           <div>
             <Label htmlFor="phone">Teléfono (opcional)</Label>
             <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+57 300 000 0000" maxLength={20} />
+          </div>
+          <div>
+            <Label htmlFor="document_number">Número de documento (opcional)</Label>
+            <Input
+              id="document_number"
+              inputMode="numeric"
+              value={documentNumber}
+              onChange={(e) => setDocumentNumber(e.target.value)}
+              placeholder="Cédula o documento"
+              maxLength={20}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Si ya has dejado equipos en reparación, vincularemos tu historial automáticamente.
+            </p>
           </div>
           <div>
             <Label htmlFor="password">Contraseña</Label>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import BackButton from "@/components/BackButton";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, Users, ShoppingCart, Wrench, BarChart3, RefreshCw, Tags, Star, ClipboardList } from "lucide-react";
@@ -34,6 +35,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <BackButton />
       <div className="flex items-center gap-3 mb-8">
         <img src={logo} alt="Tecno Gz" className="w-14 h-14 object-contain" />
         <div>
