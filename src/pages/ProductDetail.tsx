@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import BackButton from "@/components/BackButton";
 import { useParams, Link } from "react-router-dom";
 import { ChevronRight, ShoppingCart, Loader2, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

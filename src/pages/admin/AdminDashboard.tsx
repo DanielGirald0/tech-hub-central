@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import BackButton from "@/components/BackButton";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, Users, ShoppingCart, Wrench, BarChart3, RefreshCw, Tags, Star, ClipboardList } from "lucide-react";

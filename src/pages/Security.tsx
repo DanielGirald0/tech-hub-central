@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import BackButton from "@/components/BackButton";
 import { Shield, ArrowRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 

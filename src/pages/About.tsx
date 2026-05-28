@@ -1,4 +1,5 @@
 import { Shield, Wrench, Users, Award } from "lucide-react";
+import BackButton from "@/components/BackButton";
 
 const About = () => {
   return (

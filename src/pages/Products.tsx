@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import BackButton from "@/components/BackButton";
 import { useSearchParams } from "react-router-dom";
 import { Filter, Loader2, Search, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
