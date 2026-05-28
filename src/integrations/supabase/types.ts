@@ -305,6 +305,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          document_number: string | null
           email: string
           id: string
           name: string
@@ -314,6 +315,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          document_number?: string | null
           email?: string
           id?: string
           name?: string
@@ -323,6 +325,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          document_number?: string | null
           email?: string
           id?: string
           name?: string
@@ -336,32 +339,38 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          document_number: string | null
           email: string | null
           id: string
           name: string
           notes: string | null
           phone: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           address?: string | null
           created_at?: string
+          document_number?: string | null
           email?: string | null
           id?: string
           name: string
           notes?: string | null
           phone: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           address?: string | null
           created_at?: string
+          document_number?: string | null
           email?: string | null
           id?: string
           name?: string
           notes?: string | null
           phone?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -671,6 +680,22 @@ export type Database = {
     }
     Functions: {
       delete_user_by_admin: { Args: { _user_id: string }; Returns: undefined }
+      find_repair_customer_by_document: {
+        Args: { _doc: string }
+        Returns: {
+          address: string
+          document_number: string
+          email: string
+          id: string
+          name: string
+          notes: string
+          phone: string
+          registered_email: string
+          registered_name: string
+          registered_phone: string
+          user_id: string
+        }[]
+      }
       get_all_users: {
         Args: never
         Returns: {
@@ -680,6 +705,24 @@ export type Database = {
           phone: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
+        }[]
+      }
+      get_my_repair_orders: {
+        Args: never
+        Returns: {
+          brand: string
+          cost: number
+          delivered_at: string
+          device_type: string
+          diagnosis: string
+          estimated_date: string
+          id: string
+          model: string
+          order_number: string
+          received_at: string
+          reported_issue: string
+          status: Database["public"]["Enums"]["repair_status"]
+          warranty_days: number
         }[]
       }
       get_repair_order_history: {
@@ -697,6 +740,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      link_repair_customer_to_user_by_doc: {
+        Args: { _doc: string; _user_id: string }
+        Returns: number
       }
       lookup_repair_order: {
         Args: { _order_number: string; _phone: string }

@@ -1,84 +1,99 @@
-## Módulo de Servicio Técnico
+# Sincronización inteligente del módulo técnico
 
-Sistema completo de gestión de reparaciones integrado con la app actual, sin afectar el ecommerce ni el módulo existente de "Solicitudes de servicio".
+Objetivo: usar el **número de documento (cédula)** como identificador único que conecta cuentas de usuario con clientes del módulo de servicio técnico, en ambos sentidos.
 
-### 1. Base de datos (nueva migración)
+## 1. Base de datos (1 migración)
 
-Nuevas tablas en `public`:
+**`profiles`** — agregar columna:
+- `document_number TEXT UNIQUE` (nullable, normalizado: solo dígitos)
+- índice único parcial `WHERE document_number IS NOT NULL`
 
-- **`repair_customers`** — clientes del taller (independiente de `auth.users`, para walk-ins)
-  - `name`, `phone`, `email`, `address`, `notes`
-- **`repair_devices`** — equipos
-  - `customer_id` → repair_customers, `device_type`, `brand`, `model`, `serial_imei`, `device_password`, `accessories`, `physical_condition`
-- **`repair_orders`** — órdenes de reparación
-  - `order_number` (auto: `OS-2026-0001` vía secuencia), `customer_id`, `device_id`
-  - `received_at`, `reported_issue`, `diagnosis`, `solution`
-  - `assigned_technician`, `status` (enum), `cost`, `estimated_date`, `warranty_days`, `delivered_at`
-- **`repair_order_photos`** — fotos antes/después
-  - `order_id`, `url`, `label` ("antes" | "despues" | "otro")
-- **`repair_order_history`** — auditoría de cambios de estado
-  - `order_id`, `from_status`, `to_status`, `note`, `changed_by`, `created_at`
+**`repair_customers`** — agregar columnas:
+- `document_number TEXT UNIQUE NOT NULL` (obligatorio en nuevas órdenes; migración existente: nullable inicial + backfill manual)
+- `user_id UUID` (FK lógica a `auth.users`, nullable) — vínculo con la cuenta
+- índice único parcial sobre `document_number`
+- índice sobre `user_id`
 
-Enum `repair_status`: `recibido`, `en_diagnostico`, `esperando_repuesto`, `en_reparacion`, `reparado`, `listo_entrega`, `entregado`, `cancelado`.
+**Función `public.link_repair_customer_to_user()`** (SECURITY DEFINER):
+- Se ejecuta en `handle_new_user` y cuando el usuario actualiza su `document_number` en profiles
+- Busca `repair_customers` con el mismo documento y setea `user_id`
+- Actualiza también email/teléfono si faltan
 
-Storage bucket público `repair-photos` para imágenes.
+**Función `public.find_repair_customer_by_document(_doc TEXT)`** (SECURITY DEFINER, solo admin):
+- Devuelve datos del cliente + datos del usuario registrado si existe (join `profiles` por documento)
+- Usada por el form de nueva orden para autocompletar
 
-**RLS:**
-- Admins: acceso total a las 5 tablas.
-- Público (anon): solo `SELECT` mínimo sobre `repair_orders` filtrado por número de orden + teléfono (vía función `public.lookup_repair_order(order_number, phone)` SECURITY DEFINER que devuelve estado y datos básicos — evita exponer toda la tabla).
-- GRANTs explícitos a authenticated/service_role; anon solo EXECUTE en la función de lookup.
+**Función `public.get_my_repair_orders()`** (SECURITY DEFINER):
+- Devuelve órdenes del usuario autenticado uniendo por `user_id` directo o por `document_number` en su profile
+- Usada en el Dashboard del cliente
 
-Trigger para autogenerar `order_number` y registrar cambios de estado en `repair_order_history`.
+**Trigger en `profiles`**: al INSERT/UPDATE de `document_number`, llamar `link_repair_customer_to_user`.
 
-### 2. Frontend público
+## 2. Frontend
 
-- **`/seguimiento`** — página pública de consulta. Form con número de orden + teléfono → llama RPC `lookup_repair_order` → muestra timeline de estados, equipo, costo, fecha estimada.
-- Sección en `/services` con CTA "Consultar estado de mi reparación" → `/seguimiento`.
+**`AdminRepairOrderNew.tsx`** (cliente nuevo):
+- Campo `Cédula/Documento *` como primer input
+- Al hacer blur/debounce → llama `find_repair_customer_by_document`
+- Si encuentra: auto-rellena nombre/tel/email/dirección + muestra badge "Cliente existente" con link a su historial
+- Validación: documento obligatorio + email válido si se ingresa
+- Backend: usa `upsert` por documento para evitar duplicados
 
-### 3. Panel administrativo (`/admin/repairs/*`)
+**`AdminRepairCustomers.tsx`**:
+- Mostrar columna "Documento" y badge "Cuenta vinculada" cuando `user_id IS NOT NULL`
+- Buscador por documento/nombre/teléfono
 
-Rutas protegidas con `ProtectedRoute requiredRole="admin"`, lazy-loaded en `App.tsx`:
+**`Dashboard.tsx`** (cliente):
+- Nueva pestaña **"Servicio Técnico"** que llama `get_my_repair_orders`
+- Lista órdenes con estado, equipo, fecha, garantía, link a `/seguimiento?n=...`
+- Si el profile no tiene `document_number`: banner "Agrega tu documento para ver tu historial técnico"
 
-- **`/admin/repairs`** — dashboard con stats (órdenes por estado, ingresos del mes, órdenes activas) + tabla de últimas órdenes.
-- **`/admin/repairs/orders`** — listado con buscador (número, cliente, teléfono, IMEI), filtros por estado, paginación.
-- **`/admin/repairs/orders/new`** — crear orden (selecciona o crea cliente + equipo en el mismo flujo).
-- **`/admin/repairs/orders/:id`** — detalle: datos, cambio de estado, diagnóstico/solución, costo, garantía, técnico, subida de fotos (antes/después), notas, historial, botón "Notificar por WhatsApp", botón "Generar PDF".
-- **`/admin/repairs/customers`** — CRUD de clientes con historial de órdenes.
-- **`/admin/repairs/devices`** — listado de equipos por cliente.
+**`Register.tsx`**:
+- Agregar campo opcional **"Número de documento"** durante el registro
+- Se guarda en profile → trigger auto-vincula órdenes previas
+- Toast: "Hemos encontrado N órdenes de servicio asociadas a tu cédula"
 
-Enlace en `AdminDashboard` hacia el nuevo módulo + card de "Órdenes activas".
+**`TrackRepair.tsx`** (consulta pública):
+- Después de mostrar resultado, si el usuario NO está autenticado → modal moderno:
+  > "Regístrate para tener una mejor experiencia y acceder a tu historial completo, garantías y seguimiento en tiempo real."
+  - Botones: **Crear cuenta** / **Iniciar sesión**
+- Si SÍ está autenticado pero la orden no está vinculada a su cuenta y su documento coincide → vincular automáticamente
 
-### 4. Funciones extra
+**`components/BackButton.tsx`** (nuevo):
+- Componente reutilizable: ícono `ArrowLeft` + "Volver"
+- Usa `navigate(-1)` con fallback a `/` si `history.length <= 1`
+- Mobile-friendly (top-left fijo, oculto en home)
+- Integrado en: `Services`, `Products`, `ProductDetail`, `Cart`, `Contact`, `About`, `Security`, `TrackRepair`, `Dashboard`, todas las páginas admin
 
-- **WhatsApp:** al cambiar estado, botón que abre `wa.me/57<telefono>` con mensaje plantilla en es-CO (no automático en server para evitar costos de API).
-- **PDF de la orden:** generado en cliente con `jspdf` + `jspdf-autotable` (logo, datos cliente/equipo, diagnóstico, costo, garantía, firma).
-- **Fotos antes/después:** subida a bucket `repair-photos`, preview en galería.
-- **Historial del cliente:** en `/admin/repairs/customers/:id` lista todas sus órdenes pasadas.
+## 3. Anti-duplicados
 
-### 5. Arquitectura
+- `document_number UNIQUE` a nivel DB (constraint dura)
+- Al crear orden: `INSERT ... ON CONFLICT (document_number) DO UPDATE` en `repair_customers`
+- Validación frontend: si el documento existe → forzar modo "cliente existente"
+- Email no se exige único (un cliente puede no tener email); se valida formato
 
-- Hooks reutilizables: `useRepairOrders`, `useRepairCustomers`, `useRepairDevices` (React Query con `staleTime` apropiado).
-- Componentes: `RepairStatusBadge`, `RepairTimeline`, `RepairOrderForm`, `CustomerPicker`, `DevicePicker`, `PhotoUploader`, `OrderPDFButton`.
-- Validación con `zod` en todos los formularios.
-- Skeletons y error boundaries por ruta.
-- Estilo consistente con la estética dark/gaming actual (Iosevka, #D90429, uppercase en títulos).
+## 4. Detalles técnicos
 
-### 6. Integración sin romper nada
+- Normalización: documento = solo dígitos, mínimo 5
+- Migración de datos existentes: clientes actuales sin documento quedan con `NULL`; admin debe completarlos al editar (banner en lista de clientes)
+- `get_my_repair_orders` evita exponer datos sensibles (solo del usuario)
+- Sin cambios en `repair_orders` ni `repair_devices` (siguen apuntando a `customer_id`)
+- `App.tsx`: sin cambios de rutas
+- No se toca el flujo de pedidos/ecommerce existente
 
-- Las tablas son nuevas (`repair_*`); no se toca `service_requests`, `orders`, `products`, etc.
-- `App.tsx`: solo se añaden rutas lazy nuevas.
-- `AdminDashboard`: solo se añade una card y un enlace.
-- `Services.tsx`: solo se añade CTA hacia `/seguimiento`.
+## Archivos a crear/editar
 
-### Detalles técnicos
+**Crear:**
+- `src/components/BackButton.tsx`
+- `src/components/RegisterCTAModal.tsx`
 
-- Migración única con CREATE TABLE + GRANTs + RLS + POLICIES + trigger de número de orden + función `lookup_repair_order`.
-- Bucket `repair-photos` público con políticas RLS (admins INSERT/DELETE, público SELECT).
-- Dependencias nuevas: `jspdf`, `jspdf-autotable`.
-- Sin edge functions adicionales (WhatsApp se abre client-side).
+**Editar:**
+- `supabase/migrations/<new>.sql` (1 migración)
+- `src/pages/admin/repairs/AdminRepairOrderNew.tsx` (campo documento + autocompletar)
+- `src/pages/admin/repairs/AdminRepairCustomers.tsx` (mostrar documento + vínculo)
+- `src/pages/Dashboard.tsx` (nueva pestaña Servicio Técnico + BackButton)
+- `src/pages/Register.tsx` (campo documento opcional)
+- `src/pages/TrackRepair.tsx` (modal CTA + auto-vincular)
+- `src/pages/Services.tsx`, `Products.tsx`, `ProductDetail.tsx`, `Cart.tsx`, `Contact.tsx`, `About.tsx`, `Security.tsx` (BackButton)
+- Páginas admin (BackButton en cabecera)
 
-### Confirmación necesaria
-
-1. ¿Confirmas crear el bucket público `repair-photos` para las fotos de equipos?
-2. ¿El número de orden debe seguir el formato `OS-2026-0001` o prefieres otro?
-3. Para consulta pública, ¿basta con número de orden + teléfono, o quieres también opción solo por número?
+¿Lo confirmamos así? Si quieres que el documento sea obligatorio también en el registro (no solo opcional), avísame.
