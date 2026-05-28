@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Trash2, Edit, X, Phone, Mail, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Search, Trash2, Edit, X, Phone, Mail, ChevronDown, ChevronUp, IdCard, UserCheck } from "lucide-react";
 import { REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, RepairStatus, formatDate, formatCOP } from "@/lib/repairs";
+import BackButton from "@/components/BackButton";
 
-const empty = { name: "", phone: "", email: "", address: "", notes: "" };
+const empty = { document_number: "", name: "", phone: "", email: "", address: "", notes: "" };
 
 const AdminRepairCustomers = () => {
   const { toast } = useToast();
@@ -22,11 +23,12 @@ const AdminRepairCustomers = () => {
   useEffect(() => { load(); }, []);
 
   const save = async () => {
-    if (!form.name.trim() || !form.phone.trim()) {
-      toast({ title: "Nombre y teléfono requeridos", variant: "destructive" });
+    if (!form.name.trim() || !form.phone.trim() || !(form.document_number || "").trim()) {
+      toast({ title: "Documento, nombre y teléfono son requeridos", variant: "destructive" });
       return;
     }
-    const { id, ...payload } = form;
+    const { id, ...rest } = form;
+    const payload = { ...rest, document_number: (rest.document_number || "").replace(/\D/g, "") };
     const { error } = id
       ? await (supabase.from as any)("repair_customers").update(payload).eq("id", id)
       : await (supabase.from as any)("repair_customers").insert(payload);
@@ -56,11 +58,12 @@ const AdminRepairCustomers = () => {
 
   const filtered = customers.filter((c) => {
     const s = search.toLowerCase();
-    return !s || c.name?.toLowerCase().includes(s) || c.phone?.includes(s) || c.email?.toLowerCase().includes(s);
+    return !s || c.name?.toLowerCase().includes(s) || c.phone?.includes(s) || c.email?.toLowerCase().includes(s) || c.document_number?.includes(s);
   });
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <BackButton />
       <div className="flex items-start justify-between flex-wrap gap-3 mb-6">
         <h1 className="font-display text-2xl font-bold text-foreground uppercase tracking-wider">Clientes de Taller</h1>
         <button onClick={() => setForm(empty)} className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-semibold flex items-center gap-2 hover:bg-primary/90 uppercase tracking-wider">
@@ -71,7 +74,7 @@ const AdminRepairCustomers = () => {
       <div className="bg-card border border-border rounded-xl p-4 mb-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nombre, teléfono, email..." className="w-full bg-background border border-border rounded-md pl-9 pr-3 py-2 text-sm focus:border-primary focus:outline-none" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por documento, nombre, teléfono, email..." className="w-full bg-background border border-border rounded-md pl-9 pr-3 py-2 text-sm focus:border-primary focus:outline-none" />
         </div>
       </div>
 
@@ -82,7 +85,7 @@ const AdminRepairCustomers = () => {
             <button onClick={() => setForm(null)}><X className="w-4 h-4 text-muted-foreground" /></button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {(["name", "phone", "email", "address", "notes"] as const).map((k) => (
+            {(["document_number", "name", "phone", "email", "address", "notes"] as const).map((k) => (
               <input key={k} placeholder={k} value={form[k] || ""} onChange={(e) => setForm({ ...form, [k]: e.target.value })} className="bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none" />
             ))}
           </div>
@@ -95,6 +98,7 @@ const AdminRepairCustomers = () => {
           <thead>
             <tr className="border-b border-border text-left text-muted-foreground">
               <th className="p-3 font-medium">Cliente</th>
+              <th className="p-3 font-medium">Documento</th>
               <th className="p-3 font-medium">Contacto</th>
               <th className="p-3 font-medium">Dirección</th>
               <th className="p-3 font-medium w-32">Acciones</th>
@@ -104,7 +108,21 @@ const AdminRepairCustomers = () => {
             {filtered.map((c) => (
               <>
                 <tr key={c.id} className="border-b border-border/50 hover:bg-secondary/30">
-                  <td className="p-3 text-foreground font-medium">{c.name}</td>
+                  <td className="p-3 text-foreground font-medium">
+                    <div>{c.name}</div>
+                    {c.user_id && (
+                      <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                        <UserCheck className="w-3 h-3" /> Cuenta vinculada
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-3 text-xs">
+                    {c.document_number ? (
+                      <span className="inline-flex items-center gap-1 text-foreground"><IdCard className="w-3 h-3" /> {c.document_number}</span>
+                    ) : (
+                      <span className="text-amber-400">Falta documento</span>
+                    )}
+                  </td>
                   <td className="p-3">
                     <div className="flex items-center gap-1 text-foreground text-xs"><Phone className="w-3 h-3" /> {c.phone}</div>
                     {c.email && <div className="flex items-center gap-1 text-muted-foreground text-xs"><Mail className="w-3 h-3" /> {c.email}</div>}
@@ -122,7 +140,7 @@ const AdminRepairCustomers = () => {
                 </tr>
                 {expanded === c.id && (
                   <tr key={`${c.id}-hist`} className="bg-secondary/20 border-b border-border/50">
-                    <td colSpan={4} className="p-4">
+                    <td colSpan={5} className="p-4">
                       <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Historial de órdenes</h4>
                       {(history[c.id] || []).length === 0 ? (
                         <p className="text-xs text-muted-foreground">Sin órdenes.</p>
@@ -145,7 +163,7 @@ const AdminRepairCustomers = () => {
               </>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No hay clientes.</td></tr>
+              <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No hay clientes.</td></tr>
             )}
           </tbody>
         </table>
