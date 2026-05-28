@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
+import TrackOrderCTA from "@/components/TrackOrderCTA";
 import { services } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";
 import GoogleReviews from "@/components/GoogleReviews";
@@ -78,6 +79,9 @@ const Index = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* Track Order CTA */}
+      <TrackOrderCTA />
 
       {/* Stats */}
       <section className="border-b border-border bg-card">
