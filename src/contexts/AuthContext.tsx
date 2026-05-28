@@ -7,7 +7,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   userRole: "customer" | "admin" | null;
-  profile: { name: string; email: string; phone: string } | null;
+  profile: { name: string; email: string; phone: string; document_number?: string | null } | null;
   signOut: () => Promise<void>;
 }
 
@@ -27,12 +27,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<"customer" | "admin" | null>(null);
-  const [profile, setProfile] = useState<{ name: string; email: string; phone: string } | null>(null);
+  const [profile, setProfile] = useState<{ name: string; email: string; phone: string; document_number?: string | null } | null>(null);
 
   const fetchUserData = async (userId: string) => {
     const [{ data: roleData }, { data: profileData }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
-      supabase.from("profiles").select("name, email, phone").eq("user_id", userId).maybeSingle(),
+      (supabase.from("profiles") as any).select("name, email, phone, document_number").eq("user_id", userId).maybeSingle(),
     ]);
     setUserRole((roleData?.role as "customer" | "admin") || "customer");
     setProfile(profileData || null);
