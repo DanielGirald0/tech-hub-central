@@ -27,6 +27,12 @@ const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminServices = lazy(() => import("./pages/admin/AdminServices"));
 const AdminAlegra = lazy(() => import("./pages/admin/AdminAlegra"));
 const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
+const AdminRepairsDashboard = lazy(() => import("./pages/admin/repairs/AdminRepairsDashboard"));
+const AdminRepairOrders = lazy(() => import("./pages/admin/repairs/AdminRepairOrders"));
+const AdminRepairOrderNew = lazy(() => import("./pages/admin/repairs/AdminRepairOrderNew"));
+const AdminRepairOrderDetail = lazy(() => import("./pages/admin/repairs/AdminRepairOrderDetail"));
+const AdminRepairCustomers = lazy(() => import("./pages/admin/repairs/AdminRepairCustomers"));
+const TrackRepair = lazy(() => import("./pages/TrackRepair"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -68,6 +74,7 @@ const App = () => (
                 <Route path="/security" element={<Security />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/seguimiento" element={<TrackRepair />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -83,6 +90,11 @@ const App = () => (
                 <Route path="/admin/services" element={<ProtectedRoute requiredRole="admin"><AdminServices /></ProtectedRoute>} />
                 <Route path="/admin/alegra" element={<ProtectedRoute requiredRole="admin"><AdminAlegra /></ProtectedRoute>} />
                 <Route path="/admin/reviews" element={<ProtectedRoute requiredRole="admin"><AdminReviews /></ProtectedRoute>} />
+                <Route path="/admin/repairs" element={<ProtectedRoute requiredRole="admin"><AdminRepairsDashboard /></ProtectedRoute>} />
+                <Route path="/admin/repairs/orders" element={<ProtectedRoute requiredRole="admin"><AdminRepairOrders /></ProtectedRoute>} />
+                <Route path="/admin/repairs/orders/new" element={<ProtectedRoute requiredRole="admin"><AdminRepairOrderNew /></ProtectedRoute>} />
+                <Route path="/admin/repairs/orders/:id" element={<ProtectedRoute requiredRole="admin"><AdminRepairOrderDetail /></ProtectedRoute>} />
+                <Route path="/admin/repairs/customers" element={<ProtectedRoute requiredRole="admin"><AdminRepairCustomers /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               </Suspense>
