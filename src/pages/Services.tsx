@@ -14,6 +14,7 @@ const serviceCategories = [
 const Services = () => {
   return (
     <div className="container mx-auto px-4 py-8">
+      <BackButton />
       <h1 className="font-display text-3xl font-bold text-foreground mb-2">Nuestros Servicios</h1>
       <p className="text-muted-foreground mb-10 max-w-2xl">
         Servicios técnicos profesionales para todas tus necesidades tecnológicas. Desde reparaciones hasta instalaciones completas.

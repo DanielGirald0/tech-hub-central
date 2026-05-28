@@ -169,6 +169,7 @@ const AdminProducts = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <BackButton />
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Gestión de Productos</h1>
         <Button onClick={() => { setCreating(true); setEditing(null); setForm(emptyProduct); setSelectedCategoryIds([]); }}><Plus className="w-4 h-4 mr-2" />Nuevo producto</Button>

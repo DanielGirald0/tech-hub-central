@@ -57,6 +57,7 @@ const AdminUsers = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <BackButton />
       <h1 className="font-display text-2xl font-bold text-foreground mb-6">Gestión de Usuarios</h1>
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto">

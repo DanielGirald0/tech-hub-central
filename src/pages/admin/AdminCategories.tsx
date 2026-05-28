@@ -113,6 +113,7 @@ const AdminCategories = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <BackButton />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground uppercase tracking-wider">Categorías</h1>

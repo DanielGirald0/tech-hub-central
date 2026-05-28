@@ -173,6 +173,7 @@ const Products = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <BackButton />
       <h1 className="font-display text-3xl font-bold text-foreground mb-2 uppercase tracking-wider">Productos</h1>
       <p className="text-muted-foreground mb-6">Explora nuestro catálogo sincronizado y encuentra tecnología en segundos.</p>
 
