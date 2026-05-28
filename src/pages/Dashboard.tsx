@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Package, Wrench, User, LogOut } from "lucide-react";
+import { Package, Wrench, User, LogOut, ShieldCheck, Calendar, ExternalLink } from "lucide-react";
+import BackButton from "@/components/BackButton";
+import { REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, RepairStatus, formatDate, formatCOP as formatCOPLib } from "@/lib/repairs";
+import { Link } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,26 +28,38 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [orders, setOrders] = useState<any[]>([]);
   const [serviceRequests, setServiceRequests] = useState<any[]>([]);
+  const [repairOrders, setRepairOrders] = useState<any[]>([]);
   const [editName, setEditName] = useState(profile?.name || "");
   const [editPhone, setEditPhone] = useState(profile?.phone || "");
-  const [tab, setTab] = useState<"orders" | "services" | "profile">("orders");
+  const [editDoc, setEditDoc] = useState<string>(profile?.document_number || "");
+  const [tab, setTab] = useState<"orders" | "services" | "repairs" | "profile">("orders");
 
   useEffect(() => {
     if (!user) return;
     supabase.from("orders").select("*").eq("customer_id", user.id).order("created_at", { ascending: false }).then(({ data }) => setOrders(data || []));
     supabase.from("service_requests").select("*").eq("customer_id", user.id).order("created_at", { ascending: false }).then(({ data }) => setServiceRequests(data || []));
+    (supabase.rpc as any)("get_my_repair_orders").then(({ data }: any) => setRepairOrders(data || []));
   }, [user]);
 
   useEffect(() => {
     setEditName(profile?.name || "");
     setEditPhone(profile?.phone || "");
+    setEditDoc(profile?.document_number || "");
   }, [profile]);
 
   const handleUpdateProfile = async () => {
     if (!user) return;
-    const { error } = await supabase.from("profiles").update({ name: editName.trim(), phone: editPhone.trim() }).eq("user_id", user.id);
-    if (error) toast({ title: "Error al actualizar", variant: "destructive" });
-    else toast({ title: "Perfil actualizado" });
+    const docDigits = (editDoc || "").replace(/\D/g, "");
+    const { error } = await (supabase.from("profiles") as any)
+      .update({ name: editName.trim(), phone: editPhone.trim(), document_number: docDigits || null })
+      .eq("user_id", user.id);
+    if (error) {
+      toast({ title: "Error al actualizar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Perfil actualizado", description: docDigits ? "Sincronizando tu historial técnico..." : undefined });
+      // refresh repair orders after linking
+      (supabase.rpc as any)("get_my_repair_orders").then(({ data }: any) => setRepairOrders(data || []));
+    }
   };
 
   const handleLogout = async () => {
@@ -69,11 +84,13 @@ const Dashboard = () => {
   const tabs = [
     { id: "orders" as const, label: "Mis Pedidos", icon: Package },
     { id: "services" as const, label: "Mis Servicios", icon: Wrench },
+    { id: "repairs" as const, label: "Servicio Técnico", icon: ShieldCheck },
     { id: "profile" as const, label: "Mi Perfil", icon: User },
   ];
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <BackButton />
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-display text-3xl font-bold text-foreground">Mi Cuenta</h1>
@@ -183,6 +200,53 @@ const Dashboard = () => {
         </div>
       )}
 
+      {tab === "repairs" && (
+        <div className="space-y-4">
+          {!profile?.document_number && (
+            <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 text-sm">
+              <p className="text-foreground font-medium mb-1">Agrega tu número de documento</p>
+              <p className="text-muted-foreground mb-2">
+                Para ver todas tus órdenes de servicio técnico anteriores, agrega tu cédula en la pestaña <strong>Mi Perfil</strong>.
+              </p>
+              <button onClick={() => setTab("profile")} className="text-primary text-sm font-medium hover:underline">
+                Ir a Mi Perfil →
+              </button>
+            </div>
+          )}
+          {repairOrders.length === 0 ? (
+            <p className="text-muted-foreground text-center py-12">No tienes órdenes de servicio técnico.</p>
+          ) : (
+            repairOrders.map((r) => (
+              <div key={r.id} className="bg-card border border-border rounded-xl p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                  <div>
+                    <p className="font-display text-foreground font-bold">{r.order_number}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {[r.device_type, r.brand, r.model].filter(Boolean).join(" ")}
+                    </p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${REPAIR_STATUS_COLOR[r.status as RepairStatus]}`}>
+                    {REPAIR_STATUS_LABEL[r.status as RepairStatus]}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-muted-foreground">
+                  <div><Calendar className="w-3 h-3 inline mr-1" />Ingreso: <span className="text-foreground">{formatDate(r.received_at)}</span></div>
+                  <div>Estimada: <span className="text-foreground">{formatDate(r.estimated_date)}</span></div>
+                  <div>Costo: <span className="text-foreground">{formatCOPLib(Number(r.cost))}</span></div>
+                  <div>Garantía: <span className="text-foreground">{r.warranty_days ? `${r.warranty_days} días` : "—"}</span></div>
+                </div>
+                {r.reported_issue && (
+                  <p className="text-xs text-muted-foreground mt-2"><strong className="text-foreground">Falla:</strong> {r.reported_issue}</p>
+                )}
+                <Link to={`/seguimiento`} className="text-xs text-primary hover:underline mt-2 inline-flex items-center gap-1">
+                  Ver seguimiento <ExternalLink className="w-3 h-3" />
+                </Link>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
       {tab === "profile" && (
         <div className="max-w-md space-y-4">
           <div>
@@ -196,6 +260,19 @@ const Dashboard = () => {
           <div>
             <Label>Teléfono</Label>
             <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} maxLength={20} />
+          </div>
+          <div>
+            <Label>Número de documento (cédula)</Label>
+            <Input
+              value={editDoc}
+              onChange={(e) => setEditDoc(e.target.value)}
+              maxLength={20}
+              inputMode="numeric"
+              placeholder="Tu cédula"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Vincula automáticamente tus órdenes de servicio técnico.
+            </p>
           </div>
           <Button onClick={handleUpdateProfile}>Guardar cambios</Button>
         </div>
