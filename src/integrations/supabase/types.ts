@@ -332,6 +332,234 @@ export type Database = {
         }
         Relationships: []
       }
+      repair_customers: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      repair_devices: {
+        Row: {
+          accessories: string | null
+          brand: string | null
+          created_at: string
+          customer_id: string
+          device_password: string | null
+          device_type: string
+          id: string
+          model: string | null
+          physical_condition: string | null
+          serial_imei: string | null
+          updated_at: string
+        }
+        Insert: {
+          accessories?: string | null
+          brand?: string | null
+          created_at?: string
+          customer_id: string
+          device_password?: string | null
+          device_type: string
+          id?: string
+          model?: string | null
+          physical_condition?: string | null
+          serial_imei?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accessories?: string | null
+          brand?: string | null
+          created_at?: string
+          customer_id?: string
+          device_password?: string | null
+          device_type?: string
+          id?: string
+          model?: string | null
+          physical_condition?: string | null
+          serial_imei?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_devices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "repair_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repair_order_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          from_status: Database["public"]["Enums"]["repair_status"] | null
+          id: string
+          note: string | null
+          order_id: string
+          to_status: Database["public"]["Enums"]["repair_status"]
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["repair_status"] | null
+          id?: string
+          note?: string | null
+          order_id: string
+          to_status: Database["public"]["Enums"]["repair_status"]
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["repair_status"] | null
+          id?: string
+          note?: string | null
+          order_id?: string
+          to_status?: Database["public"]["Enums"]["repair_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_order_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repair_order_photos: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          order_id: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string
+          order_id: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          order_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_order_photos_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repair_orders: {
+        Row: {
+          assigned_technician: string | null
+          cost: number
+          created_at: string
+          customer_id: string
+          delivered_at: string | null
+          device_id: string
+          diagnosis: string | null
+          estimated_date: string | null
+          id: string
+          internal_notes: string | null
+          order_number: string
+          received_at: string
+          reported_issue: string
+          solution: string | null
+          status: Database["public"]["Enums"]["repair_status"]
+          updated_at: string
+          warranty_days: number
+        }
+        Insert: {
+          assigned_technician?: string | null
+          cost?: number
+          created_at?: string
+          customer_id: string
+          delivered_at?: string | null
+          device_id: string
+          diagnosis?: string | null
+          estimated_date?: string | null
+          id?: string
+          internal_notes?: string | null
+          order_number: string
+          received_at?: string
+          reported_issue?: string
+          solution?: string | null
+          status?: Database["public"]["Enums"]["repair_status"]
+          updated_at?: string
+          warranty_days?: number
+        }
+        Update: {
+          assigned_technician?: string | null
+          cost?: number
+          created_at?: string
+          customer_id?: string
+          delivered_at?: string | null
+          device_id?: string
+          diagnosis?: string | null
+          estimated_date?: string | null
+          id?: string
+          internal_notes?: string | null
+          order_number?: string
+          received_at?: string
+          reported_issue?: string
+          solution?: string | null
+          status?: Database["public"]["Enums"]["repair_status"]
+          updated_at?: string
+          warranty_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "repair_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repair_orders_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "repair_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           approved: boolean
@@ -454,6 +682,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_repair_order_history: {
+        Args: { _order_number: string; _phone: string }
+        Returns: {
+          created_at: string
+          from_status: Database["public"]["Enums"]["repair_status"]
+          note: string
+          to_status: Database["public"]["Enums"]["repair_status"]
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -461,9 +698,36 @@ export type Database = {
         }
         Returns: boolean
       }
+      lookup_repair_order: {
+        Args: { _order_number: string; _phone: string }
+        Returns: {
+          brand: string
+          cost: number
+          customer_name: string
+          delivered_at: string
+          device_type: string
+          diagnosis: string
+          estimated_date: string
+          model: string
+          order_number: string
+          received_at: string
+          reported_issue: string
+          status: Database["public"]["Enums"]["repair_status"]
+          warranty_days: number
+        }[]
+      }
     }
     Enums: {
       app_role: "customer" | "admin"
+      repair_status:
+        | "recibido"
+        | "en_diagnostico"
+        | "esperando_repuesto"
+        | "en_reparacion"
+        | "reparado"
+        | "listo_entrega"
+        | "entregado"
+        | "cancelado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -592,6 +856,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "admin"],
+      repair_status: [
+        "recibido",
+        "en_diagnostico",
+        "esperando_repuesto",
+        "en_reparacion",
+        "reparado",
+        "listo_entrega",
+        "entregado",
+        "cancelado",
+      ],
     },
   },
 } as const

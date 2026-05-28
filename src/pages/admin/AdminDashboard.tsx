@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Users, ShoppingCart, Wrench, BarChart3, RefreshCw, Tags, Star } from "lucide-react";
+import { Package, Users, ShoppingCart, Wrench, BarChart3, RefreshCw, Tags, Star, ClipboardList } from "lucide-react";
 import logo from "@/assets/logo-tecnogz-official.png";
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({ products: 0, orders: 0, users: 0, services: 0, categories: 0, reviews: 0 });
+  const [stats, setStats] = useState({ products: 0, orders: 0, users: 0, services: 0, categories: 0, reviews: 0, repairs: 0 });
 
   useEffect(() => {
     Promise.all([
@@ -15,8 +15,9 @@ const AdminDashboard = () => {
       supabase.from("service_requests").select("id", { count: "exact", head: true }),
       supabase.from("categories" as any).select("id", { count: "exact", head: true }),
       supabase.from("reviews" as any).select("id", { count: "exact", head: true }).eq("approved", false),
-    ]).then(([p, o, u, s, c, r]) => {
-      setStats({ products: p.count || 0, orders: o.count || 0, users: u.count || 0, services: s.count || 0, categories: c.count || 0, reviews: r.count || 0 });
+      supabase.from("repair_orders" as any).select("id", { count: "exact", head: true }).not("status", "in", "(entregado,cancelado)"),
+    ]).then(([p, o, u, s, c, r, rp]) => {
+      setStats({ products: p.count || 0, orders: o.count || 0, users: u.count || 0, services: s.count || 0, categories: c.count || 0, reviews: r.count || 0, repairs: rp.count || 0 });
     });
   }, []);
 
@@ -27,6 +28,7 @@ const AdminDashboard = () => {
     { label: "Usuarios", count: stats.users, icon: Users, href: "/admin/users", color: "text-purple-400" },
     { label: "Servicios", count: stats.services, icon: Wrench, href: "/admin/services", color: "text-orange-400" },
     { label: "Reseñas pendientes", count: stats.reviews, icon: Star, href: "/admin/reviews", color: "text-yellow-400" },
+    { label: "Servicio técnico", count: stats.repairs, icon: ClipboardList, href: "/admin/repairs", color: "text-pink-400" },
     { label: "Alegra Sync", count: 0, icon: RefreshCw, href: "/admin/alegra", color: "text-red-400" },
   ];
 
