@@ -51,20 +51,20 @@ const Index = () => {
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
           <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/20 rounded-full blur-3xl" />
         </div>
-        <div className="container mx-auto px-4 py-20 md:py-32 relative">
+        <div className="container mx-auto px-4 py-16 sm:py-20 md:py-32 relative">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
             className="max-w-3xl mx-auto text-center"
           >
-            <h1 className="font-display text-4xl md:text-6xl font-bold text-foreground mb-4 leading-tight uppercase tracking-wider">
+            <h1 className="font-display text-fluid-h1 font-bold text-foreground mb-4 uppercase tracking-wider break-words">
               TECNO GZ
             </h1>
-            <p className="text-xl md:text-2xl text-primary mb-4 font-display font-medium">
+            <p className="text-lg sm:text-xl md:text-2xl text-primary mb-4 font-display font-medium">
               Pasión y servicio de confianza
             </p>
-            <p className="text-lg text-muted-foreground mb-8 leading-relaxed max-w-xl mx-auto">
+            <p className="text-fluid-lead text-muted-foreground mb-8 max-w-xl mx-auto px-2">
               Productos de vanguardia, instalación profesional y servicio técnico experto.
               Todo lo que tu hogar y negocio necesitan en Rionegro, Antioquia.
             </p>

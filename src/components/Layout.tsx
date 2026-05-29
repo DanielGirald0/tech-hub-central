@@ -9,7 +9,7 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="relative min-h-screen flex flex-col bg-background">
+    <div className="relative min-h-screen flex flex-col bg-background overflow-x-hidden">
       {/* Ambient edge-only red glow — premium, subtle, non-interactive */}
       <div
         aria-hidden
