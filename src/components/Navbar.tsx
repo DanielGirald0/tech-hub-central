@@ -30,9 +30,9 @@ const Navbar = () => {
     <header className="sticky top-0 z-50 glass border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
-          <Link to="/" className="flex items-center gap-3">
-            <img src={logo} alt="Tecno Gz" className="w-14 h-14 object-contain" />
-            <span className="font-display font-bold text-xl tracking-wider text-foreground hidden sm:block uppercase">
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <img src={logo} alt="Tecno Gz" className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 object-contain shrink-0" />
+            <span className="font-display font-bold text-base sm:text-lg lg:text-xl tracking-wider text-foreground hidden md:block uppercase truncate">
               TECNO GZ
             </span>
           </Link>
@@ -59,7 +59,7 @@ const Navbar = () => {
           </nav>
 
           {/* Right icons — always visible */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <Link
               to="/cart"
               className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors relative"

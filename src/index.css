@@ -69,6 +69,11 @@
     @apply border-border;
   }
 
+  html, body {
+    @apply overflow-x-hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
@@ -76,7 +81,13 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+    text-wrap: balance;
   }
+
+  /* Fluid typography helpers */
+  .text-fluid-h1 { font-size: clamp(2rem, 5vw + 1rem, 3.75rem); line-height: 1.1; }
+  .text-fluid-h2 { font-size: clamp(1.5rem, 2.5vw + 0.75rem, 2.25rem); line-height: 1.15; }
+  .text-fluid-lead { font-size: clamp(1rem, 1vw + 0.75rem, 1.25rem); line-height: 1.55; }
 }
 
 @layer utilities {
