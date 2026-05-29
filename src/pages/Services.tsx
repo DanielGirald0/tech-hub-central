@@ -19,7 +19,7 @@ const Services = () => {
         Servicios técnicos profesionales para todas tus necesidades tecnológicas. Desde reparaciones hasta instalaciones completas.
       </p>
 
-      <div className="mb-10">
+      <div className="mb-10 [&>section]:mt-0">
         <TrackOrderCTA />
       </div>
 
