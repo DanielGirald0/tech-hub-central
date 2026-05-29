@@ -304,31 +304,40 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string
+          address: string | null
           created_at: string
           document_number: string | null
           email: string
           id: string
           name: string
+          notes: string | null
           phone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_status?: string
+          address?: string | null
           created_at?: string
           document_number?: string | null
           email?: string
           id?: string
           name?: string
+          notes?: string | null
           phone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_status?: string
+          address?: string | null
           created_at?: string
           document_number?: string | null
           email?: string
           id?: string
           name?: string
+          notes?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string
@@ -679,6 +688,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_update_user: {
+        Args: {
+          _account_status: string
+          _address: string
+          _document_number: string
+          _email: string
+          _name: string
+          _notes: string
+          _phone: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
       delete_user_by_admin: { Args: { _user_id: string }; Returns: undefined }
       find_repair_customer_by_document: {
         Args: { _doc: string }
@@ -699,9 +722,13 @@ export type Database = {
       get_all_users: {
         Args: never
         Returns: {
+          account_status: string
+          address: string
           created_at: string
+          document_number: string
           email: string
           name: string
+          notes: string
           phone: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
