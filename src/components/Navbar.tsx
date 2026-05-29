@@ -1,73 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ShoppingCart, Menu, X, User, LogOut, ChevronDown } from "lucide-react";
+import { ShoppingCart, Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import logo from "@/assets/logo-tecnogz-official.png";
 
-const productSubLinks = [
-  { label: "Todos los productos", path: "/products" },
-  { label: "Productos", path: "/products?type=product" },
-  { label: "Servicios", path: "/products?type=service" },
+const navLinks = [
+  { label: "Inicio", path: "/" },
+  { label: "Productos", path: "/products" },
+  { label: "Servicios", path: "/services" },
+  { label: "Nosotros", path: "/about" },
 ];
-
-const serviceSubLinks = [
-  { label: "── Servicio Técnico ──", path: "", header: true },
-  { label: "Reparación de computadores", path: "/services#reparacion" },
-  { label: "Reparación de celulares", path: "/services#reparacion" },
-  { label: "Reparación de consolas", path: "/services#reparacion" },
-  { label: "Mantenimiento de computadores", path: "/services#mantenimiento" },
-  { label: "Mantenimiento de celulares", path: "/services#mantenimiento" },
-  { label: "── Seguridad Electrónica ──", path: "", header: true },
-  { label: "Instalación de cámaras", path: "/services#instalacion" },
-  { label: "Instalación de alarmas", path: "/services#instalacion" },
-  { label: "Instalación de videoporteros", path: "/services#instalacion" },
-  { label: "Control de acceso", path: "/services#instalacion" },
-  { label: "Asesoría en seguridad", path: "/services#asesoria" },
-];
-
-const Dropdown = ({ label, links, active }: { label: string; links: { label: string; path: string; header?: boolean }[]; active: boolean }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${active ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
-      >
-        {label} <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div className="absolute top-full left-0 mt-1 w-56 bg-card border border-border rounded-xl shadow-lg py-2 z-50">
-          {links.map((link) =>
-            link.header ? (
-              <p key={link.label} className="px-4 pt-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{link.label.replace(/─/g, "").trim()}</p>
-            ) : (
-              <Link
-                key={link.label}
-                to={link.path}
-                onClick={() => setOpen(false)}
-                className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-              >
-                {link.label}
-              </Link>
-            )
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -78,6 +22,9 @@ const Navbar = () => {
 
   const handleUserClick = () => navigate(user ? "/dashboard" : "/login");
   const handleLogout = async () => { await signOut(); navigate("/"); };
+
+  const isActive = (path: string) =>
+    path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-border">
@@ -92,20 +39,15 @@ const Navbar = () => {
 
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-1">
-            <Link
-              to="/"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname === "/" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
-            >
-              Inicio
-            </Link>
-            <Dropdown label="Productos" links={productSubLinks} active={location.pathname === "/products"} />
-            <Dropdown label="Servicios" links={serviceSubLinks} active={location.pathname === "/services"} />
-            <Link
-              to="/about"
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname === "/about" ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
-            >
-              Nosotros
-            </Link>
+            {navLinks.map((l) => (
+              <Link
+                key={l.path}
+                to={l.path}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive(l.path) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+              >
+                {l.label}
+              </Link>
+            ))}
             {user && userRole === "admin" && (
               <Link
                 to="/admin"
@@ -159,23 +101,16 @@ const Navbar = () => {
         {/* Mobile menu */}
         {mobileOpen && (
           <nav className="lg:hidden pb-4 border-t border-border mt-1 pt-3 flex flex-col gap-1">
-            <Link to="/" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">Inicio</Link>
-
-            <p className="px-3 pt-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Productos</p>
-            {productSubLinks.map((l) => (
-              <Link key={l.label} to={l.path} onClick={() => setMobileOpen(false)} className="px-6 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md">{l.label}</Link>
+            {navLinks.map((l) => (
+              <Link
+                key={l.path}
+                to={l.path}
+                onClick={() => setMobileOpen(false)}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive(l.path) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+              >
+                {l.label}
+              </Link>
             ))}
-
-            <p className="px-3 pt-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Servicios</p>
-            {serviceSubLinks.map((l) =>
-              l.header ? (
-                <p key={l.label} className="px-6 pt-2 pb-1 text-xs font-semibold text-muted-foreground/70">{l.label.replace(/─/g, "").trim()}</p>
-              ) : (
-                <Link key={l.label} to={l.path} onClick={() => setMobileOpen(false)} className="px-8 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md">{l.label}</Link>
-              )
-            )}
-
-            <Link to="/about" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">Nosotros</Link>
 
             {user && userRole === "admin" && (
               <Link to="/admin" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">Admin</Link>
