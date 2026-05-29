@@ -1,5 +1,6 @@
 import ServiceCard from "@/components/ServiceCard";
 import BackButton from "@/components/BackButton";
+import TrackOrderCTA from "@/components/TrackOrderCTA";
 import { services } from "@/data/products";
 
 const serviceCategories = [
@@ -14,9 +15,13 @@ const Services = () => {
     <div className="container mx-auto px-4 py-8">
       <BackButton />
       <h1 className="font-display text-3xl font-bold text-foreground mb-2">Nuestros Servicios</h1>
-      <p className="text-muted-foreground mb-10 max-w-2xl">
+      <p className="text-muted-foreground mb-8 max-w-2xl">
         Servicios técnicos profesionales para todas tus necesidades tecnológicas. Desde reparaciones hasta instalaciones completas.
       </p>
+
+      <div className="mb-10 [&>section]:mt-0">
+        <TrackOrderCTA />
+      </div>
 
       {serviceCategories.map((cat) => {
         const catServices = services.filter((s) => s.category === cat.id);
