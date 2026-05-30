@@ -705,6 +705,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      approve_repair_order: { Args: { _order_id: string }; Returns: undefined }
       delete_user_by_admin: { Args: { _user_id: string }; Returns: undefined }
       find_repair_customer_by_document: {
         Args: { _doc: string }
@@ -831,6 +832,7 @@ export type Database = {
         | "entregado"
         | "cancelado"
         | "pendiente_aprobacion"
+        | "aprobado"
         | "garantia"
     }
     CompositeTypes: {
@@ -970,6 +972,7 @@ export const Constants = {
         "entregado",
         "cancelado",
         "pendiente_aprobacion",
+        "aprobado",
         "garantia",
       ],
     },
