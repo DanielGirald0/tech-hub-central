@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Loader2, Package } from "lucide-react";
+import { Search, Loader2, Package, CheckCircle2, LogIn } from "lucide-react";
 import { REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus } from "@/lib/repairs";
 import { useAuth } from "@/contexts/AuthContext";
 import RegisterCTAModal from "@/components/RegisterCTAModal";
 import BackButton from "@/components/BackButton";
+import { useToast } from "@/hooks/use-toast";
 
 interface OrderResult {
+  id?: string;
   order_number: string;
   status: RepairStatus;
   received_at: string;
@@ -32,6 +34,7 @@ interface HistoryRow {
 
 const TrackRepair = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [orderNumber, setOrderNumber] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,6 +42,7 @@ const TrackRepair = () => {
   const [order, setOrder] = useState<OrderResult | null>(null);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [showCTA, setShowCTA] = useState(false);
+  const [approving, setApproving] = useState(false);
   const [params] = useSearchParams();
 
   useEffect(() => {
@@ -68,6 +72,26 @@ const TrackRepair = () => {
     if (!user) {
       setTimeout(() => setShowCTA(true), 800);
     }
+  };
+
+  const approve = async () => {
+    if (!order?.id) return;
+    setApproving(true);
+    const { error } = await (supabase.rpc as any)("approve_repair_order", { _order_id: order.id });
+    setApproving(false);
+    if (error) {
+      toast({ title: "No se pudo aprobar", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "¡Aprobado!", description: "Has aprobado la reparación correctamente." });
+    // refresh
+    const [{ data: orderData }, { data: histData }] = await Promise.all([
+      (supabase.rpc as any)("lookup_repair_order", { _order_number: orderNumber.trim(), _phone: phone.trim() }),
+      (supabase.rpc as any)("get_repair_order_history", { _order_number: orderNumber.trim(), _phone: phone.trim() }),
+    ]);
+    const o = Array.isArray(orderData) ? orderData[0] : orderData;
+    if (o) setOrder({ ...(o as OrderResult), id: order.id });
+    setHistory((histData as HistoryRow[]) || []);
   };
 
   return (
@@ -148,6 +172,49 @@ const TrackRepair = () => {
               <div className="mt-3">
                 <div className="text-xs uppercase text-muted-foreground tracking-wider mb-1">Diagnóstico</div>
                 <p className="text-foreground text-sm">{order.diagnosis}</p>
+              </div>
+            )}
+
+            {order.status === "pendiente_aprobacion" && (
+              <div className="mt-5 pt-5 border-t border-border">
+                {user ? (
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <p className="text-emerald-200 font-semibold text-sm uppercase tracking-wider">Aprobación requerida</p>
+                      <p className="text-foreground text-sm mt-1">
+                        Revisa el diagnóstico y el valor cotizado{order.cost ? ` (${formatCOP(Number(order.cost))})` : ""}. Aprueba para que iniciemos la reparación.
+                      </p>
+                    </div>
+                    <button
+                      onClick={approve}
+                      disabled={approving}
+                      className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-5 py-2.5 rounded-md uppercase tracking-wider text-sm flex items-center justify-center gap-2 disabled:opacity-60 whitespace-nowrap"
+                    >
+                      {approving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                      Aprobar reparación
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
+                    <p className="text-foreground text-sm mb-3">
+                      Inicia sesión o crea una cuenta para aprobar la reparación y acceder al historial completo de tus servicios.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        to="/login"
+                        className="bg-primary text-primary-foreground font-semibold px-4 py-2 rounded-md text-sm uppercase tracking-wider flex items-center gap-2 hover:bg-primary/90"
+                      >
+                        <LogIn className="w-4 h-4" /> Iniciar sesión
+                      </Link>
+                      <Link
+                        to="/register"
+                        className="border border-primary text-primary font-semibold px-4 py-2 rounded-md text-sm uppercase tracking-wider hover:bg-primary/10"
+                      >
+                        Crear cuenta
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
