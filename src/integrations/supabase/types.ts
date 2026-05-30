@@ -506,6 +506,7 @@ export type Database = {
       repair_orders: {
         Row: {
           assigned_technician: string | null
+          assigned_technician_id: string | null
           cost: number
           created_at: string
           customer_id: string
@@ -525,6 +526,7 @@ export type Database = {
         }
         Insert: {
           assigned_technician?: string | null
+          assigned_technician_id?: string | null
           cost?: number
           created_at?: string
           customer_id: string
@@ -544,6 +546,7 @@ export type Database = {
         }
         Update: {
           assigned_technician?: string | null
+          assigned_technician_id?: string | null
           cost?: number
           created_at?: string
           customer_id?: string
@@ -761,6 +764,30 @@ export type Database = {
           to_status: Database["public"]["Enums"]["repair_status"]
         }[]
       }
+      get_repair_report: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          brand: string
+          cost: number
+          customer_document: string
+          customer_name: string
+          customer_phone: string
+          delivered_at: string
+          device_type: string
+          estimated_date: string
+          id: string
+          model: string
+          order_number: string
+          received_at: string
+          status: Database["public"]["Enums"]["repair_status"]
+          technician_id: string
+          technician_name: string
+        }[]
+      }
+      get_repair_report_summary: {
+        Args: { _from: string; _to: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -768,6 +795,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_staff: { Args: { _uid: string }; Returns: boolean }
       link_repair_customer_to_user_by_doc: {
         Args: { _doc: string; _user_id: string }
         Returns: number
