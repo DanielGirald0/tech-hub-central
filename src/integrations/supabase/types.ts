@@ -811,6 +811,7 @@ export type Database = {
           device_type: string
           diagnosis: string
           estimated_date: string
+          id: string
           model: string
           order_number: string
           received_at: string
