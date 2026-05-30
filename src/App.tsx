@@ -32,6 +32,7 @@ const AdminRepairOrders = lazy(() => import("./pages/admin/repairs/AdminRepairOr
 const AdminRepairOrderNew = lazy(() => import("./pages/admin/repairs/AdminRepairOrderNew"));
 const AdminRepairOrderDetail = lazy(() => import("./pages/admin/repairs/AdminRepairOrderDetail"));
 const AdminRepairCustomers = lazy(() => import("./pages/admin/repairs/AdminRepairCustomers"));
+const AdminRepairReports = lazy(() => import("./pages/admin/repairs/AdminRepairReports"));
 const TrackRepair = lazy(() => import("./pages/TrackRepair"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
