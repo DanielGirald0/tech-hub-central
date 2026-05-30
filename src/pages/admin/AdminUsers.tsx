@@ -263,7 +263,7 @@ const EditUserDialog = ({ user, onClose, onSaved }: { user: UserRow; onClose: ()
     address: user.address || "",
     notes: user.notes || "",
     account_status: user.account_status || "active",
-    role: user.role as "admin" | "customer",
+    role: user.role as "admin" | "customer" | "technician",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -335,10 +335,11 @@ const EditUserDialog = ({ user, onClose, onSaved }: { user: UserRow; onClose: ()
             </div>
             <div>
               <Label>Rol</Label>
-              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as "admin" | "customer" })}>
+              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as "admin" | "customer" | "technician" })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="customer">Cliente</SelectItem>
+                  <SelectItem value="technician">Técnico</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
