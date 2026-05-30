@@ -32,6 +32,7 @@ const AdminRepairOrders = lazy(() => import("./pages/admin/repairs/AdminRepairOr
 const AdminRepairOrderNew = lazy(() => import("./pages/admin/repairs/AdminRepairOrderNew"));
 const AdminRepairOrderDetail = lazy(() => import("./pages/admin/repairs/AdminRepairOrderDetail"));
 const AdminRepairCustomers = lazy(() => import("./pages/admin/repairs/AdminRepairCustomers"));
+const AdminRepairReports = lazy(() => import("./pages/admin/repairs/AdminRepairReports"));
 const TrackRepair = lazy(() => import("./pages/TrackRepair"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
@@ -90,11 +91,12 @@ const App = () => (
                 <Route path="/admin/services" element={<ProtectedRoute requiredRole="admin"><AdminServices /></ProtectedRoute>} />
                 <Route path="/admin/alegra" element={<ProtectedRoute requiredRole="admin"><AdminAlegra /></ProtectedRoute>} />
                 <Route path="/admin/reviews" element={<ProtectedRoute requiredRole="admin"><AdminReviews /></ProtectedRoute>} />
-                <Route path="/admin/repairs" element={<ProtectedRoute requiredRole="admin"><AdminRepairsDashboard /></ProtectedRoute>} />
-                <Route path="/admin/repairs/orders" element={<ProtectedRoute requiredRole="admin"><AdminRepairOrders /></ProtectedRoute>} />
-                <Route path="/admin/repairs/orders/new" element={<ProtectedRoute requiredRole="admin"><AdminRepairOrderNew /></ProtectedRoute>} />
-                <Route path="/admin/repairs/orders/:id" element={<ProtectedRoute requiredRole="admin"><AdminRepairOrderDetail /></ProtectedRoute>} />
-                <Route path="/admin/repairs/customers" element={<ProtectedRoute requiredRole="admin"><AdminRepairCustomers /></ProtectedRoute>} />
+                <Route path="/admin/repairs" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairsDashboard /></ProtectedRoute>} />
+                <Route path="/admin/repairs/orders" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairOrders /></ProtectedRoute>} />
+                <Route path="/admin/repairs/orders/new" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairOrderNew /></ProtectedRoute>} />
+                <Route path="/admin/repairs/orders/:id" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairOrderDetail /></ProtectedRoute>} />
+                <Route path="/admin/repairs/customers" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairCustomers /></ProtectedRoute>} />
+                <Route path="/admin/repairs/reports" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairReports /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               </Suspense>

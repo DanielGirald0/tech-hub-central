@@ -11,6 +11,7 @@ const AdminRepairOrderNew = () => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [technicians, setTechnicians] = useState<{ user_id: string; name: string }[]>([]);
 
   const [customerMode, setCustomerMode] = useState<"new" | "existing">("new");
   const [customerId, setCustomerId] = useState("");
@@ -18,9 +19,14 @@ const AdminRepairOrderNew = () => {
   const [docLookup, setDocLookup] = useState<{ loading: boolean; matched: any | null; checked: boolean }>({ loading: false, matched: null, checked: false });
   const [device, setDevice] = useState({ device_type: "", brand: "", model: "", serial_imei: "", device_password: "", accessories: "", physical_condition: "" });
   const [order, setOrder] = useState({ reported_issue: "", assigned_technician: "", estimated_date: "", warranty_days: 30, cost: 0 });
+  const [technicianId, setTechnicianId] = useState<string>("");
 
   useEffect(() => {
     (supabase.from as any)("repair_customers").select("id, name, phone, document_number").order("name").then(({ data }: any) => setCustomers(data || []));
+    (supabase.rpc as any)("get_all_users").then(({ data }: any) => {
+      const staff = (data || []).filter((u: any) => u.role === "technician" || u.role === "admin");
+      setTechnicians(staff.map((u: any) => ({ user_id: u.user_id, name: u.name || u.email })));
+    });
   }, []);
 
   const lookupDocument = async (doc: string) => {
@@ -93,6 +99,7 @@ const AdminRepairOrderNew = () => {
         device_id: dev.id,
         reported_issue: order.reported_issue,
         assigned_technician: order.assigned_technician,
+        assigned_technician_id: technicianId || null,
         estimated_date: order.estimated_date || null,
         warranty_days: Number(order.warranty_days) || 0,
         cost: Number(order.cost) || 0,
@@ -187,7 +194,22 @@ const AdminRepairOrderNew = () => {
         <Section title="Orden">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="Falla reportada" value={order.reported_issue} onChange={(v) => setOrder({ ...order, reported_issue: v })} className="md:col-span-2" />
-            <Field label="Técnico asignado" value={order.assigned_technician} onChange={(v) => setOrder({ ...order, assigned_technician: v })} />
+            <div>
+              <label className="text-xs uppercase tracking-wider text-muted-foreground mb-1 block">Técnico asignado</label>
+              <select
+                value={technicianId}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setTechnicianId(id);
+                  const t = technicians.find((x) => x.user_id === id);
+                  setOrder({ ...order, assigned_technician: t?.name || "" });
+                }}
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="">— Sin asignar —</option>
+                {technicians.map((t) => <option key={t.user_id} value={t.user_id}>{t.name}</option>)}
+              </select>
+            </div>
             <Field label="Fecha estimada" type="date" value={order.estimated_date} onChange={(v) => setOrder({ ...order, estimated_date: v })} />
             <Field label="Garantía (días)" type="number" value={String(order.warranty_days)} onChange={(v) => setOrder({ ...order, warranty_days: Number(v) })} />
             <Field label="Costo (COP)" type="number" value={String(order.cost)} onChange={(v) => setOrder({ ...order, cost: Number(v) })} />

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import BackButton from "@/components/BackButton";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Wrench, Plus, Users, ClipboardList, Activity } from "lucide-react";
+import { Wrench, Plus, Users, ClipboardList, Activity, BarChart3 } from "lucide-react";
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, RepairStatus } from "@/lib/repairs";
 
 const AdminRepairsDashboard = () => {
@@ -53,6 +53,9 @@ const AdminRepairsDashboard = () => {
         <div className="flex flex-wrap gap-2">
           <Link to="/admin/repairs/customers" className="bg-card border border-border px-4 py-2.5 rounded-md text-sm font-medium hover:border-primary/30 flex items-center gap-2">
             <Users className="w-4 h-4" /> Clientes
+          </Link>
+          <Link to="/admin/repairs/reports" className="bg-card border border-border px-4 py-2.5 rounded-md text-sm font-medium hover:border-primary/30 flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" /> Reportes
           </Link>
           <Link to="/admin/repairs/orders" className="bg-card border border-border px-4 py-2.5 rounded-md text-sm font-medium hover:border-primary/30 flex items-center gap-2">
             <ClipboardList className="w-4 h-4" /> Todas las órdenes

@@ -1,9 +1,11 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
+type Role = "admin" | "technician" | "customer";
+
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: "admin";
+  requiredRole?: Role | Role[];
 }
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
@@ -18,7 +20,12 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   }
 
   if (!user) return <Navigate to="/login" replace />;
-  if (requiredRole === "admin" && userRole !== "admin") return <Navigate to="/" replace />;
+  if (requiredRole) {
+    const allowed = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (!userRole || !allowed.includes(userRole as Role)) {
+      return <Navigate to="/" replace />;
+    }
+  }
 
   return <>{children}</>;
 };

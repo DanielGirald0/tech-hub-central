@@ -51,9 +51,17 @@ const Navbar = () => {
             {user && userRole === "admin" && (
               <Link
                 to="/admin"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname.startsWith("/admin") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname === "/admin" || (location.pathname.startsWith("/admin") && !location.pathname.startsWith("/admin/repairs")) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
               >
                 Admin
+              </Link>
+            )}
+            {user && (userRole === "admin" || userRole === "technician") && (
+              <Link
+                to="/admin/repairs"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname.startsWith("/admin/repairs") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+              >
+                Taller
               </Link>
             )}
           </nav>
@@ -114,6 +122,9 @@ const Navbar = () => {
 
             {user && userRole === "admin" && (
               <Link to="/admin" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">Admin</Link>
+            )}
+            {user && (userRole === "admin" || userRole === "technician") && (
+              <Link to="/admin/repairs" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">Taller</Link>
             )}
 
             {user ? (

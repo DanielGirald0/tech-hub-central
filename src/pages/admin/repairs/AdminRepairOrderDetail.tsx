@@ -16,6 +16,7 @@ const AdminRepairOrderDetail = () => {
   const [photos, setPhotos] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [technicians, setTechnicians] = useState<{ user_id: string; name: string }[]>([]);
   const fileBefore = useRef<HTMLInputElement>(null);
   const fileAfter = useRef<HTMLInputElement>(null);
 
@@ -33,6 +34,13 @@ const AdminRepairOrderDetail = () => {
 
   useEffect(() => { load(); }, [id]);
 
+  useEffect(() => {
+    (supabase.rpc as any)("get_all_users").then(({ data }: any) => {
+      const staff = (data || []).filter((u: any) => u.role === "technician" || u.role === "admin");
+      setTechnicians(staff.map((u: any) => ({ user_id: u.user_id, name: u.name || u.email })));
+    });
+  }, []);
+
   const save = async () => {
     setSaving(true);
     const { error } = await (supabase.from as any)("repair_orders").update({
@@ -40,6 +48,7 @@ const AdminRepairOrderDetail = () => {
       diagnosis: order.diagnosis,
       solution: order.solution,
       assigned_technician: order.assigned_technician,
+      assigned_technician_id: order.assigned_technician_id || null,
       cost: Number(order.cost) || 0,
       estimated_date: order.estimated_date || null,
       warranty_days: Number(order.warranty_days) || 0,
@@ -201,7 +210,21 @@ const AdminRepairOrderDetail = () => {
             <select value={order.status} onChange={(e) => setOrder({ ...order, status: e.target.value })} className={`w-full rounded-md px-3 py-2 text-sm font-semibold border mb-3 ${REPAIR_STATUS_COLOR[order.status as RepairStatus]}`} style={{ colorScheme: "dark" }}>
               {REPAIR_STATUSES.map((s) => <option key={s} value={s} className="bg-card text-foreground">{REPAIR_STATUS_LABEL[s]}</option>)}
             </select>
-            <Editable label="Técnico asignado" value={order.assigned_technician} onChange={(v) => setOrder({ ...order, assigned_technician: v })} />
+            <div className="mb-3">
+              <label className="text-xs uppercase tracking-wider text-muted-foreground mb-1 block">Técnico asignado</label>
+              <select
+                value={order.assigned_technician_id || ""}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  const t = technicians.find((x) => x.user_id === id);
+                  setOrder({ ...order, assigned_technician_id: id || null, assigned_technician: t?.name || order.assigned_technician });
+                }}
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="">{order.assigned_technician || "— Sin asignar —"}</option>
+                {technicians.map((t) => <option key={t.user_id} value={t.user_id}>{t.name}</option>)}
+              </select>
+            </div>
             <Editable label="Costo (COP)" type="number" value={order.cost} onChange={(v) => setOrder({ ...order, cost: v })} />
             <Editable label="Garantía (días)" type="number" value={order.warranty_days} onChange={(v) => setOrder({ ...order, warranty_days: v })} />
             <Editable label="Fecha estimada" type="date" value={order.estimated_date?.slice(0, 10) || ""} onChange={(v) => setOrder({ ...order, estimated_date: v })} />

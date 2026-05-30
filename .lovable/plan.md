@@ -1,99 +1,70 @@
-# Sincronización inteligente del módulo técnico
+# Rol Técnico + Módulo de Reportes
 
-Objetivo: usar el **número de documento (cédula)** como identificador único que conecta cuentas de usuario con clientes del módulo de servicio técnico, en ambos sentidos.
+## 1. Base de datos (migración)
 
-## 1. Base de datos (1 migración)
+**Enum `app_role`**: agregar valor `'technician'`.
 
-**`profiles`** — agregar columna:
-- `document_number TEXT UNIQUE` (nullable, normalizado: solo dígitos)
-- índice único parcial `WHERE document_number IS NOT NULL`
+**`repair_orders`**: agregar columna `assigned_technician_id uuid` (referencia lógica a `auth.users`, sin FK), índice por `assigned_technician_id` y por `received_at`.
 
-**`repair_customers`** — agregar columnas:
-- `document_number TEXT UNIQUE NOT NULL` (obligatorio en nuevas órdenes; migración existente: nullable inicial + backfill manual)
-- `user_id UUID` (FK lógica a `auth.users`, nullable) — vínculo con la cuenta
-- índice único parcial sobre `document_number`
-- índice sobre `user_id`
+**Funciones SQL nuevas / actualizadas**:
+- `has_role` ya cubre el nuevo valor.
+- Helper `is_staff(uid)` = `has_role(uid,'admin') OR has_role(uid,'technician')`.
+- `admin_update_user`: aceptar rol `technician`. Solo admin puede asignar/quitar el rol `admin`; técnicos no acceden a esta función.
+- `get_repair_report(_from timestamptz, _to timestamptz)`: devuelve filas con nº orden, fechas, cliente, documento, técnico asignado, equipo, marca, modelo, estado, costo. SECURITY DEFINER; valida `is_staff(auth.uid())`.
+- `get_repair_report_summary(_from, _to)`: totales, entregadas, pendientes, canceladas, ingresos, ticket promedio, top técnico por órdenes y por facturación, series diarias (órdenes/ingresos), órdenes por técnico, conteo por estado. Devuelve `jsonb`.
 
-**Función `public.link_repair_customer_to_user()`** (SECURITY DEFINER):
-- Se ejecuta en `handle_new_user` y cuando el usuario actualiza su `document_number` en profiles
-- Busca `repair_customers` con el mismo documento y setea `user_id`
-- Actualiza también email/teléfono si faltan
-
-**Función `public.find_repair_customer_by_document(_doc TEXT)`** (SECURITY DEFINER, solo admin):
-- Devuelve datos del cliente + datos del usuario registrado si existe (join `profiles` por documento)
-- Usada por el form de nueva orden para autocompletar
-
-**Función `public.get_my_repair_orders()`** (SECURITY DEFINER):
-- Devuelve órdenes del usuario autenticado uniendo por `user_id` directo o por `document_number` en su profile
-- Usada en el Dashboard del cliente
-
-**Trigger en `profiles`**: al INSERT/UPDATE de `document_number`, llamar `link_repair_customer_to_user`.
+**RLS**:
+- `repair_customers`, `repair_devices`, `repair_orders`, `repair_order_history`, `repair_order_photos`: políticas separadas
+  - Admin: `ALL` (mantener).
+  - Technician: `SELECT/INSERT/UPDATE` permitido; `DELETE` denegado.
+- `user_roles`: técnicos no pueden modificar (políticas existentes ya limitan a admin).
+- `profiles`: técnicos pueden ver perfiles (para cliente técnico) — opcional, agregar `SELECT` para technician.
 
 ## 2. Frontend
 
-**`AdminRepairOrderNew.tsx`** (cliente nuevo):
-- Campo `Cédula/Documento *` como primer input
-- Al hacer blur/debounce → llama `find_repair_customer_by_document`
-- Si encuentra: auto-rellena nombre/tel/email/dirección + muestra badge "Cliente existente" con link a su historial
-- Validación: documento obligatorio + email válido si se ingresa
-- Backend: usa `upsert` por documento para evitar duplicados
+**`AuthContext`**: `userRole` ahora `"customer" | "admin" | "technician" | null`.
 
-**`AdminRepairCustomers.tsx`**:
-- Mostrar columna "Documento" y badge "Cuenta vinculada" cuando `user_id IS NOT NULL`
-- Buscador por documento/nombre/teléfono
+**`ProtectedRoute`**: aceptar `requiredRole?: "admin" | "technician" | Array<...>`. Helper para "staff" (admin o técnico).
 
-**`Dashboard.tsx`** (cliente):
-- Nueva pestaña **"Servicio Técnico"** que llama `get_my_repair_orders`
-- Lista órdenes con estado, equipo, fecha, garantía, link a `/seguimiento?n=...`
-- Si el profile no tiene `document_number`: banner "Agrega tu documento para ver tu historial técnico"
+**Rutas nuevas / ajustadas en `App.tsx`**:
+- `/admin/repairs/*` → permitidas a `admin` y `technician`.
+- `/admin/repairs/reports` → nueva, staff.
+- Resto de `/admin/*` (productos, usuarios, categorías, etc.) → solo `admin`.
 
-**`Register.tsx`**:
-- Agregar campo opcional **"Número de documento"** durante el registro
-- Se guarda en profile → trigger auto-vincula órdenes previas
-- Toast: "Hemos encontrado N órdenes de servicio asociadas a tu cédula"
+**Navbar / Layout admin**: si el rol es `technician`, mostrar acceso directo a Servicio Técnico y Reportes; ocultar enlaces de admin generales.
 
-**`TrackRepair.tsx`** (consulta pública):
-- Después de mostrar resultado, si el usuario NO está autenticado → modal moderno:
-  > "Regístrate para tener una mejor experiencia y acceder a tu historial completo, garantías y seguimiento en tiempo real."
-  - Botones: **Crear cuenta** / **Iniciar sesión**
-- Si SÍ está autenticado pero la orden no está vinculada a su cuenta y su documento coincide → vincular automáticamente
+**`AdminUsers`**: agregar opción `Técnico` en selector de rol.
 
-**`components/BackButton.tsx`** (nuevo):
-- Componente reutilizable: ícono `ArrowLeft` + "Volver"
-- Usa `navigate(-1)` con fallback a `/` si `history.length <= 1`
-- Mobile-friendly (top-left fijo, oculto en home)
-- Integrado en: `Services`, `Products`, `ProductDetail`, `Cart`, `Contact`, `About`, `Security`, `TrackRepair`, `Dashboard`, todas las páginas admin
+**`AdminRepairsDashboard`**: agregar tarjeta/enlace a "Reportes".
 
-## 3. Anti-duplicados
+**Nueva página `src/pages/admin/repairs/AdminRepairReports.tsx`**:
+- Filtros: Hoy, Ayer, Esta semana, Este mes, Últimos 30 días, Personalizado (date pickers).
+- KPIs: total órdenes, entregadas, pendientes, canceladas, ingresos, ticket promedio, top técnico (órdenes y facturación), órdenes/ingresos del día/semana/mes.
+- Gráficos con `recharts` (ya disponible vía shadcn chart): barras de órdenes por día, líneas de ingresos por día, barras por técnico, dona de estados.
+- Tabla ordenable + búsqueda (cliente, nº orden, técnico). Paginación cliente.
+- Exportar **Excel** (CSV con BOM, descarga directa) y **PDF** (usar `jspdf` + `jspdf-autotable`). Incluye logo, rango, fecha de generación, resumen y listado.
+- Responsive (grid `sm:grid-cols-2 lg:grid-cols-4`).
 
-- `document_number UNIQUE` a nivel DB (constraint dura)
-- Al crear orden: `INSERT ... ON CONFLICT (document_number) DO UPDATE` en `repair_customers`
-- Validación frontend: si el documento existe → forzar modo "cliente existente"
-- Email no se exige único (un cliente puede no tener email); se valida formato
+**Asignación de técnico en órdenes**: en `AdminRepairOrderNew` / `AdminRepairOrderDetail`, agregar select de técnico (lista vía `get_all_users` filtrada por rol technician + admin). Guarda `assigned_technician_id`. Mantener campo libre `assigned_technician` para retrocompatibilidad (auto-rellenar con el nombre).
 
-## 4. Detalles técnicos
+## 3. Dependencias nuevas
+- `jspdf`, `jspdf-autotable` para exportación PDF.
 
-- Normalización: documento = solo dígitos, mínimo 5
-- Migración de datos existentes: clientes actuales sin documento quedan con `NULL`; admin debe completarlos al editar (banner en lista de clientes)
-- `get_my_repair_orders` evita exponer datos sensibles (solo del usuario)
-- Sin cambios en `repair_orders` ni `repair_devices` (siguen apuntando a `customer_id`)
-- `App.tsx`: sin cambios de rutas
-- No se toca el flujo de pedidos/ecommerce existente
+## 4. Seguridad
+- Todas las RPC nuevas validan `is_staff`.
+- DELETEs en módulo de reparaciones bloqueados a technician vía RLS.
+- Rutas no-reparación de admin permanecen exclusivas de admin.
+- Cliente nunca puede acceder a `/admin/*`.
 
 ## Archivos a crear/editar
-
-**Crear:**
-- `src/components/BackButton.tsx`
-- `src/components/RegisterCTAModal.tsx`
-
-**Editar:**
-- `supabase/migrations/<new>.sql` (1 migración)
-- `src/pages/admin/repairs/AdminRepairOrderNew.tsx` (campo documento + autocompletar)
-- `src/pages/admin/repairs/AdminRepairCustomers.tsx` (mostrar documento + vínculo)
-- `src/pages/Dashboard.tsx` (nueva pestaña Servicio Técnico + BackButton)
-- `src/pages/Register.tsx` (campo documento opcional)
-- `src/pages/TrackRepair.tsx` (modal CTA + auto-vincular)
-- `src/pages/Services.tsx`, `Products.tsx`, `ProductDetail.tsx`, `Cart.tsx`, `Contact.tsx`, `About.tsx`, `Security.tsx` (BackButton)
-- Páginas admin (BackButton en cabecera)
-
-¿Lo confirmamos así? Si quieres que el documento sea obligatorio también en el registro (no solo opcional), avísame.
+- `supabase/migrations/<ts>_technician_role_and_reports.sql`
+- `src/contexts/AuthContext.tsx`
+- `src/components/ProtectedRoute.tsx`
+- `src/App.tsx`
+- `src/components/Navbar.tsx` (acceso técnico)
+- `src/pages/admin/AdminUsers.tsx` (opción rol técnico)
+- `src/pages/admin/repairs/AdminRepairsDashboard.tsx` (link a reportes)
+- `src/pages/admin/repairs/AdminRepairOrderNew.tsx` / `AdminRepairOrderDetail.tsx` (selector técnico)
+- `src/pages/admin/repairs/AdminRepairReports.tsx` (nuevo)
+- `src/lib/repairs.ts` (helpers de fechas/labels si hace falta)
+- `package.json` (+ jspdf, jspdf-autotable)

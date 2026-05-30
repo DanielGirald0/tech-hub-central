@@ -25,11 +25,11 @@ interface UserRow {
   address: string | null;
   notes: string | null;
   account_status: string;
-  role: "customer" | "admin";
+  role: "customer" | "admin" | "technician";
   created_at: string;
 }
 
-type RoleFilter = "all" | "admin" | "customer";
+type RoleFilter = "all" | "admin" | "technician" | "customer";
 type StatusFilter = "all" | "active" | "suspended" | "inactive";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -110,6 +110,7 @@ const AdminUsers = () => {
               <SelectContent>
                 <SelectItem value="all">Todos los roles</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="technician">Técnico</SelectItem>
                 <SelectItem value="customer">Cliente</SelectItem>
               </SelectContent>
             </Select>
@@ -139,8 +140,8 @@ const AdminUsers = () => {
                     <div className="font-medium text-foreground truncate">{u.name || "—"}</div>
                     <div className="text-xs text-muted-foreground truncate">{u.email}</div>
                   </div>
-                  <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${u.role === "admin" ? "bg-primary/10 text-primary border-primary/20" : "bg-secondary text-muted-foreground border-border"}`}>
-                    {u.role === "admin" ? <Shield className="w-3 h-3" /> : <User className="w-3 h-3" />}{u.role}
+                  <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${u.role === "admin" ? "bg-primary/10 text-primary border-primary/20" : u.role === "technician" ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-secondary text-muted-foreground border-border"}`}>
+                    {u.role === "admin" ? <Shield className="w-3 h-3" /> : u.role === "technician" ? <Wrench className="w-3 h-3" /> : <User className="w-3 h-3" />}{u.role}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -185,8 +186,8 @@ const AdminUsers = () => {
                       <td className="p-3 text-muted-foreground">{u.document_number || "—"}</td>
                       <td className="p-3 text-muted-foreground">{u.phone || "—"}</td>
                       <td className="p-3">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${u.role === "admin" ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"}`}>
-                          {u.role === "admin" ? <Shield className="w-3 h-3" /> : <User className="w-3 h-3" />}{u.role}
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${u.role === "admin" ? "bg-primary/10 text-primary" : u.role === "technician" ? "bg-blue-500/10 text-blue-400" : "bg-secondary text-muted-foreground"}`}>
+                          {u.role === "admin" ? <Shield className="w-3 h-3" /> : u.role === "technician" ? <Wrench className="w-3 h-3" /> : <User className="w-3 h-3" />}{u.role}
                         </span>
                       </td>
                       <td className="p-3">
@@ -262,7 +263,7 @@ const EditUserDialog = ({ user, onClose, onSaved }: { user: UserRow; onClose: ()
     address: user.address || "",
     notes: user.notes || "",
     account_status: user.account_status || "active",
-    role: user.role as "admin" | "customer",
+    role: user.role as "admin" | "customer" | "technician",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -334,10 +335,11 @@ const EditUserDialog = ({ user, onClose, onSaved }: { user: UserRow; onClose: ()
             </div>
             <div>
               <Label>Rol</Label>
-              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as "admin" | "customer" })}>
+              <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as "admin" | "customer" | "technician" })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="customer">Cliente</SelectItem>
+                  <SelectItem value="technician">Técnico</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
