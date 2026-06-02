@@ -20,7 +20,7 @@ const ProductDetail = () => {
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
-      const { data } = await supabase.from("products").select("*").eq("id", id!).gt("stock", 0).maybeSingle();
+      const { data } = await supabase.from("products").select("*").eq("id", id!).maybeSingle();
       setProduct(data);
       if (data) {
         const { data: rel } = await supabase
