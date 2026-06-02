@@ -24,6 +24,7 @@ const Products = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [inStockCount, setInStockCount] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -86,18 +87,24 @@ const Products = () => {
       const from = (page - 1) * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
+      const isSearching = Boolean(appliedSearch);
+
       let query = db
         .from("products")
         .select("*, product_categories(category_id, categories(id, name, slug))", { count: "exact" })
-        .gt("stock", 0)
         .gte("final_price", appliedPriceRange[0])
         .lte("final_price", appliedPriceRange[1])
+        // Show in-stock first when searching so out-of-stock matches still appear at the end
+        .order("stock", { ascending: false })
         .order("name", { ascending: true })
         .range(from, to);
 
+      // Hide out-of-stock products in normal browsing; include them in search results
+      if (!isSearching) query = query.gt("stock", 0);
+
       if (productIds) query = query.in("id", productIds);
       if (appliedType) query = query.eq("product_type", appliedType);
-      if (appliedSearch) {
+      if (isSearching) {
         const term = appliedSearch.replace(/[%_]/g, "");
         query = query.or(
           `name.ilike.%${term}%,description.ilike.%${term}%,full_description.ilike.%${term}%,sku.ilike.%${term}%,reference.ilike.%${term}%,brand.ilike.%${term}%,category.ilike.%${term}%`,
@@ -107,6 +114,27 @@ const Products = () => {
       const { data, error, count } = await query;
       setProducts(error ? [] : data || []);
       setTotalCount(error ? 0 : count || 0);
+
+      // When searching, also compute how many of the matches are in stock
+      if (isSearching && !error) {
+        let countQuery = db
+          .from("products")
+          .select("id", { count: "exact", head: true })
+          .gt("stock", 0)
+          .gte("final_price", appliedPriceRange[0])
+          .lte("final_price", appliedPriceRange[1]);
+        if (productIds) countQuery = countQuery.in("id", productIds);
+        if (appliedType) countQuery = countQuery.eq("product_type", appliedType);
+        const term = appliedSearch.replace(/[%_]/g, "");
+        countQuery = countQuery.or(
+          `name.ilike.%${term}%,description.ilike.%${term}%,full_description.ilike.%${term}%,sku.ilike.%${term}%,reference.ilike.%${term}%,brand.ilike.%${term}%,category.ilike.%${term}%`,
+        );
+        const { count: inStock } = await countQuery;
+        setInStockCount(inStock || 0);
+      } else {
+        setInStockCount(error ? 0 : count || 0);
+      }
+
       setLoading(false);
     };
 
@@ -215,10 +243,20 @@ const Products = () => {
             <Button variant="outline" size="sm" onClick={() => setFiltersOpen(!filtersOpen)} className="border-border text-foreground lg:hidden">
               <Filter className="w-4 h-4 mr-2" /> Filtros
             </Button>
-            <span className="text-sm text-muted-foreground ml-auto">
-              {totalCount} {totalCount === 1 ? "producto encontrado" : "productos encontrados"}
-              {totalPages > 1 && ` · Página ${page} de ${totalPages}`}
-            </span>
+            <div className="text-sm text-muted-foreground ml-auto text-right">
+              <div>
+                {totalCount} {totalCount === 1 ? "producto encontrado" : "productos encontrados"}
+                {totalPages > 1 && ` · Página ${page} de ${totalPages}`}
+              </div>
+              {appliedSearch && totalCount > 0 && (
+                <div className="text-xs mt-0.5">
+                  <span className="text-green-500">{inStockCount} disponibles</span>
+                  {totalCount - inStockCount > 0 && (
+                    <span className="text-destructive"> · {totalCount - inStockCount} agotados</span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {filtersOpen && <div className="lg:hidden mb-6 bg-card border border-border rounded-xl p-4"><Filters /></div>}
