@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import BackButton from "@/components/BackButton";
 import { useSearchParams } from "react-router-dom";
-import { Filter, Loader2, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Loader2, Search, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,11 +17,14 @@ interface Category {
 }
 
 const MAX_PRICE = 20000000;
+const PAGE_SIZE = 24;
 
 const Products = () => {
   const [searchParams] = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,6 +69,7 @@ const Products = () => {
 
         if (linksError) {
           setProducts([]);
+          setTotalCount(0);
           setLoading(false);
           return;
         }
@@ -73,33 +77,45 @@ const Products = () => {
         productIds = ((links as unknown as { product_id: string }[]) || []).map((link) => link.product_id);
         if (productIds.length === 0) {
           setProducts([]);
+          setTotalCount(0);
           setLoading(false);
           return;
         }
       }
 
+      const from = (page - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
       let query = db
         .from("products")
-        .select("*, product_categories(category_id, categories(id, name, slug))")
+        .select("*, product_categories(category_id, categories(id, name, slug))", { count: "exact" })
         .gt("stock", 0)
         .gte("final_price", appliedPriceRange[0])
         .lte("final_price", appliedPriceRange[1])
         .order("name", { ascending: true })
-        .limit(120);
+        .range(from, to);
 
       if (productIds) query = query.in("id", productIds);
       if (appliedType) query = query.eq("product_type", appliedType);
       if (appliedSearch) {
         const term = appliedSearch.replace(/[%_]/g, "");
-        query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%,full_description.ilike.%${term}%,sku.ilike.%${term}%,reference.ilike.%${term}%`);
+        query = query.or(
+          `name.ilike.%${term}%,description.ilike.%${term}%,full_description.ilike.%${term}%,sku.ilike.%${term}%,reference.ilike.%${term}%,brand.ilike.%${term}%,category.ilike.%${term}%`,
+        );
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query;
       setProducts(error ? [] : data || []);
+      setTotalCount(error ? 0 : count || 0);
       setLoading(false);
     };
 
     loadProducts();
+  }, [appliedCategory, appliedType, appliedPriceRange, appliedSearch, page]);
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setPage(1);
   }, [appliedCategory, appliedType, appliedPriceRange, appliedSearch]);
 
   const activeFilters = useMemo(
@@ -125,6 +141,8 @@ const Products = () => {
     setAppliedPriceRange(priceRange);
     setFiltersOpen(false);
   };
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const formatCOP = (value: number) =>
     new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
@@ -197,7 +215,10 @@ const Products = () => {
             <Button variant="outline" size="sm" onClick={() => setFiltersOpen(!filtersOpen)} className="border-border text-foreground lg:hidden">
               <Filter className="w-4 h-4 mr-2" /> Filtros
             </Button>
-            <span className="text-sm text-muted-foreground ml-auto">{products.length} productos encontrados</span>
+            <span className="text-sm text-muted-foreground ml-auto">
+              {totalCount} {totalCount === 1 ? "producto encontrado" : "productos encontrados"}
+              {totalPages > 1 && ` · Página ${page} de ${totalPages}`}
+            </span>
           </div>
 
           {filtersOpen && <div className="lg:hidden mb-6 bg-card border border-border rounded-xl p-4"><Filters /></div>}
@@ -205,9 +226,36 @@ const Products = () => {
           {loading ? (
             <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
           ) : products.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              {products.map((product) => <ProductCard key={product.id} product={product} />)}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                {products.map((product) => <ProductCard key={product.id} product={product} />)}
+              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-8">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1 || loading}
+                    onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                    className="border-border text-foreground"
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
+                  </Button>
+                  <span className="text-sm text-muted-foreground px-3">
+                    {page} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages || loading}
+                    onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                    className="border-border text-foreground"
+                  >
+                    Siguiente <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-16 bg-card border border-border rounded-xl">
               <p className="text-muted-foreground">No se encontraron productos con esos criterios.</p>
