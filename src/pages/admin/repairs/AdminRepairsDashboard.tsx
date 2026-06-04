@@ -1,42 +1,27 @@
-import { useEffect, useState } from "react";
 import BackButton from "@/components/BackButton";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Wrench, Plus, Users, ClipboardList, Activity, BarChart3 } from "lucide-react";
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, RepairStatus } from "@/lib/repairs";
 
 const AdminRepairsDashboard = () => {
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [recent, setRecent] = useState<any[]>([]);
-  const [revenue, setRevenue] = useState(0);
-
-  useEffect(() => {
-    const load = async () => {
-      const promises = REPAIR_STATUSES.map((s) =>
-        (supabase.from as any)("repair_orders").select("id", { count: "exact", head: true }).eq("status", s),
-      );
-      const results = await Promise.all(promises);
-      const c: Record<string, number> = {};
-      REPAIR_STATUSES.forEach((s, i) => (c[s] = results[i].count || 0));
-      setCounts(c);
-
-      const { data } = await (supabase.from as any)("repair_orders")
-        .select("id, order_number, status, received_at, cost, repair_customers(name, phone), repair_devices(device_type, brand, model)")
-        .order("created_at", { ascending: false })
-        .limit(10);
-      setRecent(data || []);
-
-      const start = new Date();
-      start.setDate(1);
-      start.setHours(0, 0, 0, 0);
-      const { data: paid } = await (supabase.from as any)("repair_orders")
-        .select("cost")
-        .eq("status", "entregado")
-        .gte("delivered_at", start.toISOString());
-      setRevenue((paid || []).reduce((sum: number, r: any) => sum + Number(r.cost || 0), 0));
-    };
-    load();
-  }, []);
+  const { data } = useQuery({
+    queryKey: ["admin", "repair-dashboard"],
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)("get_repair_dashboard_stats");
+      if (error || !data) return { counts: {} as Record<string, number>, recent: [] as any[], revenue: 0 };
+      return {
+        counts: (data.counts_by_status || {}) as Record<string, number>,
+        recent: (data.recent || []) as any[],
+        revenue: Number(data.revenue_month) || 0,
+      };
+    },
+  });
+  const counts = data?.counts || {};
+  const recent = data?.recent || [];
+  const revenue = data?.revenue || 0;
 
   const active = REPAIR_STATUSES.filter((s) => s !== "entregado" && s !== "cancelado").reduce((sum, s) => sum + (counts[s] || 0), 0);
 
