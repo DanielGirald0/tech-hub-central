@@ -706,6 +706,27 @@ export type Database = {
         Returns: undefined
       }
       approve_repair_order: { Args: { _order_id: string }; Returns: undefined }
+      create_customer_repair_order: {
+        Args: {
+          p_accessories?: string
+          p_address?: string
+          p_brand?: string
+          p_category?: string
+          p_device_type?: string
+          p_document?: string
+          p_email?: string
+          p_model?: string
+          p_name: string
+          p_notes?: string
+          p_phone: string
+          p_reported_issue?: string
+          p_serial?: string
+        }
+        Returns: {
+          order_id: string
+          order_number: string
+        }[]
+      }
       delete_user_by_admin: { Args: { _user_id: string }; Returns: undefined }
       find_repair_customer_by_document: {
         Args: { _doc: string }
