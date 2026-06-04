@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,18 +27,35 @@ const Dashboard = () => {
   const { user, profile, userRole, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [orders, setOrders] = useState<any[]>([]);
-  const [repairOrders, setRepairOrders] = useState<any[]>([]);
+  const queryClient = useQueryClient();
   const [editName, setEditName] = useState(profile?.name || "");
   const [editPhone, setEditPhone] = useState(profile?.phone || "");
   const [editDoc, setEditDoc] = useState<string>(profile?.document_number || "");
   const [tab, setTab] = useState<"orders" | "repairs" | "profile">("repairs");
 
-  useEffect(() => {
-    if (!user) return;
-    supabase.from("orders").select("*").eq("customer_id", user.id).order("created_at", { ascending: false }).then(({ data }) => setOrders(data || []));
-    (supabase.rpc as any)("get_my_repair_orders").then(({ data }: any) => setRepairOrders(data || []));
-  }, [user]);
+  const { data: orders = [] } = useQuery({
+    queryKey: ["my-orders", user?.id],
+    enabled: !!user,
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("customer_id", user!.id)
+        .order("created_at", { ascending: false });
+      return data || [];
+    },
+  });
+
+  const { data: repairOrders = [] } = useQuery({
+    queryKey: ["my-repair-orders", user?.id, profile?.document_number],
+    enabled: !!user,
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data } = await (supabase.rpc as any)("get_my_repair_orders");
+      return data || [];
+    },
+  });
 
   useEffect(() => {
     setEditName(profile?.name || "");
@@ -55,8 +73,7 @@ const Dashboard = () => {
       toast({ title: "Error al actualizar", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Perfil actualizado", description: docDigits ? "Sincronizando tu historial técnico..." : undefined });
-      // refresh repair orders after linking
-      (supabase.rpc as any)("get_my_repair_orders").then(({ data }: any) => setRepairOrders(data || []));
+      queryClient.invalidateQueries({ queryKey: ["my-repair-orders"] });
     }
   };
 
@@ -73,7 +90,9 @@ const Dashboard = () => {
       toast({ title: "Error al cancelar", description: error.message, variant: "destructive" });
       return;
     }
-    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: "cancelado" } : o)));
+    queryClient.setQueryData(["my-orders", user?.id], (prev: any[] = []) =>
+      prev.map((o) => (o.id === id ? { ...o, status: "cancelado" } : o)),
+    );
     toast({ title: "Pedido cancelado" });
     const text = encodeURIComponent(`Hola, he cancelado el pedido #${id.slice(0, 8)}`);
     window.open(`https://wa.me/573107476909?text=${text}`, "_blank");
