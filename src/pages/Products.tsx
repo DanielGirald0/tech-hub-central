@@ -232,17 +232,17 @@ const Products = () => {
         </aside>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-4 gap-3">
+          <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
             <Button variant="outline" size="sm" onClick={() => setFiltersOpen(!filtersOpen)} className="border-border text-foreground lg:hidden">
               <Filter className="w-4 h-4 mr-2" /> Filtros
             </Button>
-            <div className="text-sm text-muted-foreground ml-auto text-right">
-              <div>
-                {totalCount} {totalCount === 1 ? "producto encontrado" : "productos encontrados"}
-                {totalPages > 1 && ` · Página ${page} de ${totalPages}`}
+            <div className="text-sm text-muted-foreground ml-auto text-right min-w-0">
+              <div className="whitespace-nowrap">
+                {totalCount.toLocaleString("es-CO")} {totalCount === 1 ? "producto" : "productos"}
+                {totalPages > 1 && ` · Pág. ${page}/${totalPages}`}
               </div>
               {appliedSearch && totalCount > 0 && (
-                <div className="text-xs mt-0.5">
+                <div className="text-xs mt-0.5 whitespace-nowrap">
                   <span className="text-green-500">{inStockCount} disponibles</span>
                   {totalCount - inStockCount > 0 && (
                     <span className="text-destructive"> · {totalCount - inStockCount} agotados</span>
