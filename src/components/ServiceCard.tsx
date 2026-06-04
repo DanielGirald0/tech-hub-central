@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Service } from "@/data/products";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,41 +24,26 @@ interface ServiceCardProps {
 
 const requestSchema = z.object({
   full_name: z.string().trim().min(1, "El nombre es obligatorio").max(100),
-  email: z.string().trim().email("Email inválido").max(255),
+  email: z.string().trim().email("Email inválido").max(255).or(z.literal("")).optional(),
   phone: z.string().trim().min(1, "El teléfono es obligatorio").max(30),
+  document: z.string().trim().max(30).optional().default(""),
   address: z.string().trim().max(300).optional().default(""),
   device_type: z.string().trim().max(200).optional().default(""),
+  brand: z.string().trim().max(100).optional().default(""),
+  model: z.string().trim().max(100).optional().default(""),
+  serial: z.string().trim().max(100).optional().default(""),
+  accessories: z.string().trim().max(300).optional().default(""),
   message: z.string().trim().max(1000).optional().default(""),
+  notes: z.string().trim().max(1000).optional().default(""),
 });
 
 type FormData = z.infer<typeof requestSchema>;
 
-const openWhatsApp = (service: Service, data: FormData) => {
+const openWhatsApp = (service: Service, data: FormData, orderNumber: string) => {
   const text = encodeURIComponent(
-    `Hola, quiero solicitar un servicio.\n\nNombre: ${data.full_name}\nTeléfono: ${data.phone}\nCorreo: ${data.email}\nServicio solicitado: ${service.name}\nEquipo: ${data.device_type || "No especificado"}\nDescripción del problema: ${data.message || "No especificada"}`
+    `Hola, acabo de registrar una orden de servicio técnico.\n\nOrden N°: ${orderNumber}\nNombre: ${data.full_name}\nTeléfono: ${data.phone}\nCorreo: ${data.email || "—"}\nServicio: ${service.name}\nEquipo: ${[data.device_type, data.brand, data.model].filter(Boolean).join(" ") || "No especificado"}\nFalla: ${data.message || "No especificada"}`
   );
   window.open(`https://wa.me/573107476909?text=${text}`, "_blank");
-};
-
-const saveRequest = async (
-  service: Service,
-  data: FormData,
-  userId?: string
-) => {
-  const { error } = await supabase.from("service_requests").insert({
-    service_type: service.id,
-    service_id: service.id,
-    service_name: service.name,
-    customer_id: userId || null,
-    full_name: data.full_name,
-    email: data.email,
-    phone: data.phone,
-    address: data.address || "",
-    device_type: data.device_type || "",
-    message: data.message || "",
-    description: data.message || "",
-  });
-  return error;
 };
 
 const ServiceCard = ({ service }: ServiceCardProps) => {
@@ -65,28 +51,39 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [createdOrder, setCreatedOrder] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState<FormData>({
     full_name: "",
     email: "",
     phone: "",
+    document: "",
     address: "",
     device_type: "",
+    brand: "",
+    model: "",
+    serial: "",
+    accessories: "",
     message: "",
+    notes: "",
   });
 
   const handleClick = () => {
+    setCreatedOrder(null);
     if (user && profile) {
       setForm({
         full_name: profile.name || "",
         email: profile.email || "",
         phone: profile.phone || "",
+        document: (profile as any).document_number || "",
         address: "",
         device_type: "",
+        brand: "", model: "", serial: "", accessories: "",
         message: "",
+        notes: "",
       });
     } else {
-      setForm({ full_name: "", email: "", phone: "", address: "", device_type: "", message: "" });
+      setForm({ full_name: "", email: "", phone: "", document: "", address: "", device_type: "", brand: "", model: "", serial: "", accessories: "", message: "", notes: "" });
     }
     setErrors({});
     setOpen(true);
@@ -106,24 +103,33 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
     setErrors({});
     setLoading(true);
 
-    const error = await saveRequest(service, result.data, user?.id);
-    if (error) {
-      console.error("Error saving service request:", error);
-      toast({
-        title: "Solicitud enviada por WhatsApp",
-        description: "No se pudo guardar en el sistema, pero puedes continuar por WhatsApp.",
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Solicitud registrada",
-        description: "Tu solicitud ha sido guardada exitosamente.",
-      });
-    }
+    const d = result.data;
+    const { data, error } = await (supabase.rpc as any)("create_customer_repair_order", {
+      p_name: d.full_name,
+      p_phone: d.phone,
+      p_email: d.email || "",
+      p_document: d.document || "",
+      p_address: d.address || "",
+      p_device_type: d.device_type || "",
+      p_brand: d.brand || "",
+      p_model: d.model || "",
+      p_serial: d.serial || "",
+      p_accessories: d.accessories || "",
+      p_category: service.name,
+      p_reported_issue: d.message || "",
+      p_notes: d.notes || "",
+    });
 
-    openWhatsApp(service, result.data);
     setLoading(false);
-    setOpen(false);
+    if (error) {
+      console.error("Error creating repair order:", error);
+      toast({ title: "No se pudo registrar la orden", description: error.message, variant: "destructive" });
+      return;
+    }
+    const orderNumber = data?.[0]?.order_number || "";
+    setCreatedOrder(orderNumber);
+    toast({ title: "Orden de servicio creada", description: `N° ${orderNumber}` });
+    openWhatsApp(service, d, orderNumber);
   };
 
   const updateField = (field: keyof FormData, value: string) => {
@@ -145,49 +151,105 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
           disabled={loading}
           className="inline-flex items-center gap-1 text-sm text-primary hover:underline group-hover:gap-2 transition-all disabled:opacity-50"
         >
-          {loading ? "Enviando..." : "Solicitar servicio"}{" "}
+          {loading ? "Enviando..." : "Crear orden de servicio"}{" "}
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="bg-card border-border max-w-md">
+        <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Solicitar: {service.name}</DialogTitle>
-            <DialogDescription>Completa tus datos para enviar la solicitud.</DialogDescription>
+            <DialogTitle className="text-foreground">Servicio Técnico: {service.name}</DialogTitle>
+            <DialogDescription>
+              Se generará una Orden de Servicio Técnico con la información del cliente, el equipo y la falla.
+            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="full_name">Nombre completo <span className="text-destructive">*</span></Label>
-              <Input id="full_name" value={form.full_name} onChange={(e) => updateField("full_name", e.target.value)} placeholder="Tu nombre completo" />
-              {errors.full_name && <p className="text-xs text-destructive">{errors.full_name}</p>}
+          {createdOrder ? (
+            <div className="space-y-4 text-sm">
+              <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
+                <p className="text-foreground font-medium">Orden creada exitosamente</p>
+                <p className="text-muted-foreground mt-1">Número de orden: <span className="font-bold text-foreground">{createdOrder}</span></p>
+              </div>
+              <p className="text-muted-foreground">Puedes seguir el estado de tu reparación con tu número de orden y teléfono.</p>
+              <div className="flex gap-2">
+                <Link to="/seguimiento" className="flex-1">
+                  <Button variant="outline" className="w-full">Ir a seguimiento</Button>
+                </Link>
+                <Button onClick={() => setOpen(false)} className="flex-1">Cerrar</Button>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>
-              <Input id="email" type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} placeholder="correo@ejemplo.com" />
-              {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="phone">Teléfono <span className="text-destructive">*</span></Label>
-              <Input id="phone" value={form.phone} onChange={(e) => updateField("phone", e.target.value)} placeholder="+57 300 1234567" />
-              {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="address">Dirección</Label>
-              <Input id="address" value={form.address} onChange={(e) => updateField("address", e.target.value)} placeholder="Tu dirección (opcional)" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="device_type">Tipo de equipo</Label>
-              <Input id="device_type" value={form.device_type} onChange={(e) => updateField("device_type", e.target.value)} placeholder="Ej: Portátil HP, iPhone 14, PS5..." />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="message">Descripción del problema</Label>
-              <Textarea id="message" value={form.message} onChange={(e) => updateField("message", e.target.value)} placeholder="Describe tu problema o lo que necesitas (opcional)" rows={3} />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Enviando..." : "Enviar solicitud y abrir WhatsApp"}
-            </Button>
-          </form>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Datos del cliente</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="full_name">Nombre completo *</Label>
+                    <Input id="full_name" value={form.full_name} onChange={(e) => updateField("full_name", e.target.value)} />
+                    {errors.full_name && <p className="text-xs text-destructive">{errors.full_name}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="document">Documento</Label>
+                    <Input id="document" value={form.document} onChange={(e) => updateField("document", e.target.value)} inputMode="numeric" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone">Teléfono *</Label>
+                    <Input id="phone" value={form.phone} onChange={(e) => updateField("phone", e.target.value)} placeholder="+57 300 1234567" />
+                    {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email">Correo</Label>
+                    <Input id="email" type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} />
+                    {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Datos del equipo</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="device_type">Tipo de equipo</Label>
+                    <Input id="device_type" value={form.device_type} onChange={(e) => updateField("device_type", e.target.value)} placeholder="Portátil, celular, impresora..." />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="brand">Marca</Label>
+                    <Input id="brand" value={form.brand} onChange={(e) => updateField("brand", e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="model">Modelo</Label>
+                    <Input id="model" value={form.model} onChange={(e) => updateField("model", e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="serial">Serial o IMEI</Label>
+                    <Input id="serial" value={form.serial} onChange={(e) => updateField("serial", e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label htmlFor="accessories">Accesorios entregados</Label>
+                    <Input id="accessories" value={form.accessories} onChange={(e) => updateField("accessories", e.target.value)} placeholder="Cargador, funda, cable..." />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Datos del servicio</p>
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="message">Descripción de la falla</Label>
+                    <Textarea id="message" value={form.message} onChange={(e) => updateField("message", e.target.value)} rows={3} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="notes">Observaciones adicionales</Label>
+                    <Textarea id="notes" value={form.notes} onChange={(e) => updateField("notes", e.target.value)} rows={2} />
+                  </div>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Creando orden..." : "Crear orden y enviar a WhatsApp"}
+              </Button>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </>
