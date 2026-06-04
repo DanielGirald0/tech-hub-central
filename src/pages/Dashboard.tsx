@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Package, Wrench, User, LogOut, ShieldCheck, Calendar, ExternalLink } from "lucide-react";
+import { Package, User, LogOut, ShieldCheck, Calendar, ExternalLink } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import { REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, RepairStatus, formatDate, formatCOP as formatCOPLib } from "@/lib/repairs";
 import { Link } from "react-router-dom";
@@ -27,17 +27,15 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [orders, setOrders] = useState<any[]>([]);
-  const [serviceRequests, setServiceRequests] = useState<any[]>([]);
   const [repairOrders, setRepairOrders] = useState<any[]>([]);
   const [editName, setEditName] = useState(profile?.name || "");
   const [editPhone, setEditPhone] = useState(profile?.phone || "");
   const [editDoc, setEditDoc] = useState<string>(profile?.document_number || "");
-  const [tab, setTab] = useState<"orders" | "services" | "repairs" | "profile">("orders");
+  const [tab, setTab] = useState<"orders" | "repairs" | "profile">("repairs");
 
   useEffect(() => {
     if (!user) return;
     supabase.from("orders").select("*").eq("customer_id", user.id).order("created_at", { ascending: false }).then(({ data }) => setOrders(data || []));
-    supabase.from("service_requests").select("*").eq("customer_id", user.id).order("created_at", { ascending: false }).then(({ data }) => setServiceRequests(data || []));
     (supabase.rpc as any)("get_my_repair_orders").then(({ data }: any) => setRepairOrders(data || []));
   }, [user]);
 
@@ -83,7 +81,6 @@ const Dashboard = () => {
 
   const tabs = [
     { id: "orders" as const, label: "Mis Pedidos", icon: Package },
-    { id: "services" as const, label: "Mis Servicios", icon: Wrench },
     { id: "repairs" as const, label: "Servicio Técnico", icon: ShieldCheck },
     { id: "profile" as const, label: "Mi Perfil", icon: User },
   ];
