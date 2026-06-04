@@ -178,25 +178,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {tab === "services" && (
-        <div className="space-y-4">
-          {serviceRequests.length === 0 ? (
-            <p className="text-muted-foreground text-center py-12">No tienes solicitudes de servicio.</p>
-          ) : serviceRequests.map((sr) => (
-            <div key={sr.id} className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-medium text-foreground">{sr.service_type}</p>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${sr.status === "completado" ? "bg-green-500/10 text-green-500" : sr.status === "cancelado" ? "bg-red-500/10 text-red-500" : "bg-yellow-500/10 text-yellow-500"}`}>
-                  {sr.status}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">{sr.device_type} — {sr.description}</p>
-              <p className="text-xs text-muted-foreground mt-1">{new Date(sr.created_at).toLocaleDateString("es-CO")}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
       {tab === "repairs" && (
         <div className="space-y-4">
           {!profile?.document_number && (
