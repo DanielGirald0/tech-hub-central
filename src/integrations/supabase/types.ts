@@ -744,6 +744,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_admin_dashboard_stats: { Args: never; Returns: Json }
       get_all_users: {
         Args: never
         Returns: {
@@ -777,6 +778,7 @@ export type Database = {
           warranty_days: number
         }[]
       }
+      get_repair_dashboard_stats: { Args: never; Returns: Json }
       get_repair_order_history: {
         Args: { _order_number: string; _phone: string }
         Returns: {

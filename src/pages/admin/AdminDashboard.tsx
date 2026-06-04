@@ -10,21 +10,15 @@ const AdminDashboard = () => {
     queryKey: ["admin", "dashboard-stats"],
     staleTime: 2 * 60 * 1000,
     queryFn: async () => {
-      const [p, o, u, c, r, rp] = await Promise.all([
-        supabase.from("products").select("id", { count: "exact", head: true }),
-        supabase.from("orders").select("id", { count: "exact", head: true }),
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
-        supabase.from("categories" as any).select("id", { count: "exact", head: true }),
-        supabase.from("reviews" as any).select("id", { count: "exact", head: true }).eq("approved", false),
-        supabase.from("repair_orders" as any).select("id", { count: "exact", head: true }).not("status", "in", "(entregado,cancelado)"),
-      ]);
+      const { data, error } = await (supabase.rpc as any)("get_admin_dashboard_stats");
+      if (error || !data) return { products: 0, orders: 0, users: 0, categories: 0, reviews: 0, repairs: 0 };
       return {
-        products: p.count || 0,
-        orders: o.count || 0,
-        users: u.count || 0,
-        categories: c.count || 0,
-        reviews: r.count || 0,
-        repairs: rp.count || 0,
+        products: Number(data.products) || 0,
+        orders: Number(data.orders) || 0,
+        users: Number(data.users) || 0,
+        categories: Number(data.categories) || 0,
+        reviews: Number(data.reviews) || 0,
+        repairs: Number(data.repairs) || 0,
       };
     },
   });

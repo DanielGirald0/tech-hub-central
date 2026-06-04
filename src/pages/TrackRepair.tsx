@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import RegisterCTAModal from "@/components/RegisterCTAModal";
 import BackButton from "@/components/BackButton";
 import { useToast } from "@/hooks/use-toast";
+import SEO from "@/components/SEO";
 
 interface OrderResult {
   id?: string;
@@ -96,6 +97,11 @@ const TrackRepair = () => {
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-3xl">
+      <SEO
+        title="Seguimiento de Reparación | Tecno Gz"
+        description="Consulta el estado de tu orden de servicio técnico con tu número de orden y teléfono."
+        path="/seguimiento"
+      />
       <BackButton />
       <div className="text-center mb-8">
         <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground uppercase tracking-wider mb-2">

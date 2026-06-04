@@ -2,6 +2,7 @@ import { useState } from "react";
 import BackButton from "@/components/BackButton";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SEO from "@/components/SEO";
 
 const Contact = () => {
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "Consulta general", serviceType: "", deviceType: "", message: "" });
@@ -25,6 +26,11 @@ const Contact = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <SEO
+        title="Contacto | Tecno Gz Rionegro"
+        description="Escríbenos por WhatsApp, correo o visítanos en Rionegro, Antioquia. Atendemos consultas, ventas y solicitudes de servicio técnico."
+        path="/contact"
+      />
       <BackButton />
       <h1 className="font-display text-3xl font-bold text-foreground mb-2">Contacto</h1>
       <p className="text-muted-foreground mb-10">Nos encantaría saber de ti. Contáctanos en cualquier momento.</p>

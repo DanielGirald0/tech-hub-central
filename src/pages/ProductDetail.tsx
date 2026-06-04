@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
+import SEO from "@/components/SEO";
 
 const formatCOP = (price: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(price);
@@ -65,6 +66,30 @@ const ProductDetail = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <SEO
+        title={`${product.name} | Tecno Gz`}
+        description={(product.description || product.full_description || `Compra ${product.name} en Tecno Gz. Envío en Rionegro y Antioquia.`).slice(0, 160)}
+        path={`/products/${product.id}`}
+        type="product"
+        image={product.image_url || undefined}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          description: product.description || product.full_description || undefined,
+          image: product.image_url || undefined,
+          sku: reference || undefined,
+          brand: product.brand || undefined,
+          offers: {
+            "@type": "Offer",
+            priceCurrency: "COP",
+            price: displayPrice,
+            availability: inStock
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+          },
+        }}
+      />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6 flex-wrap">
         <Link to="/" className="hover:text-foreground transition-colors">Inicio</Link>

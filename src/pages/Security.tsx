@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import BackButton from "@/components/BackButton";
 import { Shield, ArrowRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SEO from "@/components/SEO";
 
 const solutions = [
   {
@@ -37,6 +38,11 @@ const solutions = [
 const Security = () => {
   return (
     <div>
+      <SEO
+        title="Seguridad Electrónica | Tecno Gz"
+        description="Instalación de cámaras CCTV, sistemas de alarma, videoporteros y control de acceso para hogares y negocios en Antioquia."
+        path="/security"
+      />
       <section className="bg-gradient-hero py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl">

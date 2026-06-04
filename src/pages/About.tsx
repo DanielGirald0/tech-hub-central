@@ -1,9 +1,15 @@
 import { Shield, Wrench, Users, Award } from "lucide-react";
 import BackButton from "@/components/BackButton";
+import SEO from "@/components/SEO";
 
 const About = () => {
   return (
     <div className="container mx-auto px-4 py-8">
+      <SEO
+        title="Sobre Nosotros | Tecno Gz"
+        description="Más de 5 años brindando tecnología y servicio técnico profesional en Rionegro. Conoce nuestra historia, equipo y valores."
+        path="/about"
+      />
       <BackButton />
       <h1 className="font-display text-3xl font-bold text-foreground mb-2">Sobre Tecno Gz</h1>
       <p className="text-muted-foreground mb-10 max-w-2xl">
