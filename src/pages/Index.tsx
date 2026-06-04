@@ -9,6 +9,7 @@ import { services } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";
 import GoogleReviews from "@/components/GoogleReviews";
 import { useQuery } from "@tanstack/react-query";
+import SEO from "@/components/SEO";
 
 const featuredServices = services.slice(0, 4);
 
@@ -45,6 +46,20 @@ const Index = () => {
 
   return (
     <div>
+      <SEO
+        title="Tecno Gz | Tecnología y Servicio Técnico en Rionegro"
+        description="Venta de tecnología, reparación de equipos e instalación de seguridad electrónica en Rionegro, Antioquia. Servicio técnico profesional."
+        path="/"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          name: "Tecno Gz",
+          description: "Venta de tecnología, servicio técnico y seguridad electrónica",
+          areaServed: "Rionegro, Antioquia, Colombia",
+          telephone: "+57 310 747 6909",
+          priceRange: "$$",
+        }}
+      />
       {/* Hero */}
       <section className="relative bg-gradient-hero overflow-hidden">
         <div className="absolute inset-0 opacity-10">

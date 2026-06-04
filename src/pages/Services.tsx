@@ -2,6 +2,7 @@ import ServiceCard from "@/components/ServiceCard";
 import BackButton from "@/components/BackButton";
 import TrackOrderCTA from "@/components/TrackOrderCTA";
 import { services } from "@/data/products";
+import SEO from "@/components/SEO";
 
 const serviceCategories = [
   { id: "reparacion", label: "Servicios de reparación", icon: "🔧" },
@@ -13,6 +14,11 @@ const serviceCategories = [
 const Services = () => {
   return (
     <div className="container mx-auto px-4 py-8">
+      <SEO
+        title="Servicios Técnicos | Tecno Gz Rionegro"
+        description="Reparación de computadores, celulares, instalación de cámaras, alarmas y mantenimiento profesional. Diagnóstico y cotización rápida."
+        path="/services"
+      />
       <BackButton />
       <h1 className="font-display text-3xl font-bold text-foreground mb-2">Nuestros Servicios</h1>
       <p className="text-muted-foreground mb-8 max-w-2xl">

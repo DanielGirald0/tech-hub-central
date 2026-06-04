@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
+import SEO from "@/components/SEO";
 
 const db = supabase as any;
 
@@ -206,6 +207,11 @@ const Products = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <SEO
+        title="Productos | Tecno Gz"
+        description="Catálogo completo de tecnología, computadores, accesorios y equipos de seguridad. Precios en COP, envío en Rionegro y Antioquia."
+        path="/products"
+      />
       <BackButton />
       <h1 className="font-display text-3xl font-bold text-foreground mb-2 uppercase tracking-wider">Productos</h1>
       <p className="text-muted-foreground mb-6">Explora nuestro catálogo sincronizado y encuentra tecnología en segundos.</p>
