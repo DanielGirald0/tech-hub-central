@@ -1,25 +1,33 @@
-import { useEffect, useState } from "react";
 import BackButton from "@/components/BackButton";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, Users, ShoppingCart, BarChart3, RefreshCw, Tags, Star, ClipboardList } from "lucide-react";
 import logo from "@/assets/logo-tecnogz-official.png";
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({ products: 0, orders: 0, users: 0, categories: 0, reviews: 0, repairs: 0 });
-
-  useEffect(() => {
-    Promise.all([
-      supabase.from("products").select("id", { count: "exact", head: true }),
-      supabase.from("orders").select("id", { count: "exact", head: true }),
-      supabase.from("profiles").select("id", { count: "exact", head: true }),
-      supabase.from("categories" as any).select("id", { count: "exact", head: true }),
-      supabase.from("reviews" as any).select("id", { count: "exact", head: true }).eq("approved", false),
-      supabase.from("repair_orders" as any).select("id", { count: "exact", head: true }).not("status", "in", "(entregado,cancelado)"),
-    ]).then(([p, o, u, c, r, rp]) => {
-      setStats({ products: p.count || 0, orders: o.count || 0, users: u.count || 0, categories: c.count || 0, reviews: r.count || 0, repairs: rp.count || 0 });
-    });
-  }, []);
+  const { data: stats = { products: 0, orders: 0, users: 0, categories: 0, reviews: 0, repairs: 0 } } = useQuery({
+    queryKey: ["admin", "dashboard-stats"],
+    staleTime: 2 * 60 * 1000,
+    queryFn: async () => {
+      const [p, o, u, c, r, rp] = await Promise.all([
+        supabase.from("products").select("id", { count: "exact", head: true }),
+        supabase.from("orders").select("id", { count: "exact", head: true }),
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
+        supabase.from("categories" as any).select("id", { count: "exact", head: true }),
+        supabase.from("reviews" as any).select("id", { count: "exact", head: true }).eq("approved", false),
+        supabase.from("repair_orders" as any).select("id", { count: "exact", head: true }).not("status", "in", "(entregado,cancelado)"),
+      ]);
+      return {
+        products: p.count || 0,
+        orders: o.count || 0,
+        users: u.count || 0,
+        categories: c.count || 0,
+        reviews: r.count || 0,
+        repairs: rp.count || 0,
+      };
+    },
+  });
 
   const cards = [
     { label: "Productos", count: stats.products, icon: Package, href: "/admin/products", color: "text-blue-400" },
