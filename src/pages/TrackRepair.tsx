@@ -8,6 +8,7 @@ import RegisterCTAModal from "@/components/RegisterCTAModal";
 import BackButton from "@/components/BackButton";
 import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface OrderResult {
   id?: string;
@@ -145,6 +146,25 @@ const TrackRepair = () => {
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-300 rounded-md p-4 text-sm">{error}</div>
+      )}
+
+      {loading && !order && (
+        <div className="space-y-4">
+          <div className="bg-card border border-border rounded-xl p-6 space-y-3">
+            <Skeleton className="h-8 w-40" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i}><Skeleton className="h-3 w-16 mb-2" /><Skeleton className="h-5 w-24" /></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!loading && !order && !error && (
+        <div className="text-center text-muted-foreground text-sm py-6">
+          Ingresa el número de tu orden y el teléfono registrado para ver el estado.
+        </div>
       )}
 
       {order && (
