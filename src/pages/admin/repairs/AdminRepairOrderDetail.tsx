@@ -5,13 +5,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, Trash2, Upload, MessageCircle, FileText, Loader2 } from "lucide-react";
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus, whatsappLink, buildStatusMessage } from "@/lib/repairs";
+import { useAuth } from "@/contexts/AuthContext";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 const AdminRepairOrderDetail = () => {
   const { id } = useParams();
   const { toast } = useToast();
+  const { userRole } = useAuth();
+  const isAdmin = userRole === "admin";
   const [order, setOrder] = useState<any>(null);
+  const [originalStatus, setOriginalStatus] = useState<RepairStatus | null>(null);
+  const [statusNote, setStatusNote] = useState("");
   const [history, setHistory] = useState<any[]>([]);
   const [photos, setPhotos] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
@@ -26,6 +31,8 @@ const AdminRepairOrderDetail = () => {
       .select("*, repair_customers(*), repair_devices(*)")
       .eq("id", id).maybeSingle();
     setOrder(data);
+    setOriginalStatus(data?.status ?? null);
+    setStatusNote("");
     const { data: h } = await (supabase.from as any)("repair_order_history").select("*").eq("order_id", id).order("created_at", { ascending: false });
     setHistory(h || []);
     const { data: p } = await (supabase.from as any)("repair_order_photos").select("*").eq("order_id", id).order("created_at");
@@ -42,6 +49,10 @@ const AdminRepairOrderDetail = () => {
   }, []);
 
   const save = async () => {
+    if (!order?.cost && order.status === "entregado") {
+      if (!confirm("La orden no tiene costo registrado. ¿Marcar como entregada de todos modos?")) return;
+    }
+    const statusChanged = originalStatus && order.status !== originalStatus;
     setSaving(true);
     const { error } = await (supabase.from as any)("repair_orders").update({
       status: order.status,
@@ -55,9 +66,27 @@ const AdminRepairOrderDetail = () => {
       delivered_at: order.status === "entregado" && !order.delivered_at ? new Date().toISOString() : order.delivered_at,
       internal_notes: order.internal_notes,
     }).eq("id", id);
+    if (error) {
+      setSaving(false);
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    // Persist note on the status-change history row created by the trigger
+    if (statusChanged && statusNote.trim()) {
+      const { data: lastHist } = await (supabase.from as any)("repair_order_history")
+        .select("id")
+        .eq("order_id", id)
+        .eq("to_status", order.status)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (lastHist?.id) {
+        await (supabase.from as any)("repair_order_history").update({ note: statusNote.trim() }).eq("id", lastHist.id);
+      }
+    }
     setSaving(false);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: "Cambios guardados" }); load(); }
+    toast({ title: "Cambios guardados" });
+    load();
   };
 
   const uploadPhoto = async (file: File, label: string) => {
@@ -128,6 +157,7 @@ const AdminRepairOrderDetail = () => {
   };
 
   const remove = async () => {
+    if (!isAdmin) return;
     if (!confirm("¿Eliminar esta orden? Esta acción no se puede deshacer.")) return;
     await (supabase.from as any)("repair_orders").delete().eq("id", id);
     window.location.href = "/admin/repairs/orders";
@@ -150,7 +180,9 @@ const AdminRepairOrderDetail = () => {
         <div className="flex flex-wrap gap-2">
           <button onClick={notifyWhatsapp} className="bg-[#25D366] text-white px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:opacity-90"><MessageCircle className="w-4 h-4" /> WhatsApp</button>
           <button onClick={generatePDF} className="bg-secondary text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-secondary/80"><FileText className="w-4 h-4" /> PDF</button>
-          <button onClick={remove} className="bg-destructive/20 text-red-300 border border-red-500/30 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2"><Trash2 className="w-4 h-4" /></button>
+          {isAdmin && (
+            <button onClick={remove} className="bg-destructive/20 text-red-300 border border-red-500/30 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2" title="Eliminar orden"><Trash2 className="w-4 h-4" /></button>
+          )}
         </div>
       </div>
 
@@ -210,6 +242,18 @@ const AdminRepairOrderDetail = () => {
             <select value={order.status} onChange={(e) => setOrder({ ...order, status: e.target.value })} className={`w-full rounded-md px-3 py-2 text-sm font-semibold border mb-3 ${REPAIR_STATUS_COLOR[order.status as RepairStatus]}`} style={{ colorScheme: "dark" }}>
               {REPAIR_STATUSES.map((s) => <option key={s} value={s} className="bg-card text-foreground">{REPAIR_STATUS_LABEL[s]}</option>)}
             </select>
+            {originalStatus && order.status !== originalStatus && (
+              <div className="mb-3">
+                <label className="text-xs uppercase tracking-wider text-muted-foreground mb-1 block">Nota del cambio (opcional)</label>
+                <textarea
+                  value={statusNote}
+                  onChange={(e) => setStatusNote(e.target.value)}
+                  rows={2}
+                  placeholder="Ej: Equipo aprobado por cliente vía WhatsApp"
+                  className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+            )}
             <div className="mb-3">
               <label className="text-xs uppercase tracking-wider text-muted-foreground mb-1 block">Técnico asignado</label>
               <select
@@ -244,6 +288,7 @@ const AdminRepairOrderDetail = () => {
                       {REPAIR_STATUS_LABEL[h.to_status as RepairStatus]}
                     </span>
                     <div className="text-muted-foreground mt-0.5">{formatDateTime(h.created_at)}</div>
+                    {h.note && <div className="text-foreground mt-1 text-[11px] italic">{h.note}</div>}
                   </div>
                 </li>
               ))}
