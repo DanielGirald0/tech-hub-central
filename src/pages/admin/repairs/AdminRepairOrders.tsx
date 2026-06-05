@@ -2,19 +2,31 @@ import { useEffect, useMemo, useState } from "react";
 import BackButton from "@/components/BackButton";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Plus, Filter } from "lucide-react";
+import { Search, Plus, Filter, X } from "lucide-react";
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, RepairStatus } from "@/lib/repairs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PAGE_SIZE = 20;
 
 const AdminRepairOrders = () => {
   const [params, setParams] = useSearchParams();
   const status = params.get("status") || "";
+  const technician = params.get("tech") || "";
+  const dateFrom = params.get("from") || "";
+  const dateTo = params.get("to") || "";
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [technicians, setTechnicians] = useState<{ user_id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    (supabase.rpc as any)("get_all_users").then(({ data }: any) => {
+      const staff = (data || []).filter((u: any) => u.role === "technician" || u.role === "admin");
+      setTechnicians(staff.map((u: any) => ({ user_id: u.user_id, name: u.name || u.email })));
+    });
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -24,13 +36,29 @@ const AdminRepairOrders = () => {
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
       if (status) q = q.eq("status", status);
+      if (technician) q = q.eq("assigned_technician_id", technician);
+      if (dateFrom) q = q.gte("received_at", new Date(dateFrom + "T00:00:00").toISOString());
+      if (dateTo) {
+        const end = new Date(dateTo + "T00:00:00"); end.setDate(end.getDate() + 1);
+        q = q.lt("received_at", end.toISOString());
+      }
       const { data, count } = await q;
       setRows(data || []);
       setTotal(count || 0);
       setLoading(false);
     };
     load();
-  }, [status, page]);
+  }, [status, technician, dateFrom, dateTo, page]);
+
+  const updateParam = (key: string, value: string) => {
+    const next = new URLSearchParams(params);
+    if (value) next.set(key, value); else next.delete(key);
+    setPage(0);
+    setParams(next);
+  };
+
+  const hasFilters = !!(status || technician || dateFrom || dateTo);
+  const clearFilters = () => { setPage(0); setParams({}); };
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
@@ -75,7 +103,7 @@ const AdminRepairOrders = () => {
           <Filter className="w-4 h-4 text-muted-foreground" />
           <select
             value={status}
-            onChange={(e) => { setPage(0); setParams(e.target.value ? { status: e.target.value } : {}); }}
+            onChange={(e) => updateParam("status", e.target.value)}
             className="bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
           >
             <option value="">Todos los estados</option>
@@ -84,6 +112,31 @@ const AdminRepairOrders = () => {
             ))}
           </select>
         </div>
+        <select
+          value={technician}
+          onChange={(e) => updateParam("tech", e.target.value)}
+          className="bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+        >
+          <option value="">Todos los técnicos</option>
+          {technicians.map((t) => <option key={t.user_id} value={t.user_id}>{t.name}</option>)}
+        </select>
+        <input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => updateParam("from", e.target.value)}
+          className="bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
+          title="Desde"
+        />
+        <input
+          type="date"
+          value={dateTo}
+          onChange={(e) => updateParam("to", e.target.value)}
+          className="bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground"
+          title="Hasta"
+        />
+        {hasFilters && (
+          <button onClick={clearFilters} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2"><X className="w-3 h-3" /> Limpiar</button>
+        )}
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -100,9 +153,16 @@ const AdminRepairOrders = () => {
               </tr>
             </thead>
             <tbody>
-              {loading && (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Cargando...</td></tr>
-              )}
+              {loading && Array.from({ length: 5 }).map((_, i) => (
+                <tr key={`sk-${i}`} className="border-b border-border/50">
+                  <td className="p-3"><Skeleton className="h-4 w-16" /></td>
+                  <td className="p-3"><Skeleton className="h-4 w-32 mb-1" /><Skeleton className="h-3 w-20" /></td>
+                  <td className="p-3"><Skeleton className="h-4 w-28" /></td>
+                  <td className="p-3"><Skeleton className="h-5 w-20 rounded-full" /></td>
+                  <td className="p-3"><Skeleton className="h-4 w-16" /></td>
+                  <td className="p-3"><Skeleton className="h-4 w-20" /></td>
+                </tr>
+              ))}
               {!loading && filtered.map((r) => (
                 <tr key={r.id} className="border-b border-border/50 hover:bg-secondary/30">
                   <td className="p-3">
