@@ -1,9 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
 import BackButton from "@/components/BackButton";
 import { useParams, Link } from "react-router-dom";
-import { ChevronRight, ShoppingCart, Loader2, Package } from "lucide-react";
+import { ChevronRight, ShoppingCart, Loader2, Package, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
+import { openInquireWhatsApp } from "@/lib/inquire";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import SEO from "@/components/SEO";
@@ -14,6 +16,8 @@ const formatCOP = (price: number) =>
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { addItem } = useCart();
+  const { settings } = useStoreSettings();
+  const showPrices = settings.show_prices;
   const [product, setProduct] = useState<any>(null);
   const [related, setRelated] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +76,7 @@ const ProductDetail = () => {
         path={`/products/${product.id}`}
         type="product"
         image={product.image_url || undefined}
-        jsonLd={{
+        jsonLd={showPrices ? {
           "@context": "https://schema.org",
           "@type": "Product",
           name: product.name,
@@ -88,6 +92,14 @@ const ProductDetail = () => {
               ? "https://schema.org/InStock"
               : "https://schema.org/OutOfStock",
           },
+        } : {
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          description: product.description || product.full_description || undefined,
+          image: product.image_url || undefined,
+          sku: reference || undefined,
+          brand: product.brand || undefined,
         }}
       />
       {/* Breadcrumb */}
@@ -106,7 +118,7 @@ const ProductDetail = () => {
         {/* Image */}
         <div className="bg-secondary rounded-2xl overflow-hidden aspect-square relative">
           <img src={image} alt={product.name} className="w-full h-full object-cover" />
-          {discount > 0 && (
+          {showPrices && discount > 0 && (
             <span className="absolute top-4 left-4 bg-primary text-primary-foreground text-sm font-bold px-3 py-1 rounded-lg">-{discount}%</span>
           )}
         </div>
@@ -116,16 +128,27 @@ const ProductDetail = () => {
           {product.brand && <p className="text-sm text-muted-foreground mb-1">{product.brand}</p>}
           <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">{product.name}</h1>
 
-          <div className="flex flex-col sm:flex-row sm:items-end gap-1 sm:gap-3 mb-6">
-            <span className="font-display font-bold text-3xl text-primary leading-tight">{formatCOP(displayPrice)}</span>
-            {reference && (
-              <span className="text-xs sm:text-sm text-muted-foreground/80 leading-6 sm:pb-0.5">Ref: {reference}</span>
-            )}
-            {originalPrice && originalPrice > displayPrice && (
-              <span className="text-lg text-muted-foreground line-through sm:pb-0.5">{formatCOP(originalPrice)}</span>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground -mt-4 mb-6">Precio incluye IVA</p>
+          {showPrices ? (
+            <>
+              <div className="flex flex-col sm:flex-row sm:items-end gap-1 sm:gap-3 mb-6">
+                <span className="font-display font-bold text-3xl text-primary leading-tight">{formatCOP(displayPrice)}</span>
+                {reference && (
+                  <span className="text-xs sm:text-sm text-muted-foreground/80 leading-6 sm:pb-0.5">Ref: {reference}</span>
+                )}
+                {originalPrice && originalPrice > displayPrice && (
+                  <span className="text-lg text-muted-foreground line-through sm:pb-0.5">{formatCOP(originalPrice)}</span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground -mt-4 mb-6">Precio incluye IVA</p>
+            </>
+          ) : (
+            <div className="mb-6">
+              {reference && (
+                <p className="text-xs sm:text-sm text-muted-foreground/80 mb-2">Ref: {reference}</p>
+              )}
+              <p className="text-sm text-muted-foreground">Consulta el precio actualizado por WhatsApp.</p>
+            </div>
+          )}
 
           <div className="flex items-center gap-2 mb-6">
             <Package className="w-4 h-4 text-muted-foreground" />
@@ -182,15 +205,27 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          <Button
-            size="lg"
-            disabled={!inStock}
-            onClick={() => addItem({ id: product.id, name: product.name, price: displayPrice, image })}
-            className="w-full mt-auto bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <ShoppingCart className="w-5 h-5 mr-2" />
-            Agregar al carrito
-          </Button>
+          {showPrices ? (
+            <Button
+              size="lg"
+              disabled={!inStock}
+              onClick={() => addItem({ id: product.id, name: product.name, price: displayPrice, image })}
+              className="w-full mt-auto bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <ShoppingCart className="w-5 h-5 mr-2" />
+              Agregar al carrito
+            </Button>
+          ) : (
+            <Button
+              size="lg"
+              onClick={() => openInquireWhatsApp({ id: product.id, name: product.name, reference })}
+              className="w-full mt-auto text-white hover:opacity-90"
+              style={{ background: "#25D366" }}
+            >
+              <MessageCircle className="w-5 h-5 mr-2" />
+              Consultar precio
+            </Button>
+          )}
         </div>
       </div>
 

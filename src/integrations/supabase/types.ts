@@ -668,6 +668,24 @@ export type Database = {
         }
         Relationships: []
       }
+      store_settings: {
+        Row: {
+          id: boolean
+          show_prices: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          show_prices?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          show_prices?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
