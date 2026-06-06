@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { StoreSettingsProvider } from "@/contexts/StoreSettingsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Layout from "./components/Layout";
 import ScrollToTop from "./components/ScrollToTop";
@@ -26,6 +27,7 @@ const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminAlegra = lazy(() => import("./pages/admin/AdminAlegra"));
 const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminRepairsDashboard = lazy(() => import("./pages/admin/repairs/AdminRepairsDashboard"));
 const AdminRepairOrders = lazy(() => import("./pages/admin/repairs/AdminRepairOrders"));
 const AdminRepairOrderNew = lazy(() => import("./pages/admin/repairs/AdminRepairOrderNew"));
@@ -63,8 +65,9 @@ const App = () => (
       <BrowserRouter>
         <ScrollToTop />
         <AuthProvider>
-          <CartProvider>
-            <Layout>
+          <StoreSettingsProvider>
+            <CartProvider>
+              <Layout>
               <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -89,6 +92,7 @@ const App = () => (
                 <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
                 <Route path="/admin/alegra" element={<ProtectedRoute requiredRole="admin"><AdminAlegra /></ProtectedRoute>} />
                 <Route path="/admin/reviews" element={<ProtectedRoute requiredRole="admin"><AdminReviews /></ProtectedRoute>} />
+                <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
                 <Route path="/admin/repairs" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairsDashboard /></ProtectedRoute>} />
                 <Route path="/admin/repairs/orders" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairOrders /></ProtectedRoute>} />
                 <Route path="/admin/repairs/orders/new" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairOrderNew /></ProtectedRoute>} />
@@ -98,8 +102,9 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
               </Suspense>
-            </Layout>
-          </CartProvider>
+              </Layout>
+            </CartProvider>
+          </StoreSettingsProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
