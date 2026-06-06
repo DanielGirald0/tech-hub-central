@@ -36,7 +36,14 @@ const AdminRepairOrderDetail = () => {
     const { data: h } = await (supabase.from as any)("repair_order_history").select("*").eq("order_id", id).order("created_at", { ascending: false });
     setHistory(h || []);
     const { data: p } = await (supabase.from as any)("repair_order_photos").select("*").eq("order_id", id).order("created_at");
-    setPhotos(p || []);
+    const list = p || [];
+    // Generate signed URLs (bucket is private)
+    const signed = await Promise.all(list.map(async (ph: any) => {
+      const path = ph.url?.split("/repair-photos/")[1] || ph.url;
+      const { data: s } = await supabase.storage.from("repair-photos").createSignedUrl(path, 3600);
+      return { ...ph, displayUrl: s?.signedUrl || ph.url };
+    }));
+    setPhotos(signed);
   };
 
   useEffect(() => { load(); }, [id]);
@@ -94,14 +101,14 @@ const AdminRepairOrderDetail = () => {
     const path = `${id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
     const { error } = await supabase.storage.from("repair-photos").upload(path, file, { upsert: false });
     if (error) { toast({ title: "Error al subir", description: error.message, variant: "destructive" }); setUploading(false); return; }
-    const { data: pub } = supabase.storage.from("repair-photos").getPublicUrl(path);
-    await (supabase.from as any)("repair_order_photos").insert({ order_id: id, url: pub.publicUrl, label });
+    // Store the storage path; signed URLs are generated on read
+    await (supabase.from as any)("repair_order_photos").insert({ order_id: id, url: path, label });
     setUploading(false);
     load();
   };
 
   const deletePhoto = async (photoId: string, url: string) => {
-    const path = url.split("/repair-photos/")[1];
+    const path = url.includes("/repair-photos/") ? url.split("/repair-photos/")[1] : url;
     if (path) await supabase.storage.from("repair-photos").remove([path]);
     await (supabase.from as any)("repair_order_photos").delete().eq("id", photoId);
     load();
@@ -224,7 +231,7 @@ const AdminRepairOrderDetail = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {photos.map((p) => (
                 <div key={p.id} className="relative group">
-                  <img src={p.url} alt={p.label} className="w-full h-32 object-cover rounded-md border border-border" />
+                  <img src={p.displayUrl || p.url} alt={p.label} className="w-full h-32 object-cover rounded-md border border-border" />
                   <span className="absolute top-1 left-1 bg-background/80 text-foreground text-[10px] px-2 py-0.5 rounded uppercase">{p.label}</span>
                   <button onClick={() => deletePhoto(p.id, p.url)} className="absolute top-1 right-1 bg-destructive/80 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                     <Trash2 className="w-3 h-3" />
