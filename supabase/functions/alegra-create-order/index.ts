@@ -180,6 +180,11 @@ Deno.serve(async (req) => {
     let invoiceId: string | null = null;
     let invoiceNumber: string | null = null;
     let alegraError: string | null = null;
+    // Only push to Alegra for authenticated users to prevent anonymous abuse
+    // of the external ERP (junk contacts/invoices, rate-limit exhaustion).
+    if (!userId) {
+      alegraError = "Alegra invoice skipped: authentication required for invoice generation.";
+    } else {
     try {
       const contactId = await findOrCreateContact(customer);
       const invoice = await createInvoice(contactId, enrichedItems, customer.invoiceType === "electronica" ? "electronica" : "normal");
@@ -192,6 +197,7 @@ Deno.serve(async (req) => {
     } catch (e: any) {
       console.error("Alegra invoice push failed:", e);
       alegraError = e.message || String(e);
+    }
     }
 
     return new Response(JSON.stringify({
