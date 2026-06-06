@@ -231,7 +231,7 @@ const AdminRepairOrderDetail = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {photos.map((p) => (
                 <div key={p.id} className="relative group">
-                  <img src={p.url} alt={p.label} className="w-full h-32 object-cover rounded-md border border-border" />
+                  <img src={p.displayUrl || p.url} alt={p.label} className="w-full h-32 object-cover rounded-md border border-border" />
                   <span className="absolute top-1 left-1 bg-background/80 text-foreground text-[10px] px-2 py-0.5 rounded uppercase">{p.label}</span>
                   <button onClick={() => deletePhoto(p.id, p.url)} className="absolute top-1 right-1 bg-destructive/80 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                     <Trash2 className="w-3 h-3" />
