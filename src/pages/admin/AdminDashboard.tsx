@@ -2,10 +2,12 @@ import BackButton from "@/components/BackButton";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Users, ShoppingCart, BarChart3, RefreshCw, Tags, Star, ClipboardList } from "lucide-react";
+import { Package, Users, ShoppingCart, BarChart3, RefreshCw, Tags, Star, ClipboardList, Settings as SettingsIcon } from "lucide-react";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import logo from "@/assets/logo-tecnogz-official.png";
 
 const AdminDashboard = () => {
+  const { settings } = useStoreSettings();
   const { data: stats = { products: 0, orders: 0, users: 0, categories: 0, reviews: 0, repairs: 0 } } = useQuery({
     queryKey: ["admin", "dashboard-stats"],
     staleTime: 2 * 60 * 1000,
@@ -31,6 +33,7 @@ const AdminDashboard = () => {
     { label: "Reseñas pendientes", count: stats.reviews, icon: Star, href: "/admin/reviews", color: "text-yellow-400" },
     { label: "Servicio técnico", count: stats.repairs, icon: ClipboardList, href: "/admin/repairs", color: "text-pink-400" },
     { label: "Alegra Sync", count: 0, icon: RefreshCw, href: "/admin/alegra", color: "text-red-400" },
+    { label: settings.show_prices ? "Config: Precios visibles" : "Config: Precios ocultos", count: 0, icon: SettingsIcon, href: "/admin/settings", color: settings.show_prices ? "text-green-400" : "text-yellow-400" },
   ];
 
   return (
