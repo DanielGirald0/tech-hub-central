@@ -13,12 +13,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStoreSettings } from "@/contexts/StoreSettingsContext";
+import { EyeOff } from "lucide-react";
 
 const formatCOP = (price: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(price);
 
 const Cart = () => {
   const { items, removeItem, updateQuantity, clearCart, totalPrice } = useCart();
+  const { settings } = useStoreSettings();
+  const showPrices = settings.show_prices;
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { user } = useAuth();
@@ -80,6 +84,25 @@ const Cart = () => {
       setSubmitting(false);
     }
   };
+
+  if (!showPrices) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <BackButton />
+        <h1 className="font-display text-3xl font-bold text-foreground mb-8">Carrito de compras</h1>
+        <div className="bg-card border border-border rounded-2xl p-8 md:p-12 text-center">
+          <EyeOff className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h2 className="font-display text-xl font-semibold text-foreground mb-2">Modo cotización activo</h2>
+          <p className="text-muted-foreground mb-6">
+            Las compras en línea están temporalmente desactivadas. Consulta los precios por WhatsApp.
+          </p>
+          <Button asChild className="text-white hover:opacity-90" style={{ background: "#25D366" }}>
+            <a href="https://wa.me/573107476909" target="_blank" rel="noopener noreferrer">Consultar por WhatsApp</a>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
