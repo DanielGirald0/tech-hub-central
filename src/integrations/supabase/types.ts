@@ -843,6 +843,15 @@ export type Database = {
           warranty_days: number
         }[]
       }
+      tech_owns_repair_customer: {
+        Args: { _customer_id: string }
+        Returns: boolean
+      }
+      tech_owns_repair_device: {
+        Args: { _device_id: string }
+        Returns: boolean
+      }
+      tech_owns_repair_order: { Args: { _order_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "customer" | "admin" | "technician"
