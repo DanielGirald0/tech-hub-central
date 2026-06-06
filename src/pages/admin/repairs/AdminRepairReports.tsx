@@ -32,14 +32,77 @@ interface ReportRow {
   model: string | null;
 }
 
+interface Totals { total_orders: number; delivered: number; pending: number; cancelled: number; revenue: number; avg_ticket: number; avg_repair_days: number }
 interface Summary {
-  totals: { total_orders: number; delivered: number; pending: number; cancelled: number; revenue: number; avg_ticket: number };
-  by_day: { day: string; orders: number; revenue: number }[];
+  totals: Totals;
+  by_day: { day: string; orders: number; revenue: number; avg_days: number }[];
   by_status: { status: string; count: number }[];
   by_technician: { technician: string; orders: number; revenue: number }[];
   top_by_orders: { technician: string; orders: number; revenue: number } | null;
   top_by_revenue: { technician: string; orders: number; revenue: number } | null;
 }
+
+const computeSummary = (rows: ReportRow[]): Summary => {
+  const delivered = rows.filter((r) => r.status === "entregado");
+  const revenue = delivered.reduce((s, r) => s + Number(r.cost || 0), 0);
+  const ticketsWithCost = delivered.filter((r) => Number(r.cost) > 0);
+  const avg_ticket = ticketsWithCost.length ? revenue / ticketsWithCost.length : 0;
+  const daysList = delivered
+    .filter((r) => r.delivered_at)
+    .map((r) => (new Date(r.delivered_at!).getTime() - new Date(r.received_at).getTime()) / 86400000);
+  const avg_repair_days = daysList.length ? daysList.reduce((a, b) => a + b, 0) / daysList.length : 0;
+
+  const byDayMap = new Map<string, { orders: number; revenue: number; daysSum: number; daysN: number }>();
+  for (const r of rows) {
+    const day = r.received_at.slice(0, 10);
+    const e = byDayMap.get(day) || { orders: 0, revenue: 0, daysSum: 0, daysN: 0 };
+    e.orders += 1;
+    if (r.status === "entregado") {
+      e.revenue += Number(r.cost || 0);
+      if (r.delivered_at) {
+        e.daysSum += (new Date(r.delivered_at).getTime() - new Date(r.received_at).getTime()) / 86400000;
+        e.daysN += 1;
+      }
+    }
+    byDayMap.set(day, e);
+  }
+  const by_day = [...byDayMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([day, v]) => ({ day, orders: v.orders, revenue: v.revenue, avg_days: v.daysN ? +(v.daysSum / v.daysN).toFixed(1) : 0 }));
+
+  const byStatus = new Map<string, number>();
+  for (const r of rows) byStatus.set(r.status, (byStatus.get(r.status) || 0) + 1);
+  const by_status = [...byStatus.entries()].map(([status, count]) => ({ status, count }));
+
+  const byTech = new Map<string, { orders: number; revenue: number }>();
+  for (const r of rows) {
+    const k = r.technician_name || "—";
+    const e = byTech.get(k) || { orders: 0, revenue: 0 };
+    e.orders += 1;
+    if (r.status === "entregado") e.revenue += Number(r.cost || 0);
+    byTech.set(k, e);
+  }
+  const by_technician = [...byTech.entries()]
+    .map(([technician, v]) => ({ technician, ...v }))
+    .sort((a, b) => b.orders - a.orders);
+
+  return {
+    totals: {
+      total_orders: rows.length,
+      delivered: delivered.length,
+      pending: rows.filter((r) => r.status !== "entregado" && r.status !== "cancelado").length,
+      cancelled: rows.filter((r) => r.status === "cancelado").length,
+      revenue,
+      avg_ticket,
+      avg_repair_days: +avg_repair_days.toFixed(1),
+    },
+    by_day,
+    by_status,
+    by_technician,
+    top_by_orders: by_technician[0] || null,
+    top_by_revenue: [...by_technician].sort((a, b) => b.revenue - a.revenue)[0] || null,
+  };
+};
 
 const presetRange = (p: Preset): { from: Date; to: Date } => {
   const now = new Date();
@@ -81,7 +144,8 @@ const AdminRepairReports = () => {
   const [to, setTo] = useState(toInput(init.to));
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState<ReportRow[]>([]);
-  const [summary, setSummary] = useState<Summary | null>(null);
+  const [prevRows, setPrevRows] = useState<ReportRow[]>([]);
+  const [technicianFilter, setTechnicianFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<keyof ReportRow>("received_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -103,13 +167,17 @@ const AdminRepairReports = () => {
       const fromIso = new Date(from + "T00:00:00").toISOString();
       const toDate = new Date(to + "T00:00:00"); toDate.setDate(toDate.getDate() + 1);
       const toIso = toDate.toISOString();
-      const [{ data: r, error: e1 }, { data: s, error: e2 }] = await Promise.all([
+      // previous period of same length
+      const spanMs = new Date(toIso).getTime() - new Date(fromIso).getTime();
+      const prevTo = fromIso;
+      const prevFrom = new Date(new Date(fromIso).getTime() - spanMs).toISOString();
+      const [{ data: r, error: e1 }, { data: pr, error: e2 }] = await Promise.all([
         (supabase.rpc as any)("get_repair_report", { _from: fromIso, _to: toIso }),
-        (supabase.rpc as any)("get_repair_report_summary", { _from: fromIso, _to: toIso }),
+        (supabase.rpc as any)("get_repair_report", { _from: prevFrom, _to: prevTo }),
       ]);
       if (e1 || e2) throw e1 || e2;
       setRows((r as ReportRow[]) || []);
-      setSummary((s as Summary) || null);
+      setPrevRows((pr as ReportRow[]) || []);
       setPage(1);
     } catch (err: any) {
       toast({ title: "Error al cargar reporte", description: err.message, variant: "destructive" });
@@ -120,11 +188,28 @@ const AdminRepairReports = () => {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [from, to]);
 
+  const technicians = useMemo(() => {
+    const set = new Set<string>();
+    rows.forEach((r) => r.technician_name && set.add(r.technician_name));
+    return [...set].sort();
+  }, [rows]);
+
+  const scopedRows = useMemo(
+    () => technicianFilter === "all" ? rows : rows.filter((r) => r.technician_name === technicianFilter),
+    [rows, technicianFilter]
+  );
+  const scopedPrevRows = useMemo(
+    () => technicianFilter === "all" ? prevRows : prevRows.filter((r) => r.technician_name === technicianFilter),
+    [prevRows, technicianFilter]
+  );
+  const summary = useMemo(() => computeSummary(scopedRows), [scopedRows]);
+  const prevSummary = useMemo(() => computeSummary(scopedPrevRows), [scopedPrevRows]);
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    let r = rows;
+    let r = scopedRows;
     if (s) {
-      r = rows.filter((x) =>
+      r = scopedRows.filter((x) =>
         x.order_number.toLowerCase().includes(s) ||
         (x.customer_name || "").toLowerCase().includes(s) ||
         (x.customer_document || "").toLowerCase().includes(s) ||
@@ -139,7 +224,7 @@ const AdminRepairReports = () => {
       return 0;
     });
     return sorted;
-  }, [rows, search, sortKey, sortDir]);
+  }, [scopedRows, search, sortKey, sortDir]);
 
   const paged = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -202,7 +287,12 @@ const AdminRepairReports = () => {
     doc.save(`reporte-taller-${from}_${to}.pdf`);
   };
 
-  const t = summary?.totals;
+  const t = summary.totals;
+  const pt = prevSummary.totals;
+  const delta = (cur: number, prev: number) => {
+    if (!prev) return cur ? 100 : 0;
+    return ((cur - prev) / prev) * 100;
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -239,21 +329,29 @@ const AdminRepairReports = () => {
             <label className="text-xs text-muted-foreground block mb-1">Hasta</label>
             <input type="date" value={to} onChange={(e) => { setPreset("custom"); setTo(e.target.value); }} className="bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground" />
           </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">Técnico</label>
+            <select value={technicianFilter} onChange={(e) => setTechnicianFilter(e.target.value)} className="bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground">
+              <option value="all">Todos</option>
+              {technicians.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
           {loading && <Loader2 className="w-4 h-4 animate-spin text-primary mb-3" />}
         </div>
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        <Kpi icon={Wrench} label="Total órdenes" value={t?.total_orders ?? 0} color="text-blue-400" />
-        <Kpi icon={CheckCircle2} label="Entregadas" value={t?.delivered ?? 0} color="text-emerald-400" />
-        <Kpi icon={Clock} label="Pendientes" value={t?.pending ?? 0} color="text-yellow-400" />
-        <Kpi icon={XCircle} label="Canceladas" value={t?.cancelled ?? 0} color="text-red-400" />
-        <Kpi icon={DollarSign} label="Ingresos" value={formatCOP(Number(t?.revenue || 0))} color="text-green-400" />
-        <Kpi icon={TrendingUp} label="Ticket promedio" value={formatCOP(Number(t?.avg_ticket || 0))} color="text-purple-400" />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 mb-6">
+        <Kpi icon={Wrench} label="Total órdenes" value={t.total_orders} color="text-blue-400" deltaPct={delta(t.total_orders, pt.total_orders)} />
+        <Kpi icon={CheckCircle2} label="Entregadas" value={t.delivered} color="text-emerald-400" deltaPct={delta(t.delivered, pt.delivered)} />
+        <Kpi icon={Clock} label="Pendientes" value={t.pending} color="text-yellow-400" deltaPct={delta(t.pending, pt.pending)} />
+        <Kpi icon={XCircle} label="Canceladas" value={t.cancelled} color="text-red-400" deltaPct={delta(t.cancelled, pt.cancelled)} />
+        <Kpi icon={DollarSign} label="Ingresos" value={formatCOP(t.revenue)} color="text-green-400" deltaPct={delta(t.revenue, pt.revenue)} />
+        <Kpi icon={TrendingUp} label="Ticket promedio" value={formatCOP(t.avg_ticket)} color="text-purple-400" deltaPct={delta(t.avg_ticket, pt.avg_ticket)} />
+        <Kpi icon={Clock} label="Días promedio" value={t.avg_repair_days ? `${t.avg_repair_days}d` : "—"} color="text-cyan-400" deltaPct={delta(t.avg_repair_days, pt.avg_repair_days)} invertDelta />
       </div>
 
-      {summary && (summary.top_by_orders || summary.top_by_revenue) && (
+      {(summary.top_by_orders || summary.top_by_revenue) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
           {summary.top_by_orders && (
             <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
@@ -277,7 +375,7 @@ const AdminRepairReports = () => {
       )}
 
       {/* Charts */}
-      {summary && (
+      {(
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
           <ChartCard title="Órdenes por día">
             <ResponsiveContainer width="100%" height={220}>
@@ -321,6 +419,17 @@ const AdminRepairReports = () => {
                 <Legend wrapperStyle={{ fontSize: 11 }} formatter={(v: any) => REPAIR_STATUS_LABEL[v as RepairStatus] || v} />
                 <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} formatter={(v: any, n: any) => [v, REPAIR_STATUS_LABEL[n as RepairStatus] || n]} />
               </PieChart>
+            </ResponsiveContainer>
+          </ChartCard>
+          <ChartCard title="Tiempo promedio de reparación (días)">
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={summary.by_day}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${v}d`} />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} formatter={(v: any) => [`${v} días`, "Promedio"]} />
+                <Line type="monotone" dataKey="avg_days" stroke="#06b6d4" strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
             </ResponsiveContainer>
           </ChartCard>
         </div>
@@ -389,13 +498,23 @@ const AdminRepairReports = () => {
   );
 };
 
-const Kpi = ({ icon: Icon, label, value, color }: any) => (
-  <div className="bg-card border border-border rounded-xl p-4">
-    <Icon className={`w-5 h-5 ${color} mb-2`} />
-    <div className="font-display text-xl font-bold text-foreground truncate">{value}</div>
-    <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">{label}</div>
-  </div>
-);
+const Kpi = ({ icon: Icon, label, value, color, deltaPct, invertDelta }: any) => {
+  const hasDelta = typeof deltaPct === "number" && isFinite(deltaPct);
+  const positive = invertDelta ? deltaPct < 0 : deltaPct > 0;
+  const neutral = !hasDelta || Math.abs(deltaPct) < 0.5;
+  return (
+    <div className="bg-card border border-border rounded-xl p-4">
+      <Icon className={`w-5 h-5 ${color} mb-2`} />
+      <div className="font-display text-xl font-bold text-foreground truncate">{value}</div>
+      <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">{label}</div>
+      {hasDelta && (
+        <div className={`text-[10px] mt-1 font-medium ${neutral ? "text-muted-foreground" : positive ? "text-emerald-400" : "text-red-400"}`}>
+          {neutral ? "= 0%" : `${deltaPct > 0 ? "▲" : "▼"} ${Math.abs(deltaPct).toFixed(0)}% vs período anterior`}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ChartCard = ({ title, children }: any) => (
   <div className="bg-card border border-border rounded-xl p-4">
