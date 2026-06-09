@@ -53,6 +53,7 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
   const [loading, setLoading] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const isRepair = service.category === "reparacion";
   const [form, setForm] = useState<FormData>({
     full_name: "",
     email: "",
@@ -69,6 +70,13 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
   });
 
   const handleClick = () => {
+    if (!isRepair) {
+      const text = encodeURIComponent(
+        `Hola, estoy interesado en el siguiente servicio:\n\nServicio: ${service.name}\n\nMe gustaría recibir más información y una cotización.\n\nGracias.`
+      );
+      window.open(`https://wa.me/573107476909?text=${text}`, "_blank", "noopener,noreferrer");
+      return;
+    }
     setCreatedOrder(null);
     if (user && profile) {
       setForm({
@@ -151,7 +159,7 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
           disabled={loading}
           className="inline-flex items-center gap-1 text-sm text-primary hover:underline group-hover:gap-2 transition-all disabled:opacity-50"
         >
-          {loading ? "Enviando..." : "Crear orden de servicio"}{" "}
+          {loading ? "Enviando..." : isRepair ? "Crear orden de servicio" : "Obtener información"}{" "}
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
