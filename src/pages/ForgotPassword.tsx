@@ -31,6 +31,7 @@ const ForgotPassword = () => {
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
+      <SEO title="Recuperar contraseña | Tecno Gz" description="Recupera el acceso a tu cuenta de Tecno Gz." path="/forgot-password" noindex />
       <div className="w-full max-w-md bg-card border border-border rounded-2xl p-8">
         <div className="text-center mb-8">
           <img src={logo} alt="Tecno Gz" className="w-24 h-24 object-contain mx-auto mb-4" />

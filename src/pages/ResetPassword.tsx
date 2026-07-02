@@ -158,6 +158,7 @@ const ResetPassword = () => {
           <h1 className="font-display text-2xl font-bold text-foreground uppercase tracking-wider">Nueva contraseña</h1>
           <p className="text-sm text-muted-foreground mt-1">Ingresa tu nueva contraseña</p>
         </div>
+      <SEO title="Nueva contraseña | Tecno Gz" description="Establece una nueva contraseña para tu cuenta de Tecno Gz." path="/reset-password" noindex />
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="password">Nueva contraseña</Label>

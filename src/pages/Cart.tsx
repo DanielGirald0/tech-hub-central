@@ -124,6 +124,7 @@ const Cart = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <SEO title="Carrito de compras | Tecno Gz" description="Revisa los productos en tu carrito y finaliza tu pedido con Tecno Gz." path="/cart" noindex />
       <h1 className="font-display text-3xl font-bold text-foreground mb-8">Carrito de compras</h1>
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
