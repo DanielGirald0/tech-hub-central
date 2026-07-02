@@ -50,15 +50,35 @@ const Index = () => {
         title="Tecno Gz | Tecnología y Servicio Técnico en Rionegro"
         description="Venta de tecnología, reparación de equipos e instalación de seguridad electrónica en Rionegro, Antioquia. Servicio técnico profesional."
         path="/"
-        jsonLd={{
-          "@context": "https://schema.org",
-          "@type": "LocalBusiness",
-          name: "Tecno Gz",
-          description: "Venta de tecnología, servicio técnico y seguridad electrónica",
-          areaServed: "Rionegro, Antioquia, Colombia",
-          telephone: "+57 310 747 6909",
-          priceRange: "$$",
-        }}
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            name: "Tecno Gz",
+            description: "Venta de tecnología, servicio técnico y seguridad electrónica en Rionegro, Antioquia.",
+            telephone: "+57 310 747 6909",
+            priceRange: "$$",
+            address: {
+              "@type": "PostalAddress",
+              addressLocality: "Rionegro",
+              addressRegion: "Antioquia",
+              addressCountry: "CO",
+            },
+            areaServed: ["Rionegro", "Oriente Antioqueño", "Antioquia"],
+            sameAs: ["https://wa.me/573107476909"],
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "Tecno Gz",
+            inLanguage: "es-CO",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: "/products?search={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+          },
+        ]}
       />
       {/* Hero */}
       <section className="relative bg-gradient-hero overflow-hidden">

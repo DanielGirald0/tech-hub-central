@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import SEO from "@/components/SEO";
 
 const Dashboard = () => {
   const { user, profile, userRole, signOut } = useAuth();
@@ -106,6 +107,7 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <SEO title="Mi cuenta | Tecno Gz" description="Panel personal de Tecno Gz: perfil, órdenes y reparaciones." path="/dashboard" noindex />
       <BackButton />
       <div className="flex items-center justify-between mb-8">
         <div>
