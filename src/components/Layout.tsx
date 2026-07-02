@@ -26,18 +26,18 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Corner diamond motif — inspired by brand business card */}
       <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
         {/* Top-right cluster */}
-        <div className="absolute -top-16 -right-16 w-[380px] h-[380px] opacity-[0.09]">
-          <div className="absolute top-8 right-8 w-40 h-40 rotate-45 border border-primary/70" />
-          <div className="absolute top-24 right-24 w-32 h-32 rotate-45 border border-primary/50 bg-primary/10" />
-          <div className="absolute top-40 right-2 w-24 h-24 rotate-45 border border-primary/40" />
-          <div className="absolute top-2 right-40 w-20 h-20 rotate-45 border border-primary/30" />
+        <div className="absolute -top-10 -right-10 w-[420px] h-[420px] opacity-40">
+          <div className="absolute top-8 right-8 w-44 h-44 rotate-45 border-2 border-primary/70" />
+          <div className="absolute top-28 right-28 w-32 h-32 rotate-45 border-2 border-primary/60 bg-primary/20" />
+          <div className="absolute top-48 right-4 w-24 h-24 rotate-45 border-2 border-primary/50" />
+          <div className="absolute top-2 right-48 w-20 h-20 rotate-45 border-2 border-primary/40" />
         </div>
         {/* Bottom-left cluster */}
-        <div className="absolute -bottom-16 -left-16 w-[380px] h-[380px] opacity-[0.09]">
-          <div className="absolute bottom-8 left-8 w-40 h-40 rotate-45 border border-primary/70" />
-          <div className="absolute bottom-24 left-24 w-32 h-32 rotate-45 border border-primary/50 bg-primary/10" />
-          <div className="absolute bottom-40 left-2 w-24 h-24 rotate-45 border border-primary/40" />
-          <div className="absolute bottom-2 left-40 w-20 h-20 rotate-45 border border-primary/30" />
+        <div className="absolute -bottom-10 -left-10 w-[420px] h-[420px] opacity-40">
+          <div className="absolute bottom-8 left-8 w-44 h-44 rotate-45 border-2 border-primary/70" />
+          <div className="absolute bottom-28 left-28 w-32 h-32 rotate-45 border-2 border-primary/60 bg-primary/20" />
+          <div className="absolute bottom-48 left-4 w-24 h-24 rotate-45 border-2 border-primary/50" />
+          <div className="absolute bottom-2 left-48 w-20 h-20 rotate-45 border-2 border-primary/40" />
         </div>
       </div>
       <div className="relative z-10 flex flex-col min-h-screen">
