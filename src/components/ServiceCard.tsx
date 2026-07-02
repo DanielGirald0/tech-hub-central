@@ -53,7 +53,7 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
   const [loading, setLoading] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const isRepair = service.category === "reparacion";
+  const isRepair = service.category === "reparacion" || service.category === "mantenimiento";
   const [form, setForm] = useState<FormData>({
     full_name: "",
     email: "",

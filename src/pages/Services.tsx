@@ -5,10 +5,9 @@ import { services } from "@/data/products";
 import SEO from "@/components/SEO";
 
 const serviceCategories = [
-  { id: "reparacion", label: "Servicios de reparación", icon: "🔧" },
-  { id: "instalacion", label: "Servicios de instalación", icon: "📦" },
-  { id: "asesoria", label: "Asesoría", icon: "💡" },
-  { id: "mantenimiento", label: "Mantenimiento", icon: "⚙️" },
+  { id: "reparacion", label: "Servicios de reparación y mantenimiento", icon: "🔧", match: ["reparacion", "mantenimiento"] },
+  { id: "instalacion", label: "Servicios de instalación", icon: "📦", match: ["instalacion"] },
+  { id: "asesoria", label: "Asesoría", icon: "💡", match: ["asesoria"] },
 ];
 
 const Services = () => {
@@ -30,7 +29,7 @@ const Services = () => {
       </div>
 
       {serviceCategories.map((cat) => {
-        const catServices = services.filter((s) => s.category === cat.id);
+        const catServices = services.filter((s) => cat.match.includes(s.category));
         if (catServices.length === 0) return null;
         return (
           <section key={cat.id} className="mb-12">
