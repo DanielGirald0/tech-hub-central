@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import SEO from "@/components/SEO";
 
 const Dashboard = () => {
   const { user, profile, userRole, signOut } = useAuth();

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo-tecnogz-official.png";
+import SEO from "@/components/SEO";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");

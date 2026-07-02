@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import { EyeOff } from "lucide-react";
+import SEO from "@/components/SEO";
 
 const formatCOP = (price: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(price);
