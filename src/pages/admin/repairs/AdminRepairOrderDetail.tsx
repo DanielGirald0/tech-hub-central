@@ -214,36 +214,91 @@ const AdminRepairOrderDetail = () => {
       </body></html>`;
   };
 
-  // Renderiza el HTML oficial en un contenedor oculto y lo convierte a PDF con jsPDF.html (autoPaging).
-  // autoPaging="text" evita cortar filas de tablas / bloques a la mitad entre páginas.
+  // Renderiza el MISMO HTML que se imprime dentro de un iframe oculto, lo captura con
+  // html2canvas y lo pagina en A4 cortando solo en bordes de elementos (nunca a mitad de fila).
   const buildOrderPDFBlob = async (): Promise<{ blob: Blob; filename: string }> => {
-    // Contenedor oculto en el MISMO documento (jsPDF.html no funciona con iframes cross-doc).
-    const container = document.createElement("div");
-    container.style.position = "fixed";
-    container.style.left = "-10000px";
-    container.style.top = "0";
-    container.style.width = "794px"; // ~A4 @ 96dpi
-    container.style.background = "#ffffff";
-    container.innerHTML = buildOrderHTML();
-    document.body.appendChild(container);
-    // Espera a que las fuentes/estilos apliquen
-    await new Promise((r) => setTimeout(r, 200));
-
-    const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "p" });
+    const html2canvas = (await import("html2canvas")).default;
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.left = "-10000px";
+    iframe.style.top = "0";
+    iframe.style.width = "794px"; // ~A4 @ 96dpi
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
     try {
-      await pdf.html(container, {
-        x: 0,
-        y: 0,
-        width: 210, // A4 mm
-        windowWidth: 794, // px de origen (mantiene proporción)
-        autoPaging: "text",
-        margin: [8, 0, 8, 0],
-        html2canvas: { scale: 2, backgroundColor: "#ffffff", useCORS: true, letterRendering: true },
+      const doc = iframe.contentDocument!;
+      doc.open();
+      doc.write(buildOrderHTML());
+      doc.close();
+      // Espera a que estilos y fuentes apliquen
+      await new Promise((r) => setTimeout(r, 300));
+      try { await (doc as any).fonts?.ready; } catch { /* ignore */ }
+      const body = doc.body;
+      body.style.margin = "0";
+      iframe.style.height = `${body.scrollHeight + 40}px`;
+      await new Promise((r) => setTimeout(r, 100));
+
+      const scale = 2;
+      const canvas = await html2canvas(body, {
+        scale,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        windowWidth: 794,
       });
+
+      const pageWmm = 210;
+      const pageHmm = 297;
+      const marginMm = 12; // igual que @page en impresión
+      const contentWmm = pageWmm - marginMm * 2;
+      const pxPerMm = canvas.width / contentWmm;
+      const pageContentHpx = (pageHmm - marginMm * 2) * pxPerMm;
+
+      // Posiciones (en px del canvas) donde es seguro cortar: el borde superior de cada elemento.
+      const bodyTop = body.getBoundingClientRect().top;
+      const breakpoints: number[] = [];
+      body
+        .querySelectorAll("h2, tr, li, .row, .head, .sign, .terms-title, .accept, table")
+        .forEach((el) => {
+          const top = (el as HTMLElement).getBoundingClientRect().top - bodyTop;
+          if (top > 0) breakpoints.push(Math.floor(top * scale));
+        });
+      breakpoints.sort((a, b) => a - b);
+
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "p" });
+      let y = 0;
+      let pageIndex = 0;
+      while (y < canvas.height - 2) {
+        let end = Math.min(y + pageContentHpx, canvas.height);
+        if (end < canvas.height) {
+          // Corta en el borde de elemento más cercano hacia arriba (evita partir filas).
+          const safe = breakpoints.filter((b) => b > y + pageContentHpx * 0.4 && b < end - 4).pop();
+          if (safe) end = safe;
+        }
+        const sliceH = Math.ceil(end - y);
+        const slice = document.createElement("canvas");
+        slice.width = canvas.width;
+        slice.height = sliceH;
+        const ctx = slice.getContext("2d")!;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, slice.width, slice.height);
+        ctx.drawImage(canvas, 0, y, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+        if (pageIndex > 0) pdf.addPage();
+        pdf.addImage(
+          slice.toDataURL("image/jpeg", 0.92),
+          "JPEG",
+          marginMm,
+          marginMm,
+          contentWmm,
+          sliceH / pxPerMm
+        );
+        y = end;
+        pageIndex++;
+      }
+      return { blob: pdf.output("blob"), filename: `${order.order_number}.pdf` };
     } finally {
-      document.body.removeChild(container);
+      document.body.removeChild(iframe);
     }
-    return { blob: pdf.output("blob"), filename: `${order.order_number}.pdf` };
   };
 
   // Acortador de URL público (is.gd). Devuelve la original si falla.
