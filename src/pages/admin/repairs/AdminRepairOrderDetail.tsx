@@ -411,8 +411,24 @@ const AdminRepairOrderDetail = () => {
     printHTML(html);
   };
 
-  const printOrder = () => {
-    printHTML(buildOrderHTML());
+  // ÚNICA fuente del PDF de la orden: buildOrderPDFBlob().
+  // "Imprimir" descarga ese PDF; "WhatsApp" sube EXACTAMENTE el mismo PDF al storage.
+  const printOrder = async () => {
+    toast({ title: "Generando PDF…" });
+    try {
+      const { blob, filename } = await buildOrderPDFBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      toast({ title: "PDF generado", description: filename });
+    } catch (e: any) {
+      toast({ title: "No se pudo generar el PDF", description: e?.message || String(e), variant: "destructive" });
+    }
   };
 
   const remove = async () => {
