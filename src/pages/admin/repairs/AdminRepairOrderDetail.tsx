@@ -7,7 +7,6 @@ import { Save, Trash2, Upload, MessageCircle, Loader2, Printer, Tag } from "luci
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus, whatsappLink, buildStatusMessage } from "@/lib/repairs";
 import { useAuth } from "@/contexts/AuthContext";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 
 const AdminRepairOrderDetail = () => {
   const { id } = useParams();
@@ -215,41 +214,34 @@ const AdminRepairOrderDetail = () => {
       </body></html>`;
   };
 
-  // Renderiza el HTML oficial en un iframe oculto y lo convierte a PDF con html2canvas + jsPDF.
+  // Renderiza el HTML oficial en un contenedor oculto y lo convierte a PDF con jsPDF.html (autoPaging).
+  // autoPaging="text" evita cortar filas de tablas / bloques a la mitad entre páginas.
   const buildOrderPDFBlob = async (): Promise<{ blob: Blob; filename: string }> => {
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.left = "-10000px";
-    iframe.style.top = "0";
-    iframe.style.width = "794px"; // ~A4 @ 96dpi
-    iframe.style.height = "1123px";
-    iframe.style.border = "0";
-    document.body.appendChild(iframe);
-    const idoc = iframe.contentDocument!;
-    idoc.open();
-    idoc.write(buildOrderHTML());
-    idoc.close();
-    // Espera al layout / fuentes
-    await new Promise((r) => setTimeout(r, 250));
-    const target = idoc.body;
-    const canvas = await html2canvas(target, { scale: 2, backgroundColor: "#ffffff", useCORS: true, windowWidth: 794 });
-    document.body.removeChild(iframe);
+    // Contenedor oculto en el MISMO documento (jsPDF.html no funciona con iframes cross-doc).
+    const container = document.createElement("div");
+    container.style.position = "fixed";
+    container.style.left = "-10000px";
+    container.style.top = "0";
+    container.style.width = "794px"; // ~A4 @ 96dpi
+    container.style.background = "#ffffff";
+    container.innerHTML = buildOrderHTML();
+    document.body.appendChild(container);
+    // Espera a que las fuentes/estilos apliquen
+    await new Promise((r) => setTimeout(r, 200));
 
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pageW = 210;
-    const pageH = 297;
-    const imgW = pageW;
-    const imgH = (canvas.height * imgW) / canvas.width;
-    const imgData = canvas.toDataURL("image/jpeg", 0.92);
-    let heightLeft = imgH;
-    let position = 0;
-    pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
-    heightLeft -= pageH;
-    while (heightLeft > 0) {
-      position = heightLeft - imgH;
-      pdf.addPage();
-      pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
-      heightLeft -= pageH;
+    const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "p" });
+    try {
+      await pdf.html(container, {
+        x: 0,
+        y: 0,
+        width: 210, // A4 mm
+        windowWidth: 794, // px de origen (mantiene proporción)
+        autoPaging: "text",
+        margin: [8, 0, 8, 0],
+        html2canvas: { scale: 2, backgroundColor: "#ffffff", useCORS: true, letterRendering: true },
+      });
+    } finally {
+      document.body.removeChild(container);
     }
     return { blob: pdf.output("blob"), filename: `${order.order_number}.pdf` };
   };
@@ -268,7 +260,14 @@ const AdminRepairOrderDetail = () => {
 
   const notifyWhatsapp = async () => {
     toast({ title: "Generando PDF…" });
-    const { blob } = await buildOrderPDFBlob();
+    let blob: Blob;
+    try {
+      const res = await buildOrderPDFBlob();
+      blob = res.blob;
+    } catch (e: any) {
+      toast({ title: "No se pudo generar el PDF", description: e?.message || String(e), variant: "destructive" });
+      return;
+    }
     const baseMsg = buildStatusMessage(order.order_number, order.status, order.repair_customers.name);
 
     // Sube el PDF al storage privado y genera un link firmado de larga duración (1 año).
