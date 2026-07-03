@@ -234,6 +234,10 @@ const AdminRepairOrderDetail = () => {
         .sign { margin-top: 36px; display: flex; justify-content: space-between; gap: 24px; }
         .sign > div { flex: 1; border-top: 1px solid #000; padding-top: 4px; text-align: center; font-size: 10px; text-transform: uppercase; }
         .terms { font-size: 9px; color:#333; margin-top: 12px; line-height: 1.4; }
+        .terms-title { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
+        .terms ol { padding-left: 16px; margin: 4px 0; }
+        .terms li { margin-bottom: 3px; }
+        .terms .accept { margin-top: 8px; font-weight: bold; text-transform: uppercase; font-size: 9px; }
       </style></head><body>
       <div class="head">
         <div>
@@ -282,7 +286,23 @@ const AdminRepairOrderDetail = () => {
       ${photos.length ? `<h2>Fotos</h2><div>${photosHtml}</div>` : ""}
 
       <div class="terms">
-        <b>Condiciones:</b> El cliente acepta el diagnóstico y presupuesto informado. Pasados 30 días sin retirar el equipo, TECNO GZ podrá cobrar bodegaje. La garantía cubre exclusivamente la falla reparada. Este documento hace las veces de comprobante de ingreso.
+        <div class="terms-title">Garantía y condiciones sobre orden de servicio en hardware y software de dispositivos móviles y portátiles.</div>
+        <ol>
+          <li>La garantía por cambio de display, táctil, carcasas, reparaciones en software y apertura de bandas es contra entrega.</li>
+          <li>De ninguna manera se responde por equipos que hayan sido reportados como perdidos o robados, se presume que todo equipo es de buena procedencia, si este equipo es requerido por la autoridad se entregará y no se responderá por su valor.</li>
+          <li>Si el equipo está mojado, desarmado o golpeado, entra al taller con riesgo de que se apague o empeore en el procedimiento de revisión o reparación.</li>
+          <li>La garantía por reparación no es aplicable si el equipo entra por un daño diferente al reportado en el momento de su ingreso, si el daño reportado no lo presenta en el momento en que el cliente recibe y cancela la orden de trabajo. Si el equipo muestra señales de contaminación por líquidos o sólidos antes y después de la reparación, si el equipo es abierto después de reparado. Sí pasa el tiempo de garantía estipulado en la orden de servicio. <b>Si el equipo después de 15 días sin reclamar con su debida factura en el almacén, deberá cancelar por bodegaje $ 3.000 semanales y se declarará en abandono según lo estipulado en el art. 18 de la ley 1480 de Colombia.</b></li>
+          <li>El diagnóstico del equipo ingresado se dará en los próximos 3 días hábiles.</li>
+          <li>Bajo ninguna circunstancia se responderá por accesorios extraíbles del celular como: pilas, carcasas, memorias, cargadores, Sim Card, y su información, etc.</li>
+          <li>Los equipos que se destapan por la pantalla se corre el riesgo de que se reviente el Display o pantalla, lo cual si ocurre en el proceso de reparación no nos hacemos responsables.</li>
+          <li>Todo equipo que requiera de una actualización de software corre el riesgo de quedarse apagado lo cual no nos hacemos responsables.</li>
+          <li>Los iPhone de serie 11 en adelante se corre un riesgo más alto de que dañe la pantalla en el proceso de desarme.</li>
+          <li>Los procesos de reparación de Board tienen riesgo de que el equipo se pueda quedar apagado.</li>
+          <li>La garantía es de 1 mes solo en el trabajo que se le hace al equipo.</li>
+          <li>Las pantallas Genéricas de iPhone 11 en adelante no tienen garantía si se actualizan a iOs 18 o posterior.</li>
+          <li><b>Todo diagnóstico tiene un valor de $30.000 (celulares) $40.000 portátiles y torres y todo en uno.</b></li>
+        </ol>
+        <div class="accept">Al recibir este mensaje queda constancia que lo plasmado en la garantía y orden de servicio fue leído, comprendido y aceptado como su firma electrónica. Conservar la factura para reclamar el dispositivo móvil, en caso de pérdida reportarla lo antes posible, ya que el dispositivo móvil podría ser entregado al portador de esta.</div>
       </div>
 
       <div class="sign">
