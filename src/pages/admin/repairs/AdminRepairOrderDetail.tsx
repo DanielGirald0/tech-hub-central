@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import BackButton from "@/components/BackButton";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Upload, MessageCircle, Loader2, Printer, Tag } from "lucide-react";
+import { Save, Trash2, Upload, MessageCircle, Loader2, Printer, Tag } from "lucide-react";
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus, whatsappLink, buildStatusMessage } from "@/lib/repairs";
 import { useAuth } from "@/contexts/AuthContext";
 import jsPDF from "jspdf";
@@ -211,11 +211,20 @@ const AdminRepairOrderDetail = () => {
     const msg = `${baseMsg}\n\nDescarga tu orden de servicio con las condiciones de garantía aquí:\n${signed.signedUrl}`;
     const digits = (order.repair_customers.phone || "").replace(/\D/g, "").replace(/^57/, "");
     const phone = `57${digits}`;
+    const encoded = encodeURIComponent(msg);
     const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-    const url = isMobile
-      ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
-      : `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
+    if (isMobile) {
+      window.open(`https://wa.me/${phone}?text=${encoded}`, "_blank");
+      return;
+    }
+    // Escritorio: abre la app de WhatsApp instalada (evita los dominios web bloqueados).
+    window.location.href = `whatsapp://send?phone=${phone}&text=${encoded}`;
+    // Si la app no se abre (la pestaña conserva el foco), respaldo con WhatsApp Web.
+    setTimeout(() => {
+      if (document.hasFocus()) {
+        window.open(`https://web.whatsapp.com/send?phone=${phone}&text=${encoded}`, "_blank");
+      }
+    }, 2500);
   };
 
   const printHTML = (html: string) => {
@@ -380,9 +389,6 @@ const AdminRepairOrderDetail = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <BackButton />
-      <Link to="/admin/repairs/orders" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4">
-        <ArrowLeft className="w-4 h-4" /> Volver
-      </Link>
 
       <div className="flex items-start justify-between flex-wrap gap-3 mb-6">
         <div>
