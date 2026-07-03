@@ -3,7 +3,7 @@ import BackButton from "@/components/BackButton";
 import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Upload, MessageCircle, FileText, Loader2, Printer, Tag } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Upload, MessageCircle, Loader2, Printer, Tag } from "lucide-react";
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus, whatsappLink, buildStatusMessage } from "@/lib/repairs";
 import { useAuth } from "@/contexts/AuthContext";
 import jsPDF from "jspdf";
@@ -114,12 +114,23 @@ const AdminRepairOrderDetail = () => {
     load();
   };
 
-  const notifyWhatsapp = () => {
-    const msg = buildStatusMessage(order.order_number, order.status, order.repair_customers.name);
-    window.open(whatsappLink(order.repair_customers.phone, msg), "_blank");
-  };
+  const TERMS: string[] = [
+    "La garantía por cambio de display, táctil, carcasas, reparaciones en software y apertura de bandas es contra entrega.",
+    "De ninguna manera se responde por equipos que hayan sido reportados como perdidos o robados, se presume que todo equipo es de buena procedencia, si este equipo es requerido por la autoridad se entregará y no se responderá por su valor.",
+    "Si el equipo está mojado, desarmado o golpeado, entra al taller con riesgo de que se apague o empeore en el procedimiento de revisión o reparación.",
+    "La garantía por reparación no es aplicable si el equipo entra por un daño diferente al reportado en el momento de su ingreso, si el daño reportado no lo presenta en el momento en que el cliente recibe y cancela la orden de trabajo. Si el equipo muestra señales de contaminación por líquidos o sólidos antes y después de la reparación, si el equipo es abierto después de reparado. Sí pasa el tiempo de garantía estipulado en la orden de servicio. Si el equipo después de 15 días sin reclamar con su debida factura en el almacén, deberá cancelar por bodegaje $3.000 semanales y se declarará en abandono según lo estipulado en el art. 18 de la ley 1480 de Colombia.",
+    "El diagnóstico del equipo ingresado se dará en los próximos 3 días hábiles.",
+    "Bajo ninguna circunstancia se responderá por accesorios extraíbles del celular como: pilas, carcasas, memorias, cargadores, Sim Card, y su información, etc.",
+    "Los equipos que se destapan por la pantalla se corre el riesgo de que se reviente el Display o pantalla, lo cual si ocurre en el proceso de reparación no nos hacemos responsables.",
+    "Todo equipo que requiera de una actualización de software corre el riesgo de quedarse apagado lo cual no nos hacemos responsables.",
+    "Los iPhone de serie 11 en adelante se corre un riesgo más alto de que dañe la pantalla en el proceso de desarme.",
+    "Los procesos de reparación de Board tienen riesgo de que el equipo se pueda quedar apagado.",
+    "La garantía es de 1 mes solo en el trabajo que se le hace al equipo.",
+    "Las pantallas Genéricas de iPhone 11 en adelante no tienen garantía si se actualizan a iOs 18 o posterior.",
+    "TODO DIAGNÓSTICO TIENE UN VALOR DE $30.000 (CELULARES) $40.000 PORTÁTILES Y TORRES Y TODO EN UNO.",
+  ];
 
-  const generatePDF = () => {
+  const buildOrderPDF = (): { doc: jsPDF; filename: string } => {
     const doc = new jsPDF();
     doc.setFontSize(18);
     doc.text("TECNO GZ — Orden de Servicio", 14, 18);
@@ -160,7 +171,52 @@ const AdminRepairOrderDetail = () => {
         ["Fecha estimada", formatDate(order.estimated_date)],
       ],
     });
-    doc.save(`${order.order_number}.pdf`);
+    autoTable(doc, {
+      head: [["Garantía y condiciones sobre orden de servicio en hardware y software de dispositivos móviles y portátiles"]],
+      body: TERMS.map((t, i) => [`${i + 1}. ${t}`]),
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fontSize: 8, fillColor: [217, 4, 41] },
+    });
+    autoTable(doc, {
+      body: [[
+        "AL RECIBIR ESTE MENSAJE QUEDA CONSTANCIA QUE LO PLASMADO EN LA GARANTÍA Y ORDEN DE SERVICIO FUE LEÍDO, COMPRENDIDO Y ACEPTADO COMO SU FIRMA ELECTRÓNICA. CONSERVAR LA FACTURA PARA RECLAMAR EL DISPOSITIVO MÓVIL, EN CASO DE PÉRDIDA REPORTARLA LO ANTES POSIBLE, YA QUE EL DISPOSITIVO MÓVIL PODRÍA SER ENTREGADO AL PORTADOR DE ESTA.",
+      ]],
+      styles: { fontSize: 8, cellPadding: 3, fontStyle: "bold" },
+    });
+    return { doc, filename: `${order.order_number}.pdf` };
+  };
+
+  const notifyWhatsapp = async () => {
+    const { doc, filename } = buildOrderPDF();
+    const blob = doc.output("blob");
+    const file = new File([blob], filename, { type: "application/pdf" });
+    const msg = buildStatusMessage(order.order_number, order.status, order.repair_customers.name);
+
+    // Try native share (works on móvil con WhatsApp instalado)
+    const nav: any = navigator;
+    if (nav.canShare && nav.canShare({ files: [file] })) {
+      try {
+        await nav.share({ files: [file], text: msg, title: `Orden ${order.order_number}` });
+        return;
+      } catch {
+        /* usuario canceló o falló, hacemos fallback */
+      }
+    }
+
+    // Fallback: descargar el PDF y abrir WhatsApp con el mensaje para adjuntarlo manualmente
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast({
+      title: "PDF descargado",
+      description: "Adjunta el archivo en la ventana de WhatsApp que se abrirá.",
+    });
+    window.open(whatsappLink(order.repair_customers.phone, msg), "_blank");
   };
 
   const printHTML = (html: string) => {
@@ -338,7 +394,6 @@ const AdminRepairOrderDetail = () => {
           <button onClick={notifyWhatsapp} className="bg-[#25D366] text-white px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:opacity-90"><MessageCircle className="w-4 h-4" /> WhatsApp</button>
           <button onClick={printTicket} className="bg-secondary text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-secondary/80" title="Ticket adhesivo para el equipo"><Tag className="w-4 h-4" /> Ticket</button>
           <button onClick={printOrder} className="bg-secondary text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-secondary/80" title="Imprimir orden completa"><Printer className="w-4 h-4" /> Imprimir</button>
-          <button onClick={generatePDF} className="bg-secondary text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-secondary/80"><FileText className="w-4 h-4" /> PDF</button>
           {isAdmin && (
             <button onClick={remove} className="bg-destructive/20 text-red-300 border border-red-500/30 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2" title="Eliminar orden"><Trash2 className="w-4 h-4" /></button>
           )}
