@@ -189,33 +189,26 @@ const AdminRepairOrderDetail = () => {
   const notifyWhatsapp = async () => {
     const { doc, filename } = buildOrderPDF();
     const blob = doc.output("blob");
-    const file = new File([blob], filename, { type: "application/pdf" });
-    const msg = buildStatusMessage(order.order_number, order.status, order.repair_customers.name);
+    const baseMsg = buildStatusMessage(order.order_number, order.status, order.repair_customers.name);
 
-    // Try native share (works on móvil con WhatsApp instalado)
-    const nav: any = navigator;
-    if (nav.canShare && nav.canShare({ files: [file] })) {
-      try {
-        await nav.share({ files: [file], text: msg, title: `Orden ${order.order_number}` });
-        return;
-      } catch {
-        /* usuario canceló o falló, hacemos fallback */
-      }
+    // Sube el PDF al storage privado y genera un link firmado de larga duración (1 año).
+    const path = `${order.id}/${order.order_number}-${Date.now()}.pdf`;
+    const { error: upErr } = await supabase.storage
+      .from("repair-order-pdfs")
+      .upload(path, blob, { contentType: "application/pdf", upsert: true });
+    if (upErr) {
+      toast({ title: "No se pudo subir el PDF", description: upErr.message, variant: "destructive" });
+      return;
+    }
+    const { data: signed, error: signErr } = await supabase.storage
+      .from("repair-order-pdfs")
+      .createSignedUrl(path, 60 * 60 * 24 * 365);
+    if (signErr || !signed?.signedUrl) {
+      toast({ title: "No se pudo generar el link", description: signErr?.message || "", variant: "destructive" });
+      return;
     }
 
-    // Fallback: descargar el PDF y abrir WhatsApp con el mensaje para adjuntarlo manualmente
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-    toast({
-      title: "PDF descargado",
-      description: "Adjunta el archivo en la ventana de WhatsApp que se abrirá.",
-    });
+    const msg = `${baseMsg}\n\nDescarga tu orden de servicio con las condiciones de garantía aquí:\n${signed.signedUrl}`;
     window.open(whatsappLink(order.repair_customers.phone, msg), "_blank");
   };
 
