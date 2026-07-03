@@ -3,7 +3,7 @@ import BackButton from "@/components/BackButton";
 import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Trash2, Upload, MessageCircle, FileText, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Upload, MessageCircle, FileText, Loader2, Printer, Tag } from "lucide-react";
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus, whatsappLink, buildStatusMessage } from "@/lib/repairs";
 import { useAuth } from "@/contexts/AuthContext";
 import jsPDF from "jspdf";
@@ -163,6 +163,136 @@ const AdminRepairOrderDetail = () => {
     doc.save(`${order.order_number}.pdf`);
   };
 
+  const printHTML = (html: string) => {
+    const w = window.open("", "_blank", "width=800,height=600");
+    if (!w) { toast({ title: "Habilita las ventanas emergentes para imprimir", variant: "destructive" }); return; }
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => { w.print(); }, 300);
+  };
+
+  const printTicket = () => {
+    const c = order.repair_customers;
+    const d = order.repair_devices;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Ticket ${order.order_number}</title>
+      <style>
+        @page { size: 80mm auto; margin: 3mm; }
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; width: 74mm; margin: 0; padding: 2mm; color: #000; font-size: 11px; line-height: 1.35; }
+        .center { text-align: center; }
+        h1 { font-size: 14px; margin: 0 0 2px; letter-spacing: 1px; }
+        h2 { font-size: 22px; margin: 4px 0; letter-spacing: 2px; border: 2px solid #000; padding: 4px 0; }
+        .row { display: flex; justify-content: space-between; gap: 4px; margin: 1px 0; }
+        .label { font-weight: bold; text-transform: uppercase; font-size: 9px; }
+        hr { border: none; border-top: 1px dashed #000; margin: 4px 0; }
+        .small { font-size: 9px; }
+        .box { border: 1px solid #000; padding: 3px; margin-top: 3px; }
+      </style></head><body>
+      <div class="center"><h1>TECNO GZ</h1><div class="small">Servicio Técnico</div></div>
+      <h2 class="center">${order.order_number}</h2>
+      <div class="center small">${formatDateTime(order.received_at)}</div>
+      <hr/>
+      <div class="row"><span class="label">Cliente</span></div>
+      <div>${c.name || "—"}</div>
+      <div class="small">Tel: ${c.phone || "—"}</div>
+      <hr/>
+      <div class="row"><span class="label">Equipo</span></div>
+      <div>${(d.device_type || "") } ${(d.brand || "")} ${(d.model || "")}</div>
+      ${d.serial_imei ? `<div class="small">S/N: ${d.serial_imei}</div>` : ""}
+      ${d.device_password ? `<div class="small">Clave: ${d.device_password}</div>` : ""}
+      ${d.accessories ? `<div class="small">Accesorios: ${d.accessories}</div>` : ""}
+      <hr/>
+      <div class="label">Falla reportada</div>
+      <div class="small">${(order.reported_issue || "—").replace(/</g,"&lt;")}</div>
+      ${order.estimated_date ? `<div class="box small"><b>Entrega estimada:</b> ${formatDate(order.estimated_date)}</div>` : ""}
+      <hr/>
+      <div class="center small">Consulta el estado en<br/>tecnogz.com/rastrear-reparacion</div>
+      </body></html>`;
+    printHTML(html);
+  };
+
+  const printOrder = () => {
+    const c = order.repair_customers;
+    const d = order.repair_devices;
+    const photosHtml = photos.map((p) => `<div style="display:inline-block;margin:4px;text-align:center"><img src="${p.displayUrl}" style="width:220px;height:160px;object-fit:cover;border:1px solid #333"/><div style="font-size:10px;text-transform:uppercase">${p.label}</div></div>`).join("");
+    const historyHtml = history.map((h) => `<tr><td>${formatDateTime(h.created_at)}</td><td>${REPAIR_STATUS_LABEL[h.to_status as RepairStatus]}</td><td>${h.note || ""}</td></tr>`).join("");
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Orden ${order.order_number}</title>
+      <style>
+        @page { size: A4; margin: 12mm; }
+        body { font-family: Arial, sans-serif; color: #000; font-size: 12px; margin: 0; }
+        h1 { margin: 0; font-size: 22px; letter-spacing: 2px; }
+        h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #000; padding-bottom: 2px; margin: 14px 0 6px; }
+        .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #D90429; padding-bottom: 8px; }
+        .badge { border: 2px solid #000; padding: 6px 12px; font-size: 20px; font-weight: bold; letter-spacing: 2px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
+        .row { display: flex; gap: 6px; padding: 2px 0; border-bottom: 1px dotted #999; }
+        .label { font-weight: bold; text-transform: uppercase; font-size: 10px; min-width: 110px; color:#555; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { border: 1px solid #333; padding: 4px 6px; text-align: left; }
+        th { background: #f0f0f0; text-transform: uppercase; font-size: 10px; }
+        .sign { margin-top: 36px; display: flex; justify-content: space-between; gap: 24px; }
+        .sign > div { flex: 1; border-top: 1px solid #000; padding-top: 4px; text-align: center; font-size: 10px; text-transform: uppercase; }
+        .terms { font-size: 9px; color:#333; margin-top: 12px; line-height: 1.4; }
+      </style></head><body>
+      <div class="head">
+        <div>
+          <h1>TECNO GZ</h1>
+          <div style="font-size:11px">Orden de Servicio Técnico</div>
+          <div style="font-size:10px;color:#555">Ingreso: ${formatDateTime(order.received_at)}</div>
+        </div>
+        <div class="badge">${order.order_number}</div>
+      </div>
+
+      <h2>Cliente</h2>
+      <div class="grid">
+        <div class="row"><span class="label">Nombre</span><span>${c.name || "—"}</span></div>
+        <div class="row"><span class="label">Documento</span><span>${c.document_number || "—"}</span></div>
+        <div class="row"><span class="label">Teléfono</span><span>${c.phone || "—"}</span></div>
+        <div class="row"><span class="label">Email</span><span>${c.email || "—"}</span></div>
+        <div class="row" style="grid-column:1/-1"><span class="label">Dirección</span><span>${c.address || "—"}</span></div>
+      </div>
+
+      <h2>Equipo recibido</h2>
+      <div class="grid">
+        <div class="row"><span class="label">Tipo</span><span>${d.device_type || "—"}</span></div>
+        <div class="row"><span class="label">Marca / Modelo</span><span>${(d.brand || "")} ${(d.model || "")}</span></div>
+        <div class="row"><span class="label">Serial / IMEI</span><span>${d.serial_imei || "—"}</span></div>
+        <div class="row"><span class="label">Contraseña</span><span>${d.device_password || "—"}</span></div>
+        <div class="row" style="grid-column:1/-1"><span class="label">Accesorios</span><span>${d.accessories || "—"}</span></div>
+        <div class="row" style="grid-column:1/-1"><span class="label">Estado físico</span><span>${d.physical_condition || "—"}</span></div>
+      </div>
+
+      <h2>Servicio</h2>
+      <div class="grid">
+        <div class="row" style="grid-column:1/-1"><span class="label">Falla reportada</span><span>${(order.reported_issue || "—").replace(/</g,"&lt;")}</span></div>
+        <div class="row" style="grid-column:1/-1"><span class="label">Diagnóstico</span><span>${(order.diagnosis || "—").replace(/</g,"&lt;")}</span></div>
+        <div class="row" style="grid-column:1/-1"><span class="label">Solución</span><span>${(order.solution || "—").replace(/</g,"&lt;")}</span></div>
+        <div class="row"><span class="label">Técnico</span><span>${order.assigned_technician || "—"}</span></div>
+        <div class="row"><span class="label">Estado</span><span>${REPAIR_STATUS_LABEL[order.status as RepairStatus]}</span></div>
+        <div class="row"><span class="label">Costo</span><span>${formatCOP(Number(order.cost) || 0)}</span></div>
+        <div class="row"><span class="label">Garantía</span><span>${order.warranty_days ? order.warranty_days + " días" : "—"}</span></div>
+        <div class="row"><span class="label">Fecha estimada</span><span>${formatDate(order.estimated_date)}</span></div>
+        ${order.delivered_at ? `<div class="row"><span class="label">Entregado</span><span>${formatDateTime(order.delivered_at)}</span></div>` : ""}
+      </div>
+
+      ${history.length ? `<h2>Historial</h2>
+      <table><thead><tr><th>Fecha</th><th>Estado</th><th>Nota</th></tr></thead><tbody>${historyHtml}</tbody></table>` : ""}
+
+      ${photos.length ? `<h2>Fotos</h2><div>${photosHtml}</div>` : ""}
+
+      <div class="terms">
+        <b>Condiciones:</b> El cliente acepta el diagnóstico y presupuesto informado. Pasados 30 días sin retirar el equipo, TECNO GZ podrá cobrar bodegaje. La garantía cubre exclusivamente la falla reparada. Este documento hace las veces de comprobante de ingreso.
+      </div>
+
+      <div class="sign">
+        <div>Firma cliente</div>
+        <div>Firma técnico / recepción</div>
+      </div>
+      </body></html>`;
+    printHTML(html);
+  };
+
   const remove = async () => {
     if (!isAdmin) return;
     if (!confirm("¿Eliminar esta orden? Esta acción no se puede deshacer.")) return;
@@ -186,6 +316,8 @@ const AdminRepairOrderDetail = () => {
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={notifyWhatsapp} className="bg-[#25D366] text-white px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:opacity-90"><MessageCircle className="w-4 h-4" /> WhatsApp</button>
+          <button onClick={printTicket} className="bg-secondary text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-secondary/80" title="Ticket adhesivo para el equipo"><Tag className="w-4 h-4" /> Ticket</button>
+          <button onClick={printOrder} className="bg-secondary text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-secondary/80" title="Imprimir orden completa"><Printer className="w-4 h-4" /> Imprimir</button>
           <button onClick={generatePDF} className="bg-secondary text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-secondary/80"><FileText className="w-4 h-4" /> PDF</button>
           {isAdmin && (
             <button onClick={remove} className="bg-destructive/20 text-red-300 border border-red-500/30 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2" title="Eliminar orden"><Trash2 className="w-4 h-4" /></button>
