@@ -7,7 +7,7 @@ import { Save, Trash2, Upload, MessageCircle, Loader2, Printer, Tag } from "luci
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus, whatsappLink, buildStatusMessage } from "@/lib/repairs";
 import { useAuth } from "@/contexts/AuthContext";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
 
 const AdminRepairOrderDetail = () => {
   const { id } = useParams();
@@ -130,65 +130,145 @@ const AdminRepairOrderDetail = () => {
     "TODO DIAGNÓSTICO TIENE UN VALOR DE $30.000 (CELULARES) $40.000 PORTÁTILES Y TORRES Y TODO EN UNO.",
   ];
 
-  const buildOrderPDF = (): { doc: jsPDF; filename: string } => {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("TECNO GZ — Orden de Servicio", 14, 18);
-    doc.setFontSize(11);
-    doc.text(`Orden: ${order.order_number}`, 14, 28);
-    doc.text(`Fecha: ${formatDate(order.received_at)}`, 14, 34);
-    doc.text(`Estado: ${REPAIR_STATUS_LABEL[order.status as RepairStatus]}`, 14, 40);
+  // Genera el HTML con el diseño oficial de la orden (mismo que se imprime).
+  const buildOrderHTML = (): string => {
+    const c = order.repair_customers;
+    const d = order.repair_devices;
+    const historyHtml = history.map((h) => `<tr><td>${formatDateTime(h.created_at)}</td><td>${REPAIR_STATUS_LABEL[h.to_status as RepairStatus]}</td><td>${h.note || ""}</td></tr>`).join("");
+    const termsHtml = TERMS.map((t) => `<li>${t}</li>`).join("");
+    return `<!doctype html><html><head><meta charset="utf-8"><title>Orden ${order.order_number}</title>
+      <style>
+        @page { size: A4; margin: 12mm; }
+        body { font-family: Arial, sans-serif; color: #000; font-size: 12px; margin: 0; background:#fff; }
+        h1 { margin: 0; font-size: 22px; letter-spacing: 2px; }
+        h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #000; padding-bottom: 2px; margin: 14px 0 6px; }
+        .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #D90429; padding-bottom: 8px; }
+        .badge { border: 2px solid #000; padding: 6px 12px; font-size: 20px; font-weight: bold; letter-spacing: 2px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
+        .row { display: flex; gap: 6px; padding: 2px 0; border-bottom: 1px dotted #999; }
+        .label { font-weight: bold; text-transform: uppercase; font-size: 10px; min-width: 110px; color:#555; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { border: 1px solid #333; padding: 4px 6px; text-align: left; }
+        th { background: #f0f0f0; text-transform: uppercase; font-size: 10px; }
+        .sign { margin-top: 36px; display: flex; justify-content: space-between; gap: 24px; }
+        .sign > div { flex: 1; border-top: 1px solid #000; padding-top: 4px; text-align: center; font-size: 10px; text-transform: uppercase; }
+        .terms { font-size: 9px; color:#333; margin-top: 12px; line-height: 1.4; }
+        .terms-title { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
+        .terms ol { padding-left: 16px; margin: 4px 0; }
+        .terms li { margin-bottom: 3px; }
+        .terms .accept { margin-top: 8px; font-weight: bold; text-transform: uppercase; font-size: 9px; }
+      </style></head><body>
+      <div class="head">
+        <div>
+          <h1>TECNO GZ</h1>
+          <div style="font-size:11px">Orden de Servicio Técnico</div>
+          <div style="font-size:10px;color:#555">Ingreso: ${formatDateTime(order.received_at)}</div>
+        </div>
+        <div class="badge">${order.order_number}</div>
+      </div>
 
-    autoTable(doc, {
-      startY: 48,
-      head: [["Cliente", ""]],
-      body: [
-        ["Nombre", order.repair_customers.name],
-        ["Teléfono", order.repair_customers.phone],
-        ["Email", order.repair_customers.email || "—"],
-        ["Dirección", order.repair_customers.address || "—"],
-      ],
-    });
-    autoTable(doc, {
-      head: [["Equipo", ""]],
-      body: [
-        ["Tipo", order.repair_devices.device_type],
-        ["Marca / Modelo", `${order.repair_devices.brand} ${order.repair_devices.model}`],
-        ["Serial / IMEI", order.repair_devices.serial_imei || "—"],
-        ["Accesorios", order.repair_devices.accessories || "—"],
-        ["Estado físico", order.repair_devices.physical_condition || "—"],
-      ],
-    });
-    autoTable(doc, {
-      head: [["Servicio", ""]],
-      body: [
-        ["Falla reportada", order.reported_issue || "—"],
-        ["Diagnóstico", order.diagnosis || "—"],
-        ["Solución", order.solution || "—"],
-        ["Técnico", order.assigned_technician || "—"],
-        ["Costo", formatCOP(Number(order.cost))],
-        ["Garantía", order.warranty_days ? `${order.warranty_days} días` : "—"],
-        ["Fecha estimada", formatDate(order.estimated_date)],
-      ],
-    });
-    autoTable(doc, {
-      head: [["Garantía y condiciones sobre orden de servicio en hardware y software de dispositivos móviles y portátiles"]],
-      body: TERMS.map((t, i) => [`${i + 1}. ${t}`]),
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fontSize: 8, fillColor: [217, 4, 41] },
-    });
-    autoTable(doc, {
-      body: [[
-        "AL RECIBIR ESTE MENSAJE QUEDA CONSTANCIA QUE LO PLASMADO EN LA GARANTÍA Y ORDEN DE SERVICIO FUE LEÍDO, COMPRENDIDO Y ACEPTADO COMO SU FIRMA ELECTRÓNICA. CONSERVAR LA FACTURA PARA RECLAMAR EL DISPOSITIVO MÓVIL, EN CASO DE PÉRDIDA REPORTARLA LO ANTES POSIBLE, YA QUE EL DISPOSITIVO MÓVIL PODRÍA SER ENTREGADO AL PORTADOR DE ESTA.",
-      ]],
-      styles: { fontSize: 8, cellPadding: 3, fontStyle: "bold" },
-    });
-    return { doc, filename: `${order.order_number}.pdf` };
+      <h2>Cliente</h2>
+      <div class="grid">
+        <div class="row"><span class="label">Nombre</span><span>${c.name || "—"}</span></div>
+        <div class="row"><span class="label">Documento</span><span>${c.document_number || "—"}</span></div>
+        <div class="row"><span class="label">Teléfono</span><span>${c.phone || "—"}</span></div>
+        <div class="row"><span class="label">Email</span><span>${c.email || "—"}</span></div>
+        <div class="row" style="grid-column:1/-1"><span class="label">Dirección</span><span>${c.address || "—"}</span></div>
+      </div>
+
+      <h2>Equipo recibido</h2>
+      <div class="grid">
+        <div class="row"><span class="label">Tipo</span><span>${d.device_type || "—"}</span></div>
+        <div class="row"><span class="label">Marca / Modelo</span><span>${(d.brand || "")} ${(d.model || "")}</span></div>
+        <div class="row"><span class="label">Serial / IMEI</span><span>${d.serial_imei || "—"}</span></div>
+        <div class="row"><span class="label">Contraseña</span><span>${d.device_password || "—"}</span></div>
+        <div class="row" style="grid-column:1/-1"><span class="label">Accesorios</span><span>${d.accessories || "—"}</span></div>
+        <div class="row" style="grid-column:1/-1"><span class="label">Estado físico</span><span>${d.physical_condition || "—"}</span></div>
+      </div>
+
+      <h2>Servicio</h2>
+      <div class="grid">
+        <div class="row" style="grid-column:1/-1"><span class="label">Falla reportada</span><span>${(order.reported_issue || "—").replace(/</g,"&lt;")}</span></div>
+        <div class="row" style="grid-column:1/-1"><span class="label">Diagnóstico</span><span>${(order.diagnosis || "—").replace(/</g,"&lt;")}</span></div>
+        <div class="row" style="grid-column:1/-1"><span class="label">Solución</span><span>${(order.solution || "—").replace(/</g,"&lt;")}</span></div>
+        <div class="row"><span class="label">Técnico</span><span>${order.assigned_technician || "—"}</span></div>
+        <div class="row"><span class="label">Estado</span><span>${REPAIR_STATUS_LABEL[order.status as RepairStatus]}</span></div>
+        <div class="row"><span class="label">Costo</span><span>${formatCOP(Number(order.cost) || 0)}</span></div>
+        <div class="row"><span class="label">Garantía</span><span>${order.warranty_days ? order.warranty_days + " días" : "—"}</span></div>
+        <div class="row"><span class="label">Fecha estimada</span><span>${formatDate(order.estimated_date)}</span></div>
+        ${order.delivered_at ? `<div class="row"><span class="label">Entregado</span><span>${formatDateTime(order.delivered_at)}</span></div>` : ""}
+      </div>
+
+      ${history.length ? `<h2>Historial</h2>
+      <table><thead><tr><th>Fecha</th><th>Estado</th><th>Nota</th></tr></thead><tbody>${historyHtml}</tbody></table>` : ""}
+
+      <div class="terms">
+        <div class="terms-title">Garantía y condiciones sobre orden de servicio en hardware y software de dispositivos móviles y portátiles.</div>
+        <ol>${termsHtml}</ol>
+        <div class="accept">Al recibir este mensaje queda constancia que lo plasmado en la garantía y orden de servicio fue leído, comprendido y aceptado como su firma electrónica. Conservar la factura para reclamar el dispositivo móvil, en caso de pérdida reportarla lo antes posible, ya que el dispositivo móvil podría ser entregado al portador de esta.</div>
+      </div>
+
+      <div class="sign">
+        <div>Firma cliente</div>
+        <div>Firma técnico / recepción</div>
+      </div>
+      </body></html>`;
+  };
+
+  // Renderiza el HTML oficial en un iframe oculto y lo convierte a PDF con html2canvas + jsPDF.
+  const buildOrderPDFBlob = async (): Promise<{ blob: Blob; filename: string }> => {
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.left = "-10000px";
+    iframe.style.top = "0";
+    iframe.style.width = "794px"; // ~A4 @ 96dpi
+    iframe.style.height = "1123px";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+    const idoc = iframe.contentDocument!;
+    idoc.open();
+    idoc.write(buildOrderHTML());
+    idoc.close();
+    // Espera al layout / fuentes
+    await new Promise((r) => setTimeout(r, 250));
+    const target = idoc.body;
+    const canvas = await html2canvas(target, { scale: 2, backgroundColor: "#ffffff", useCORS: true, windowWidth: 794 });
+    document.body.removeChild(iframe);
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pageW = 210;
+    const pageH = 297;
+    const imgW = pageW;
+    const imgH = (canvas.height * imgW) / canvas.width;
+    const imgData = canvas.toDataURL("image/jpeg", 0.92);
+    let heightLeft = imgH;
+    let position = 0;
+    pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
+    heightLeft -= pageH;
+    while (heightLeft > 0) {
+      position = heightLeft - imgH;
+      pdf.addPage();
+      pdf.addImage(imgData, "JPEG", 0, position, imgW, imgH);
+      heightLeft -= pageH;
+    }
+    return { blob: pdf.output("blob"), filename: `${order.order_number}.pdf` };
+  };
+
+  // Acortador de URL público (is.gd). Devuelve la original si falla.
+  const shortenUrl = async (url: string): Promise<string> => {
+    try {
+      const r = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`);
+      if (!r.ok) return url;
+      const t = (await r.text()).trim();
+      return t.startsWith("http") ? t : url;
+    } catch {
+      return url;
+    }
   };
 
   const notifyWhatsapp = async () => {
-    const { doc, filename } = buildOrderPDF();
-    const blob = doc.output("blob");
+    toast({ title: "Generando PDF…" });
+    const { blob } = await buildOrderPDFBlob();
     const baseMsg = buildStatusMessage(order.order_number, order.status, order.repair_customers.name);
 
     // Sube el PDF al storage privado y genera un link firmado de larga duración (1 año).
@@ -208,7 +288,8 @@ const AdminRepairOrderDetail = () => {
       return;
     }
 
-    const msg = `${baseMsg}\n\nDescarga tu orden de servicio con las condiciones de garantía aquí:\n${signed.signedUrl}`;
+    const shortUrl = await shortenUrl(signed.signedUrl);
+    const msg = `${baseMsg}\n\nDescarga tu orden de servicio con las condiciones de garantía aquí:\n${shortUrl}`;
     const digits = (order.repair_customers.phone || "").replace(/\D/g, "").replace(/^57/, "");
     const phone = `57${digits}`;
     const encoded = encodeURIComponent(msg);
@@ -277,104 +358,7 @@ const AdminRepairOrderDetail = () => {
   };
 
   const printOrder = () => {
-    const c = order.repair_customers;
-    const d = order.repair_devices;
-    const photosHtml = photos.map((p) => `<div style="display:inline-block;margin:4px;text-align:center"><img src="${p.displayUrl}" style="width:220px;height:160px;object-fit:cover;border:1px solid #333"/><div style="font-size:10px;text-transform:uppercase">${p.label}</div></div>`).join("");
-    const historyHtml = history.map((h) => `<tr><td>${formatDateTime(h.created_at)}</td><td>${REPAIR_STATUS_LABEL[h.to_status as RepairStatus]}</td><td>${h.note || ""}</td></tr>`).join("");
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Orden ${order.order_number}</title>
-      <style>
-        @page { size: A4; margin: 12mm; }
-        body { font-family: Arial, sans-serif; color: #000; font-size: 12px; margin: 0; }
-        h1 { margin: 0; font-size: 22px; letter-spacing: 2px; }
-        h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #000; padding-bottom: 2px; margin: 14px 0 6px; }
-        .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #D90429; padding-bottom: 8px; }
-        .badge { border: 2px solid #000; padding: 6px 12px; font-size: 20px; font-weight: bold; letter-spacing: 2px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
-        .row { display: flex; gap: 6px; padding: 2px 0; border-bottom: 1px dotted #999; }
-        .label { font-weight: bold; text-transform: uppercase; font-size: 10px; min-width: 110px; color:#555; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th, td { border: 1px solid #333; padding: 4px 6px; text-align: left; }
-        th { background: #f0f0f0; text-transform: uppercase; font-size: 10px; }
-        .sign { margin-top: 36px; display: flex; justify-content: space-between; gap: 24px; }
-        .sign > div { flex: 1; border-top: 1px solid #000; padding-top: 4px; text-align: center; font-size: 10px; text-transform: uppercase; }
-        .terms { font-size: 9px; color:#333; margin-top: 12px; line-height: 1.4; }
-        .terms-title { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
-        .terms ol { padding-left: 16px; margin: 4px 0; }
-        .terms li { margin-bottom: 3px; }
-        .terms .accept { margin-top: 8px; font-weight: bold; text-transform: uppercase; font-size: 9px; }
-      </style></head><body>
-      <div class="head">
-        <div>
-          <h1>TECNO GZ</h1>
-          <div style="font-size:11px">Orden de Servicio Técnico</div>
-          <div style="font-size:10px;color:#555">Ingreso: ${formatDateTime(order.received_at)}</div>
-        </div>
-        <div class="badge">${order.order_number}</div>
-      </div>
-
-      <h2>Cliente</h2>
-      <div class="grid">
-        <div class="row"><span class="label">Nombre</span><span>${c.name || "—"}</span></div>
-        <div class="row"><span class="label">Documento</span><span>${c.document_number || "—"}</span></div>
-        <div class="row"><span class="label">Teléfono</span><span>${c.phone || "—"}</span></div>
-        <div class="row"><span class="label">Email</span><span>${c.email || "—"}</span></div>
-        <div class="row" style="grid-column:1/-1"><span class="label">Dirección</span><span>${c.address || "—"}</span></div>
-      </div>
-
-      <h2>Equipo recibido</h2>
-      <div class="grid">
-        <div class="row"><span class="label">Tipo</span><span>${d.device_type || "—"}</span></div>
-        <div class="row"><span class="label">Marca / Modelo</span><span>${(d.brand || "")} ${(d.model || "")}</span></div>
-        <div class="row"><span class="label">Serial / IMEI</span><span>${d.serial_imei || "—"}</span></div>
-        <div class="row"><span class="label">Contraseña</span><span>${d.device_password || "—"}</span></div>
-        <div class="row" style="grid-column:1/-1"><span class="label">Accesorios</span><span>${d.accessories || "—"}</span></div>
-        <div class="row" style="grid-column:1/-1"><span class="label">Estado físico</span><span>${d.physical_condition || "—"}</span></div>
-      </div>
-
-      <h2>Servicio</h2>
-      <div class="grid">
-        <div class="row" style="grid-column:1/-1"><span class="label">Falla reportada</span><span>${(order.reported_issue || "—").replace(/</g,"&lt;")}</span></div>
-        <div class="row" style="grid-column:1/-1"><span class="label">Diagnóstico</span><span>${(order.diagnosis || "—").replace(/</g,"&lt;")}</span></div>
-        <div class="row" style="grid-column:1/-1"><span class="label">Solución</span><span>${(order.solution || "—").replace(/</g,"&lt;")}</span></div>
-        <div class="row"><span class="label">Técnico</span><span>${order.assigned_technician || "—"}</span></div>
-        <div class="row"><span class="label">Estado</span><span>${REPAIR_STATUS_LABEL[order.status as RepairStatus]}</span></div>
-        <div class="row"><span class="label">Costo</span><span>${formatCOP(Number(order.cost) || 0)}</span></div>
-        <div class="row"><span class="label">Garantía</span><span>${order.warranty_days ? order.warranty_days + " días" : "—"}</span></div>
-        <div class="row"><span class="label">Fecha estimada</span><span>${formatDate(order.estimated_date)}</span></div>
-        ${order.delivered_at ? `<div class="row"><span class="label">Entregado</span><span>${formatDateTime(order.delivered_at)}</span></div>` : ""}
-      </div>
-
-      ${history.length ? `<h2>Historial</h2>
-      <table><thead><tr><th>Fecha</th><th>Estado</th><th>Nota</th></tr></thead><tbody>${historyHtml}</tbody></table>` : ""}
-
-      ${photos.length ? `<h2>Fotos</h2><div>${photosHtml}</div>` : ""}
-
-      <div class="terms">
-        <div class="terms-title">Garantía y condiciones sobre orden de servicio en hardware y software de dispositivos móviles y portátiles.</div>
-        <ol>
-          <li>La garantía por cambio de display, táctil, carcasas, reparaciones en software y apertura de bandas es contra entrega.</li>
-          <li>De ninguna manera se responde por equipos que hayan sido reportados como perdidos o robados, se presume que todo equipo es de buena procedencia, si este equipo es requerido por la autoridad se entregará y no se responderá por su valor.</li>
-          <li>Si el equipo está mojado, desarmado o golpeado, entra al taller con riesgo de que se apague o empeore en el procedimiento de revisión o reparación.</li>
-          <li>La garantía por reparación no es aplicable si el equipo entra por un daño diferente al reportado en el momento de su ingreso, si el daño reportado no lo presenta en el momento en que el cliente recibe y cancela la orden de trabajo. Si el equipo muestra señales de contaminación por líquidos o sólidos antes y después de la reparación, si el equipo es abierto después de reparado. Sí pasa el tiempo de garantía estipulado en la orden de servicio. <b>Si el equipo después de 15 días sin reclamar con su debida factura en el almacén, deberá cancelar por bodegaje $ 3.000 semanales y se declarará en abandono según lo estipulado en el art. 18 de la ley 1480 de Colombia.</b></li>
-          <li>El diagnóstico del equipo ingresado se dará en los próximos 3 días hábiles.</li>
-          <li>Bajo ninguna circunstancia se responderá por accesorios extraíbles del celular como: pilas, carcasas, memorias, cargadores, Sim Card, y su información, etc.</li>
-          <li>Los equipos que se destapan por la pantalla se corre el riesgo de que se reviente el Display o pantalla, lo cual si ocurre en el proceso de reparación no nos hacemos responsables.</li>
-          <li>Todo equipo que requiera de una actualización de software corre el riesgo de quedarse apagado lo cual no nos hacemos responsables.</li>
-          <li>Los iPhone de serie 11 en adelante se corre un riesgo más alto de que dañe la pantalla en el proceso de desarme.</li>
-          <li>Los procesos de reparación de Board tienen riesgo de que el equipo se pueda quedar apagado.</li>
-          <li>La garantía es de 1 mes solo en el trabajo que se le hace al equipo.</li>
-          <li>Las pantallas Genéricas de iPhone 11 en adelante no tienen garantía si se actualizan a iOs 18 o posterior.</li>
-          <li><b>Todo diagnóstico tiene un valor de $30.000 (celulares) $40.000 portátiles y torres y todo en uno.</b></li>
-        </ol>
-        <div class="accept">Al recibir este mensaje queda constancia que lo plasmado en la garantía y orden de servicio fue leído, comprendido y aceptado como su firma electrónica. Conservar la factura para reclamar el dispositivo móvil, en caso de pérdida reportarla lo antes posible, ya que el dispositivo móvil podría ser entregado al portador de esta.</div>
-      </div>
-
-      <div class="sign">
-        <div>Firma cliente</div>
-        <div>Firma técnico / recepción</div>
-      </div>
-      </body></html>`;
-    printHTML(html);
+    printHTML(buildOrderHTML());
   };
 
   const remove = async () => {
