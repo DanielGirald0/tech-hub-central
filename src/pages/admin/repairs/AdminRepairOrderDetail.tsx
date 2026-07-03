@@ -133,83 +133,124 @@ const AdminRepairOrderDetail = () => {
   const buildOrderHTML = (): string => {
     const c = order.repair_customers;
     const d = order.repair_devices;
-    const historyHtml = history.map((h) => `<tr><td>${formatDateTime(h.created_at)}</td><td>${REPAIR_STATUS_LABEL[h.to_status as RepairStatus]}</td><td>${h.note || ""}</td></tr>`).join("");
     const termsHtml = TERMS.map((t) => `<li>${t}</li>`).join("");
+    const esc = (s: any) => String(s ?? "").replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]!));
+    const val = (s: any) => (s && String(s).trim() !== "" ? esc(s) : "—");
     return `<!doctype html><html><head><meta charset="utf-8"><title>Orden ${order.order_number}</title>
       <style>
-        @page { size: A4; margin: 12mm; }
-        body { font-family: Arial, sans-serif; color: #000; font-size: 12px; margin: 0; background:#fff; }
-        h1 { margin: 0; font-size: 22px; letter-spacing: 2px; }
-        h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #000; padding-bottom: 2px; margin: 14px 0 6px; }
-        .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #D90429; padding-bottom: 8px; }
-        .badge { border: 2px solid #000; padding: 6px 12px; font-size: 20px; font-weight: bold; letter-spacing: 2px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
-        .row { display: flex; gap: 6px; padding: 2px 0; border-bottom: 1px dotted #999; }
-        .label { font-weight: bold; text-transform: uppercase; font-size: 10px; min-width: 110px; color:#555; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th, td { border: 1px solid #333; padding: 4px 6px; text-align: left; }
-        th { background: #f0f0f0; text-transform: uppercase; font-size: 10px; }
-        .sign { margin-top: 36px; display: flex; justify-content: space-between; gap: 24px; }
-        .sign > div { flex: 1; border-top: 1px solid #000; padding-top: 4px; text-align: center; font-size: 10px; text-transform: uppercase; }
-        .terms { font-size: 9px; color:#333; margin-top: 12px; line-height: 1.4; }
-        .terms-title { font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
-        .terms ol { padding-left: 16px; margin: 4px 0; }
-        .terms li { margin-bottom: 3px; }
-        .terms .accept { margin-top: 8px; font-weight: bold; text-transform: uppercase; font-size: 9px; }
+        @page { size: A4; margin: 10mm; }
+        * { box-sizing: border-box; }
+        html, body { margin:0; padding:0; background:#fff; }
+        body { font-family: Arial, Helvetica, sans-serif; color:#111; font-size:10.5px; line-height:1.35; }
+        .header { display:flex; justify-content:space-between; align-items:flex-start;
+                  border-bottom:3px solid #D90429; padding-bottom:6px; margin-bottom:8px; }
+        .brand h1 { margin:0; font-size:22px; font-weight:900; letter-spacing:2px; }
+        .brand .sub { font-size:9.5px; color:#555; text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+        .brand .biz { font-size:9px; color:#666; margin-top:3px; }
+        .meta { text-align:right; }
+        .meta .num { display:inline-block; border:2px solid #000; padding:4px 10px;
+                     font-size:15px; font-weight:900; letter-spacing:2px; }
+        .meta .date { font-size:9px; color:#555; margin-top:4px; }
+        .meta .status { display:inline-block; margin-top:4px; padding:2px 8px; border:1px solid #000;
+                        background:#111; color:#fff; font-size:9px; font-weight:bold;
+                        text-transform:uppercase; letter-spacing:1px; border-radius:2px; }
+        .section { margin-top:7px; break-inside:avoid; page-break-inside:avoid; }
+        .section-title { font-size:9.5px; font-weight:bold; text-transform:uppercase; letter-spacing:1.5px;
+                         background:#111; color:#fff; padding:3px 8px; }
+        .section-body { border:1px solid #ddd; border-top:none; padding:6px 8px; }
+        .kv { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:1px 14px; }
+        .kv .item { display:flex; align-items:baseline; padding:2px 0; min-width:0; }
+        .kv .item.full { grid-column:1 / -1; }
+        .kv .k { font-size:8px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;
+                 color:#666; width:82px; flex:0 0 82px; margin-right:8px; }
+        .kv .v { color:#111; flex:1 1 auto; min-width:0; word-break:break-word; }
+        .kv .v.strong { font-weight:bold; }
+        .kv .v.money { font-weight:bold; color:#D90429; }
+        .block { padding:3px 0; }
+        .block .k { display:block; font-size:8px; font-weight:bold; text-transform:uppercase;
+                    letter-spacing:0.5px; color:#666; margin-bottom:2px; }
+        .block .v { display:block; white-space:pre-wrap; word-break:break-word; }
+        .sign { margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:32px; }
+        .sign > div { border-top:1px solid #000; padding-top:3px; text-align:center;
+                      font-size:8.5px; text-transform:uppercase; letter-spacing:1px; color:#333; }
+        .terms { margin-top:8px; font-size:7px; color:#333; line-height:1.3; }
+        .terms-title { font-size:8px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+        .terms ol { padding-left:14px; margin:2px 0; -webkit-column-count:2; column-count:2;
+                    -webkit-column-gap:12px; column-gap:12px; }
+        .terms li { margin-bottom:2px; break-inside:avoid; }
+        .terms .accept { margin-top:5px; font-weight:bold; text-transform:uppercase;
+                         font-size:7px; text-align:justify; }
       </style></head><body>
-      <div class="head">
-        <div>
+      <div class="header">
+        <div class="brand">
           <h1>TECNO GZ</h1>
-          <div style="font-size:11px">Orden de Servicio Técnico</div>
-          <div style="font-size:10px;color:#555">Ingreso: ${formatDateTime(order.received_at)}</div>
+          <div class="sub">Orden de Servicio Técnico</div>
+          <div class="biz">Servicio técnico especializado · Colombia</div>
         </div>
-        <div class="badge">${order.order_number}</div>
+        <div class="meta">
+          <div class="num">N° ${esc(order.order_number)}</div>
+          <div class="date">Ingreso: ${esc(formatDateTime(order.received_at))}</div>
+          <div class="status">${esc(REPAIR_STATUS_LABEL[order.status as RepairStatus])}</div>
+        </div>
       </div>
 
-      <h2>Cliente</h2>
-      <div class="grid">
-        <div class="row"><span class="label">Nombre</span><span>${c.name || "—"}</span></div>
-        <div class="row"><span class="label">Documento</span><span>${c.document_number || "—"}</span></div>
-        <div class="row"><span class="label">Teléfono</span><span>${c.phone || "—"}</span></div>
-        <div class="row"><span class="label">Email</span><span>${c.email || "—"}</span></div>
-        <div class="row" style="grid-column:1/-1"><span class="label">Dirección</span><span>${c.address || "—"}</span></div>
+      <div class="section">
+        <div class="section-title">Cliente</div>
+        <div class="section-body">
+          <div class="kv">
+            <div class="item"><span class="k">Nombre</span><span class="v strong">${val(c.name)}</span></div>
+            <div class="item"><span class="k">Documento</span><span class="v">${val(c.document_number)}</span></div>
+            <div class="item"><span class="k">Teléfono</span><span class="v">${val(c.phone)}</span></div>
+            <div class="item"><span class="k">Email</span><span class="v">${val(c.email)}</span></div>
+            <div class="item full"><span class="k">Dirección</span><span class="v">${val(c.address)}</span></div>
+          </div>
+        </div>
       </div>
 
-      <h2>Equipo recibido</h2>
-      <div class="grid">
-        <div class="row"><span class="label">Tipo</span><span>${d.device_type || "—"}</span></div>
-        <div class="row"><span class="label">Marca / Modelo</span><span>${(d.brand || "")} ${(d.model || "")}</span></div>
-        <div class="row"><span class="label">Serial / IMEI</span><span>${d.serial_imei || "—"}</span></div>
-        <div class="row"><span class="label">Contraseña</span><span>${d.device_password || "—"}</span></div>
-        <div class="row" style="grid-column:1/-1"><span class="label">Accesorios</span><span>${d.accessories || "—"}</span></div>
-        <div class="row" style="grid-column:1/-1"><span class="label">Estado físico</span><span>${d.physical_condition || "—"}</span></div>
+      <div class="section">
+        <div class="section-title">Equipo</div>
+        <div class="section-body">
+          <div class="kv">
+            <div class="item"><span class="k">Tipo</span><span class="v">${val(d.device_type)}</span></div>
+            <div class="item"><span class="k">Marca / Modelo</span><span class="v strong">${esc([d.brand, d.model].filter(Boolean).join(" ")) || "—"}</span></div>
+            <div class="item"><span class="k">Serial / IMEI</span><span class="v">${val(d.serial_imei)}</span></div>
+            <div class="item"><span class="k">Contraseña</span><span class="v">${val(d.device_password)}</span></div>
+            <div class="item full"><span class="k">Accesorios</span><span class="v">${val(d.accessories)}</span></div>
+            <div class="item full"><span class="k">Estado físico</span><span class="v">${val(d.physical_condition)}</span></div>
+          </div>
+        </div>
       </div>
 
-      <h2>Servicio</h2>
-      <div class="grid">
-        <div class="row" style="grid-column:1/-1"><span class="label">Falla reportada</span><span>${(order.reported_issue || "—").replace(/</g,"&lt;")}</span></div>
-        <div class="row" style="grid-column:1/-1"><span class="label">Diagnóstico</span><span>${(order.diagnosis || "—").replace(/</g,"&lt;")}</span></div>
-        <div class="row" style="grid-column:1/-1"><span class="label">Solución</span><span>${(order.solution || "—").replace(/</g,"&lt;")}</span></div>
-        <div class="row"><span class="label">Técnico</span><span>${order.assigned_technician || "—"}</span></div>
-        <div class="row"><span class="label">Estado</span><span>${REPAIR_STATUS_LABEL[order.status as RepairStatus]}</span></div>
-        <div class="row"><span class="label">Costo</span><span>${formatCOP(Number(order.cost) || 0)}</span></div>
-        <div class="row"><span class="label">Garantía</span><span>${order.warranty_days ? order.warranty_days + " días" : "—"}</span></div>
-        <div class="row"><span class="label">Fecha estimada</span><span>${formatDate(order.estimated_date)}</span></div>
-        ${order.delivered_at ? `<div class="row"><span class="label">Entregado</span><span>${formatDateTime(order.delivered_at)}</span></div>` : ""}
+      <div class="section">
+        <div class="section-title">Servicio</div>
+        <div class="section-body">
+          <div class="block"><span class="k">Falla reportada</span><span class="v">${val(order.reported_issue)}</span></div>
+          <div class="block"><span class="k">Diagnóstico</span><span class="v">${val(order.diagnosis)}</span></div>
+          <div class="block"><span class="k">Solución</span><span class="v">${val(order.solution)}</span></div>
+          <div class="kv" style="margin-top:2px">
+            <div class="item"><span class="k">Técnico</span><span class="v">${val(order.assigned_technician)}</span></div>
+            <div class="item"><span class="k">Garantía</span><span class="v">${order.warranty_days ? esc(order.warranty_days) + " días" : "—"}</span></div>
+            <div class="item"><span class="k">Fecha estimada</span><span class="v">${esc(formatDate(order.estimated_date))}</span></div>
+            <div class="item"><span class="k">Valor</span><span class="v money">${esc(formatCOP(Number(order.cost) || 0))}</span></div>
+            ${order.delivered_at ? `<div class="item full"><span class="k">Entregado</span><span class="v">${esc(formatDateTime(order.delivered_at))}</span></div>` : ""}
+          </div>
+        </div>
       </div>
 
-      ${history.length ? `<h2>Historial</h2>
-      <table><thead><tr><th>Fecha</th><th>Estado</th><th>Nota</th></tr></thead><tbody>${historyHtml}</tbody></table>` : ""}
-
-      <div class="terms">
-        <div class="terms-title">Garantía y condiciones sobre orden de servicio en hardware y software de dispositivos móviles y portátiles.</div>
-        <ol>${termsHtml}</ol>
-        <div class="accept">Al recibir este mensaje queda constancia que lo plasmado en la garantía y orden de servicio fue leído, comprendido y aceptado como su firma electrónica. Conservar la factura para reclamar el dispositivo móvil, en caso de pérdida reportarla lo antes posible, ya que el dispositivo móvil podría ser entregado al portador de esta.</div>
-      </div>
+      ${order.internal_notes ? `<div class="section">
+        <div class="section-title">Observaciones</div>
+        <div class="section-body"><div class="block"><span class="v">${val(order.internal_notes)}</span></div></div>
+      </div>` : ""}
 
       <div class="sign">
         <div>Firma cliente</div>
         <div>Firma técnico / recepción</div>
+      </div>
+
+      <div class="terms">
+        <div class="terms-title">Garantía y condiciones del servicio</div>
+        <ol>${termsHtml}</ol>
+        <div class="accept">Al recibir esta orden queda constancia que las condiciones de garantía fueron leídas, comprendidas y aceptadas como firma electrónica del cliente.</div>
       </div>
       </body></html>`;
   };
@@ -301,16 +342,21 @@ const AdminRepairOrderDetail = () => {
     }
   };
 
-  // Acortador de URL público (is.gd). Devuelve la original si falla.
+  // Acortador de URL público con varios respaldos. Devuelve la original si todos fallan.
   const shortenUrl = async (url: string): Promise<string> => {
-    try {
-      const r = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`);
-      if (!r.ok) return url;
-      const t = (await r.text()).trim();
-      return t.startsWith("http") ? t : url;
-    } catch {
-      return url;
+    const providers = [
+      `https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`,
+      `https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`,
+    ];
+    for (const p of providers) {
+      try {
+        const r = await fetch(p);
+        if (!r.ok) continue;
+        const t = (await r.text()).trim();
+        if (t.startsWith("http") && t.length < url.length) return t;
+      } catch { /* try next */ }
     }
+    return url;
   };
 
   const notifyWhatsapp = async () => {
@@ -411,24 +457,22 @@ const AdminRepairOrderDetail = () => {
     printHTML(html);
   };
 
-  // ÚNICA fuente del PDF de la orden: buildOrderPDFBlob().
-  // "Imprimir" descarga ese PDF; "WhatsApp" sube EXACTAMENTE el mismo PDF al storage.
-  const printOrder = async () => {
-    toast({ title: "Generando PDF…" });
-    try {
-      const { blob, filename } = await buildOrderPDFBlob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      toast({ title: "PDF generado", description: filename });
-    } catch (e: any) {
-      toast({ title: "No se pudo generar el PDF", description: e?.message || String(e), variant: "destructive" });
+  // "Imprimir" abre el mismo diseño en una ventana nueva y dispara el diálogo nativo
+  // de impresión (el usuario elige imprimir o guardar como PDF).
+  // "WhatsApp" sube el PDF renderizado con EXACTAMENTE el mismo HTML.
+  const printOrder = () => {
+    const html = buildOrderHTML().replace(
+      "</body>",
+      `<script>window.addEventListener('load',function(){setTimeout(function(){window.focus();window.print();},250);});<\/script></body>`
+    );
+    const w = window.open("", "_blank", "width=900,height=1000");
+    if (!w) {
+      toast({ title: "Habilita las ventanas emergentes para imprimir", variant: "destructive" });
+      return;
     }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
   };
 
   const remove = async () => {
