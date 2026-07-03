@@ -209,7 +209,13 @@ const AdminRepairOrderDetail = () => {
     }
 
     const msg = `${baseMsg}\n\nDescarga tu orden de servicio con las condiciones de garantía aquí:\n${signed.signedUrl}`;
-    window.open(whatsappLink(order.repair_customers.phone, msg), "_blank");
+    const digits = (order.repair_customers.phone || "").replace(/\D/g, "").replace(/^57/, "");
+    const phone = `57${digits}`;
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    const url = isMobile
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+      : `https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
   };
 
   const printHTML = (html: string) => {
