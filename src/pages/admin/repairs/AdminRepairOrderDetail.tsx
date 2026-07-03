@@ -254,142 +254,19 @@ const AdminRepairOrderDetail = () => {
       </body></html>`;
   };
 
-  // Renderiza el MISMO HTML que se imprime dentro de un iframe oculto, lo captura con
-  // html2canvas y lo pagina en A4 cortando solo en bordes de elementos (nunca a mitad de fila).
-  const buildOrderPDFBlob = async (): Promise<{ blob: Blob; filename: string }> => {
-    const html2canvas = (await import("html2canvas")).default;
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.left = "-10000px";
-    iframe.style.top = "0";
-    iframe.style.width = "794px"; // ~A4 @ 96dpi
-    iframe.style.height = "0";
-    iframe.style.border = "0";
-    document.body.appendChild(iframe);
-    try {
-      const doc = iframe.contentDocument!;
-      doc.open();
-      doc.write(buildOrderHTML());
-      doc.close();
-      // Espera a que estilos y fuentes apliquen
-      await new Promise((r) => setTimeout(r, 300));
-      try { await (doc as any).fonts?.ready; } catch { /* ignore */ }
-      const body = doc.body;
-      body.style.margin = "0";
-      iframe.style.height = `${body.scrollHeight + 40}px`;
-      await new Promise((r) => setTimeout(r, 100));
-
-      const scale = 2;
-      const canvas = await html2canvas(body, {
-        scale,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        windowWidth: 794,
-      });
-
-      const pageWmm = 210;
-      const pageHmm = 297;
-      const marginMm = 12; // igual que @page en impresión
-      const contentWmm = pageWmm - marginMm * 2;
-      const pxPerMm = canvas.width / contentWmm;
-      const pageContentHpx = (pageHmm - marginMm * 2) * pxPerMm;
-
-      // Posiciones (en px del canvas) donde es seguro cortar: el borde superior de cada elemento.
-      const bodyTop = body.getBoundingClientRect().top;
-      const breakpoints: number[] = [];
-      body
-        .querySelectorAll("h2, tr, li, .row, .head, .sign, .terms-title, .accept, table")
-        .forEach((el) => {
-          const top = (el as HTMLElement).getBoundingClientRect().top - bodyTop;
-          if (top > 0) breakpoints.push(Math.floor(top * scale));
-        });
-      breakpoints.sort((a, b) => a - b);
-
-      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "p" });
-      let y = 0;
-      let pageIndex = 0;
-      while (y < canvas.height - 2) {
-        let end = Math.min(y + pageContentHpx, canvas.height);
-        if (end < canvas.height) {
-          // Corta en el borde de elemento más cercano hacia arriba (evita partir filas).
-          const safe = breakpoints.filter((b) => b > y + pageContentHpx * 0.4 && b < end - 4).pop();
-          if (safe) end = safe;
-        }
-        const sliceH = Math.ceil(end - y);
-        const slice = document.createElement("canvas");
-        slice.width = canvas.width;
-        slice.height = sliceH;
-        const ctx = slice.getContext("2d")!;
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, slice.width, slice.height);
-        ctx.drawImage(canvas, 0, y, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
-        if (pageIndex > 0) pdf.addPage();
-        pdf.addImage(
-          slice.toDataURL("image/jpeg", 0.92),
-          "JPEG",
-          marginMm,
-          marginMm,
-          contentWmm,
-          sliceH / pxPerMm
-        );
-        y = end;
-        pageIndex++;
-      }
-      return { blob: pdf.output("blob"), filename: `${order.order_number}.pdf` };
-    } finally {
-      document.body.removeChild(iframe);
-    }
-  };
-
-  // Acortador de URL público con varios respaldos. Devuelve la original si todos fallan.
-  const shortenUrl = async (url: string): Promise<string> => {
-    const providers = [
-      `https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`,
-      `https://is.gd/create.php?format=simple&url=${encodeURIComponent(url)}`,
-    ];
-    for (const p of providers) {
-      try {
-        const r = await fetch(p);
-        if (!r.ok) continue;
-        const t = (await r.text()).trim();
-        if (t.startsWith("http") && t.length < url.length) return t;
-      } catch { /* try next */ }
-    }
-    return url;
-  };
-
-  const notifyWhatsapp = async () => {
-    toast({ title: "Generando PDF…" });
-    let blob: Blob;
-    try {
-      const res = await buildOrderPDFBlob();
-      blob = res.blob;
-    } catch (e: any) {
-      toast({ title: "No se pudo generar el PDF", description: e?.message || String(e), variant: "destructive" });
-      return;
-    }
-    const baseMsg = buildStatusMessage(order.order_number, order.status, order.repair_customers.name);
-
-    // Sube el PDF al storage privado y genera un link firmado de larga duración (1 año).
-    const path = `${order.id}/${order.order_number}-${Date.now()}.pdf`;
-    const { error: upErr } = await supabase.storage
-      .from("repair-order-pdfs")
-      .upload(path, blob, { contentType: "application/pdf", upsert: true });
-    if (upErr) {
-      toast({ title: "No se pudo subir el PDF", description: upErr.message, variant: "destructive" });
-      return;
-    }
-    const { data: signed, error: signErr } = await supabase.storage
-      .from("repair-order-pdfs")
-      .createSignedUrl(path, 60 * 60 * 24 * 365);
-    if (signErr || !signed?.signedUrl) {
-      toast({ title: "No se pudo generar el link", description: signErr?.message || "", variant: "destructive" });
-      return;
-    }
-
-    const shortUrl = await shortenUrl(signed.signedUrl);
-    const msg = `${baseMsg}\n\nDescarga tu orden de servicio con las condiciones de garantía aquí:\n${shortUrl}`;
-    const digits = (order.repair_customers.phone || "").replace(/\D/g, "").replace(/^57/, "");
+  // Compartir por WhatsApp: mensaje simple con nombre, número de orden, estado
+  // y enlace directo al seguimiento público de la orden. Sin PDF ni Storage.
+  const notifyWhatsapp = () => {
+    const name = (order.repair_customers?.name || "").split(" ")[0] || "cliente";
+    const statusLabel = REPAIR_STATUS_LABEL[order.status as RepairStatus];
+    const trackUrl = `https://tecnogz.com/seguimiento?orden=${encodeURIComponent(order.order_number)}`;
+    const msg =
+      `Hola ${name}.\n\n` +
+      `Te informamos que tu Orden de Servicio #${order.order_number} se encuentra actualmente en el estado:\n\n` +
+      `${statusLabel}\n\n` +
+      `Puedes consultar todos los detalles y el historial actualizado desde el siguiente enlace:\n${trackUrl}\n\n` +
+      `Gracias por confiar en TECNO GZ.`;
+    const digits = (order.repair_customers?.phone || "").replace(/\D/g, "").replace(/^57/, "");
     const phone = `57${digits}`;
     const encoded = encodeURIComponent(msg);
     const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -397,9 +274,7 @@ const AdminRepairOrderDetail = () => {
       window.open(`https://wa.me/${phone}?text=${encoded}`, "_blank");
       return;
     }
-    // Escritorio: abre la app de WhatsApp instalada (evita los dominios web bloqueados).
     window.location.href = `whatsapp://send?phone=${phone}&text=${encoded}`;
-    // Si la app no se abre (la pestaña conserva el foco), respaldo con WhatsApp Web.
     setTimeout(() => {
       if (document.hasFocus()) {
         window.open(`https://web.whatsapp.com/send?phone=${phone}&text=${encoded}`, "_blank");
