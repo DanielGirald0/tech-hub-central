@@ -130,7 +130,7 @@ const Cart = () => {
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
             <div key={item.id} className="bg-card border border-border rounded-xl p-4 flex gap-4 items-center">
-              <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-lg bg-secondary" />
+              <img src={item.image} alt={item.name} loading="lazy" decoding="async" className="w-20 h-20 object-cover rounded-lg bg-secondary" />
               <div className="flex-1 min-w-0">
                 <h3 className="font-display font-semibold text-foreground text-sm truncate">{item.name}</h3>
                 <p className="text-primary font-bold mt-1">{formatCOP(item.price)}</p>
