@@ -4,7 +4,7 @@ import { ShoppingCart, Menu, X, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
-import logo from "@/assets/logo-tecnogz-official.png";
+import logo from "@/assets/logo-tecnogz.webp";
 
 const navLinks = [
   { label: "Inicio", path: "/" },
