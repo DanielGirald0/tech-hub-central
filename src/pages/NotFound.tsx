@@ -10,7 +10,7 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="flex min-h-dvh items-center justify-center bg-background">
       <SEO title="Página no encontrada | Tecno Gz" description="La página que buscas no existe. Vuelve al inicio de Tecno Gz." path={location.pathname} noindex />
       <div className="text-center">
         <h1 className="mb-4 text-4xl font-bold text-foreground">404</h1>

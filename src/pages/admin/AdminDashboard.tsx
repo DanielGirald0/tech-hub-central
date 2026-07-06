@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, Users, ShoppingCart, BarChart3, RefreshCw, Tags, Star, ClipboardList, Settings as SettingsIcon } from "lucide-react";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
-import logo from "@/assets/logo-tecnogz-official.png";
+import logo from "@/assets/logo-tecnogz.webp";
 
 const AdminDashboard = () => {
   const { settings } = useStoreSettings();

@@ -1,10 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ShoppingCart, Menu, X, User, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
-import logo from "@/assets/logo-tecnogz-official.png";
+import logo from "@/assets/logo-tecnogz.webp";
 
 const navLinks = [
   { label: "Inicio", path: "/" },
@@ -30,8 +29,16 @@ const Navbar = () => {
     <header className="sticky top-0 z-50 glass border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
-          <Link to="/" className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <img src={logo} alt="Tecno Gz" className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 object-contain shrink-0" />
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 min-w-0" aria-label="Tecno Gz — Inicio">
+            <img
+              src={logo}
+              alt="Logo Tecno Gz"
+              width={56}
+              height={56}
+              fetchPriority="high"
+              decoding="async"
+              className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 object-contain shrink-0"
+            />
             <span className="font-display font-bold text-base sm:text-lg lg:text-xl tracking-wider text-foreground hidden md:block uppercase truncate">
               TECNO GZ
             </span>
@@ -70,11 +77,12 @@ const Navbar = () => {
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <Link
               to="/cart"
-              className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors relative"
+              aria-label={`Carrito de compras${totalItems > 0 ? ` (${totalItems} artículos)` : ""}`}
+              className="p-2 min-h-11 min-w-11 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                <span aria-hidden="true" className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
                   {totalItems > 99 ? "99+" : totalItems}
                 </span>
               )}
@@ -82,7 +90,8 @@ const Navbar = () => {
 
             <button
               onClick={handleUserClick}
-              className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              aria-label={user ? "Mi cuenta" : "Iniciar sesión"}
+              className="p-2 min-h-11 min-w-11 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <User className="w-5 h-5" />
             </button>
@@ -90,7 +99,8 @@ const Navbar = () => {
             {user && (
               <button
                 onClick={handleLogout}
-                className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors hidden sm:flex"
+                aria-label="Cerrar sesión"
+                className="p-2 min-h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors hidden sm:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 title="Cerrar sesión"
               >
                 <LogOut className="w-5 h-5" />
@@ -99,7 +109,10 @@ const Navbar = () => {
 
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="p-2 rounded-md text-muted-foreground hover:text-foreground lg:hidden"
+              aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-nav"
+              className="p-2 min-h-11 min-w-11 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -108,7 +121,7 @@ const Navbar = () => {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <nav className="lg:hidden pb-4 border-t border-border mt-1 pt-3 flex flex-col gap-1">
+          <nav id="mobile-nav" aria-label="Navegación móvil" className="lg:hidden pb-4 border-t border-border mt-1 pt-3 flex flex-col gap-1">
             {navLinks.map((l) => (
               <Link
                 key={l.path}
