@@ -9,7 +9,13 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="relative min-h-screen flex flex-col bg-background overflow-x-hidden">
+    <div className="relative min-h-dvh flex flex-col bg-background overflow-x-hidden">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-3 focus:py-2 focus:rounded-md focus:bg-primary focus:text-primary-foreground"
+      >
+        Saltar al contenido
+      </a>
       {/* Ambient edge-only red glow — premium, subtle, non-interactive */}
       <div
         aria-hidden
@@ -40,9 +46,9 @@ const Layout = ({ children }: LayoutProps) => {
           <div className="absolute bottom-2 left-48 w-20 h-20 rotate-45 border-2 border-primary/40" />
         </div>
       </div>
-      <div className="relative z-10 flex flex-col min-h-screen">
+      <div className="relative z-10 flex flex-col min-h-dvh">
         <Navbar />
-        <main className="flex-1">{children}</main>
+        <main id="main-content" className="flex-1">{children}</main>
         <Footer />
         <WhatsAppButton />
       </div>
