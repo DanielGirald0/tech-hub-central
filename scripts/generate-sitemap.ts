@@ -5,8 +5,7 @@ import { writeFileSync } from "fs";
 import { resolve } from "path";
 import { createClient } from "@supabase/supabase-js";
 
-// TODO: replace with the project's published or custom domain when known.
-const BASE_URL = process.env.SITE_URL || "";
+const BASE_URL = process.env.SITE_URL || "https://tecnogz.lovable.app";
 
 interface SitemapEntry {
   path: string;
