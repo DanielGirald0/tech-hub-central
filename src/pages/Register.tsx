@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,12 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo-tecnogz.webp";
 import SEO from "@/components/SEO";
+
+const safeNext = (raw: string | null): string | null => {
+  if (!raw) return null;
+  if (!raw.startsWith("/") || raw.startsWith("//")) return null;
+  return raw;
+};
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -17,6 +23,8 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [params] = useSearchParams();
+  const next = safeNext(params.get("next"));
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +40,7 @@ const Register = () => {
       password,
       options: {
         data: { name: name.trim(), phone: phone.trim(), document_number: docDigits || null },
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: next ? window.location.origin + next : window.location.origin,
       },
     });
     setLoading(false);
@@ -45,7 +53,7 @@ const Register = () => {
           ? "Revisa tu correo. Vincularemos automáticamente tus órdenes de servicio anteriores."
           : "Revisa tu correo para confirmar tu cuenta.",
       });
-      navigate("/login");
+      navigate(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
     }
   };
 
@@ -95,7 +103,7 @@ const Register = () => {
         </form>
         <p className="text-center text-sm text-muted-foreground mt-6">
           ¿Ya tienes cuenta?{" "}
-          <Link to="/login" className="text-primary hover:underline">Inicia sesión</Link>
+          <Link to={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className="text-primary hover:underline">Inicia sesión</Link>
         </p>
       </div>
     </div>
