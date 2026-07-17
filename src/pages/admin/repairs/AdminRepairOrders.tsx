@@ -22,7 +22,7 @@ const AdminRepairOrders = () => {
   const [technicians, setTechnicians] = useState<{ user_id: string; name: string }[]>([]);
 
   useEffect(() => {
-    (supabase.rpc as any)("get_all_users").then(({ data }: any) => {
+    (supabase.rpc as any)("get_staff_list").then(({ data }: any) => {
       const staff = (data || []).filter((u: any) => u.role === "technician" || u.role === "admin");
       setTechnicians(staff.map((u: any) => ({ user_id: u.user_id, name: u.name || u.email })));
     });
