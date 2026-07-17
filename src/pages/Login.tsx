@@ -64,7 +64,7 @@ const Login = () => {
         </div>
         <p className="text-center text-sm text-muted-foreground mt-4">
           ¿No tienes cuenta?{" "}
-          <Link to="/register" className="text-primary hover:underline">Regístrate aquí</Link>
+          <Link to={next ? `/register?next=${encodeURIComponent(next)}` : "/register"} className="text-primary hover:underline">Regístrate aquí</Link>
         </p>
       </div>
     </div>
