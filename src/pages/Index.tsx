@@ -94,7 +94,7 @@ const Index = () => {
             className="max-w-3xl mx-auto text-center"
           >
             <h1 className="font-display text-fluid-h1 font-bold text-foreground mb-4 uppercase tracking-wider break-words">
-              TECNO GZ
+              Tecno Gz — Venta de Tecnología y Servicio Técnico en Rionegro
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-primary mb-4 font-display font-medium">
               Pasión y servicio de confianza

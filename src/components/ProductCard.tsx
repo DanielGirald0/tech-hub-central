@@ -75,8 +75,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
             <span className="text-foreground font-display font-semibold text-sm bg-secondary px-3 py-1 rounded-md">Agotado</span>
           </div>
         )}
-        <button className="absolute top-3 right-3 w-8 h-8 rounded-full bg-card/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-card">
-          <Heart className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+        <button
+          aria-label={`Añadir ${product.name} a favoritos`}
+          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-card/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-card"
+        >
+          <Heart className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" aria-hidden="true" />
         </button>
       </div>
       <div className="p-4">
@@ -93,8 +96,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 <span className="block text-xs text-muted-foreground line-through mt-0.5">{formatCOP(originalPrice)}</span>
               )}
             </div>
-            <Button size="sm" disabled={!inStock} onClick={(e) => { e.preventDefault(); handleAdd(); }} className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 w-8 p-0">
-              <ShoppingCart className="w-4 h-4" />
+            <Button
+              size="sm"
+              disabled={!inStock}
+              onClick={(e) => { e.preventDefault(); handleAdd(); }}
+              aria-label={inStock ? `Agregar ${product.name} al carrito` : `${product.name} agotado`}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 w-8 p-0"
+            >
+              <ShoppingCart className="w-4 h-4" aria-hidden="true" />
             </Button>
           </div>
         ) : (
