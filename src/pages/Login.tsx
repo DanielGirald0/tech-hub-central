@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,12 +8,20 @@ import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo-tecnogz.webp";
 import SEO from "@/components/SEO";
 
+const safeNext = (raw: string | null): string | null => {
+  if (!raw) return null;
+  if (!raw.startsWith("/") || raw.startsWith("//")) return null;
+  return raw;
+};
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [params] = useSearchParams();
+  const next = safeNext(params.get("next"));
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +33,7 @@ const Login = () => {
       toast({ title: "Error al iniciar sesión", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "¡Bienvenido!" });
-      navigate("/dashboard");
+      navigate(next ?? "/dashboard");
     }
   };
 
@@ -56,7 +64,7 @@ const Login = () => {
         </div>
         <p className="text-center text-sm text-muted-foreground mt-4">
           ¿No tienes cuenta?{" "}
-          <Link to="/register" className="text-primary hover:underline">Regístrate aquí</Link>
+          <Link to={next ? `/register?next=${encodeURIComponent(next)}` : "/register"} className="text-primary hover:underline">Regístrate aquí</Link>
         </p>
       </div>
     </div>
