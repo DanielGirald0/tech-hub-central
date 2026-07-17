@@ -71,7 +71,14 @@ const ProductDetail = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <SEO
-        title={`${product.name} | Tecno Gz`}
+        title={(() => {
+          const suffix = " | Tecno Gz";
+          const max = 60;
+          const name = product.name.length > max - suffix.length
+            ? product.name.slice(0, max - suffix.length - 1).trimEnd() + "…"
+            : product.name;
+          return `${name}${suffix}`;
+        })()}
         description={(product.description || product.full_description || `Compra ${product.name} en Tecno Gz. Envío en Rionegro y Antioquia.`).slice(0, 160)}
         path={`/products/${product.id}`}
         type="product"

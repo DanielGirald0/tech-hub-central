@@ -20,3 +20,5 @@ Disallow: /login
 Disallow: /register
 Disallow: /forgot-password
 Disallow: /reset-password
+
+Sitemap: https://tecnogz.lovable.app/sitemap.xml
