@@ -830,6 +830,15 @@ export type Database = {
         Args: { _from: string; _to: string }
         Returns: Json
       }
+      get_staff_list: {
+        Args: never
+        Returns: {
+          email: string
+          name: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
