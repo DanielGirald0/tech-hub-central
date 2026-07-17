@@ -23,7 +23,7 @@ const AdminRepairOrderNew = () => {
 
   useEffect(() => {
     (supabase.from as any)("repair_customers").select("id, name, phone, document_number").order("name").then(({ data }: any) => setCustomers(data || []));
-    (supabase.rpc as any)("get_all_users").then(({ data }: any) => {
+    (supabase.rpc as any)("get_staff_list").then(({ data }: any) => {
       const staff = (data || []).filter((u: any) => u.role === "technician" || u.role === "admin");
       setTechnicians(staff.map((u: any) => ({ user_id: u.user_id, name: u.name || u.email })));
     });
