@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['Iosevka', 'monospace', 'system-ui', 'sans-serif'],
-        body: ['Iosevka', 'monospace', 'system-ui', 'sans-serif'],
+        display: ['Geist', 'system-ui', '-apple-system', 'sans-serif'],
+        body: ['Geist', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",
