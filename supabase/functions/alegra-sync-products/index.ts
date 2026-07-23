@@ -107,11 +107,9 @@ function calculatePricing(item: any): { basePrice: number; taxPercentage: number
   const rawPrice = extractPrice(item);
   const taxPercentage = extractTaxPercentage(item);
   const includesTax = priceIncludesTax(item);
-  const basePrice = includesTax && taxPercentage > 0 ? rawPrice / (1 + taxPercentage) : rawPrice;
-  const finalPrice = includesTax ? rawPrice : basePrice * (1 + taxPercentage);
-  if (!Number.isFinite(rawPrice) || rawPrice <= 0 || !Number.isFinite(finalPrice) || finalPrice <= 0) {
-    throw new Error("precio inválido");
-  }
+  const safeRaw = Number.isFinite(rawPrice) && rawPrice > 0 ? rawPrice : 0;
+  const basePrice = includesTax && taxPercentage > 0 ? safeRaw / (1 + taxPercentage) : safeRaw;
+  const finalPrice = includesTax ? safeRaw : basePrice * (1 + taxPercentage);
   return {
     basePrice: Math.round(basePrice),
     taxPercentage: Number((taxPercentage * 100).toFixed(2)),
