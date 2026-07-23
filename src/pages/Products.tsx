@@ -181,14 +181,9 @@ const Products = () => {
       </div>
       <div>
         <h3 className="font-display font-semibold text-foreground text-sm mb-3 uppercase tracking-wider">Precio</h3>
-        <Slider value={priceRange} min={0} max={MAX_PRICE} step={50000} onValueChange={(value) => setPriceRange(value as [number, number])} />
-        <div className="flex items-center justify-between gap-3 mt-3 text-xs text-muted-foreground">
-          <span>{formatCOP(priceRange[0])}</span>
-          <span>{formatCOP(priceRange[1])}</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2 mt-3">
-          <Input type="number" min={0} value={priceRange[0]} onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])} />
-          <Input type="number" min={0} value={priceRange[1]} onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])} />
+        <div className="grid grid-cols-2 gap-2">
+          <Input type="number" min={0} value={priceRange[0]} onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])} placeholder="Mínimo" />
+          <Input type="number" min={0} value={priceRange[1]} onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])} placeholder="Máximo" />
         </div>
       </div>
       <div className="grid grid-cols-1 gap-2">
