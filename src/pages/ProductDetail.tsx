@@ -123,8 +123,8 @@ const ProductDetail = () => {
       {/* Main content */}
       <div className="grid lg:grid-cols-2 gap-8 mb-16">
         {/* Image */}
-        <div className="bg-secondary rounded-2xl overflow-hidden aspect-square relative">
-          <img src={image} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+        <div className="bg-gradient-to-br from-secondary via-secondary to-background rounded-2xl overflow-hidden aspect-square relative p-6">
+          <img src={image} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-contain" />
           {showPrices && discount > 0 && (
             <span className="absolute top-4 left-4 bg-primary text-primary-foreground text-sm font-bold px-3 py-1 rounded-lg">-{discount}%</span>
           )}
