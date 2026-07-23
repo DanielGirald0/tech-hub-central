@@ -293,6 +293,31 @@ Deno.serve(async (req) => {
 
     if (payloads.length === 0) throw new Error("No se importaron productos porque Alegra no envió productos válidos.");
 
+    // Mirror Alegra images to our own Storage bucket so URLs never expire.
+    // Only re-download when the source URL changed from what we already have.
+    const alegraIdsForMirror = payloads.map((p) => p.alegra_id);
+    const { data: existingRows } = await supabase
+      .from("products")
+      .select("alegra_id,image_url")
+      .in("alegra_id", alegraIdsForMirror);
+    const existingImageByAlegraId = new Map<string, string>(
+      ((existingRows || []) as any[]).map((r) => [r.alegra_id, r.image_url || ""]),
+    );
+    for (const p of payloads) {
+      if (elapsedMs(startedMs) > 120000) break;
+      const src = p.image_url;
+      if (!src) continue;
+      const prev = existingImageByAlegraId.get(p.alegra_id) || "";
+      // Reuse previously mirrored URL when the source hasn't changed and we already stored it
+      const alreadyMirrored = prev.includes("/storage/v1/object/") && prev.includes("product-images");
+      if (alreadyMirrored) {
+        p.image_url = prev;
+        continue;
+      }
+      const mirrored = await mirrorImageToStorage(supabase, p.alegra_id, src);
+      p.image_url = mirrored || prev || "";
+    }
+
     const categoryNames = [...new Set(payloads.map((product) => product.category))];
     await supabase.from("categories").upsert(categoryNames.map((name) => ({ name, slug: slugify(name), active: true })), { onConflict: "slug" });
     const { data: categoryRows } = await supabase.from("categories").select("id,slug").in("slug", categoryNames.map(slugify));
