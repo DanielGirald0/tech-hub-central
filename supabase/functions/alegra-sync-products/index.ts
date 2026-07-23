@@ -132,6 +132,53 @@ function extractImage(item: any): string {
   return "";
 }
 
+// 10 years, effectively permanent
+const SIGNED_URL_TTL = 60 * 60 * 24 * 365 * 10;
+
+function guessExtension(contentType: string | null, url: string): string {
+  if (contentType?.includes("png")) return "png";
+  if (contentType?.includes("webp")) return "webp";
+  if (contentType?.includes("gif")) return "gif";
+  if (contentType?.includes("jpeg") || contentType?.includes("jpg")) return "jpg";
+  const m = url.split("?")[0].match(/\.(png|jpe?g|webp|gif)$/i);
+  return m ? m[1].toLowerCase().replace("jpeg", "jpg") : "jpg";
+}
+
+async function mirrorImageToStorage(
+  supabase: any,
+  alegraId: string,
+  sourceUrl: string,
+): Promise<string> {
+  if (!sourceUrl) return "";
+  // Already mirrored (our own storage signed URL) — reuse
+  if (sourceUrl.includes("/storage/v1/object/") && sourceUrl.includes("product-images")) {
+    return sourceUrl;
+  }
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(sourceUrl, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`download ${res.status}`);
+    const contentType = res.headers.get("content-type");
+    const ext = guessExtension(contentType, sourceUrl);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const path = `${alegraId}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("product-images")
+      .upload(path, bytes, { contentType: contentType || "image/jpeg", upsert: true });
+    if (upErr) throw upErr;
+    const { data: signed, error: signErr } = await supabase.storage
+      .from("product-images")
+      .createSignedUrl(path, SIGNED_URL_TTL);
+    if (signErr || !signed?.signedUrl) throw signErr || new Error("sign failed");
+    return signed.signedUrl;
+  } catch (e) {
+    console.error(`mirror image failed for ${alegraId}:`, e instanceof Error ? e.message : e);
+    return "";
+  }
+}
+
 function extractCategory(item: any): string {
   if (item.category?.name) return String(item.category.name);
   if (item.itemCategory?.name) return String(item.itemCategory.name);
