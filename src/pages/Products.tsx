@@ -216,7 +216,7 @@ const Products = () => {
           <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar por nombre, SKU o descripción" className="pl-10 h-11" />
         </div>
         <Button onClick={applyFilters} className="bg-primary text-primary-foreground hover:bg-primary/90 h-11">
-          Aplicar filtros
+          Buscar
         </Button>
       </div>
 
