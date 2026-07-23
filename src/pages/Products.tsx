@@ -6,7 +6,6 @@ import { ChevronLeft, ChevronRight, Filter, Loader2, Search, X } from "lucide-re
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 
