@@ -6,7 +6,6 @@ import { ChevronLeft, ChevronRight, Filter, Loader2, Search, X } from "lucide-re
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 
@@ -182,14 +181,9 @@ const Products = () => {
       </div>
       <div>
         <h3 className="font-display font-semibold text-foreground text-sm mb-3 uppercase tracking-wider">Precio</h3>
-        <Slider value={priceRange} min={0} max={MAX_PRICE} step={50000} onValueChange={(value) => setPriceRange(value as [number, number])} />
-        <div className="flex items-center justify-between gap-3 mt-3 text-xs text-muted-foreground">
-          <span>{formatCOP(priceRange[0])}</span>
-          <span>{formatCOP(priceRange[1])}</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2 mt-3">
-          <Input type="number" min={0} value={priceRange[0]} onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])} />
-          <Input type="number" min={0} value={priceRange[1]} onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])} />
+        <div className="grid grid-cols-2 gap-2">
+          <Input type="number" min={0} value={priceRange[0]} onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])} placeholder="Mínimo" />
+          <Input type="number" min={0} value={priceRange[1]} onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])} placeholder="Máximo" />
         </div>
       </div>
       <div className="grid grid-cols-1 gap-2">
@@ -222,7 +216,7 @@ const Products = () => {
           <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar por nombre, SKU o descripción" className="pl-10 h-11" />
         </div>
         <Button onClick={applyFilters} className="bg-primary text-primary-foreground hover:bg-primary/90 h-11">
-          Aplicar filtros
+          Buscar
         </Button>
       </div>
 
