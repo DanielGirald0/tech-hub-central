@@ -132,6 +132,53 @@ function extractImage(item: any): string {
   return "";
 }
 
+// 10 years, effectively permanent
+const SIGNED_URL_TTL = 60 * 60 * 24 * 365 * 10;
+
+function guessExtension(contentType: string | null, url: string): string {
+  if (contentType?.includes("png")) return "png";
+  if (contentType?.includes("webp")) return "webp";
+  if (contentType?.includes("gif")) return "gif";
+  if (contentType?.includes("jpeg") || contentType?.includes("jpg")) return "jpg";
+  const m = url.split("?")[0].match(/\.(png|jpe?g|webp|gif)$/i);
+  return m ? m[1].toLowerCase().replace("jpeg", "jpg") : "jpg";
+}
+
+async function mirrorImageToStorage(
+  supabase: any,
+  alegraId: string,
+  sourceUrl: string,
+): Promise<string> {
+  if (!sourceUrl) return "";
+  // Already mirrored (our own storage signed URL) — reuse
+  if (sourceUrl.includes("/storage/v1/object/") && sourceUrl.includes("product-images")) {
+    return sourceUrl;
+  }
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(sourceUrl, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`download ${res.status}`);
+    const contentType = res.headers.get("content-type");
+    const ext = guessExtension(contentType, sourceUrl);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const path = `${alegraId}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("product-images")
+      .upload(path, bytes, { contentType: contentType || "image/jpeg", upsert: true });
+    if (upErr) throw upErr;
+    const { data: signed, error: signErr } = await supabase.storage
+      .from("product-images")
+      .createSignedUrl(path, SIGNED_URL_TTL);
+    if (signErr || !signed?.signedUrl) throw signErr || new Error("sign failed");
+    return signed.signedUrl;
+  } catch (e) {
+    console.error(`mirror image failed for ${alegraId}:`, e instanceof Error ? e.message : e);
+    return "";
+  }
+}
+
 function extractCategory(item: any): string {
   if (item.category?.name) return String(item.category.name);
   if (item.itemCategory?.name) return String(item.itemCategory.name);
@@ -245,6 +292,31 @@ Deno.serve(async (req) => {
     });
 
     if (payloads.length === 0) throw new Error("No se importaron productos porque Alegra no envió productos válidos.");
+
+    // Mirror Alegra images to our own Storage bucket so URLs never expire.
+    // Only re-download when the source URL changed from what we already have.
+    const alegraIdsForMirror = payloads.map((p) => p.alegra_id);
+    const { data: existingRows } = await supabase
+      .from("products")
+      .select("alegra_id,image_url")
+      .in("alegra_id", alegraIdsForMirror);
+    const existingImageByAlegraId = new Map<string, string>(
+      ((existingRows || []) as any[]).map((r) => [r.alegra_id, r.image_url || ""]),
+    );
+    for (const p of payloads) {
+      if (elapsedMs(startedMs) > 120000) break;
+      const src = p.image_url;
+      if (!src) continue;
+      const prev = existingImageByAlegraId.get(p.alegra_id) || "";
+      // Reuse previously mirrored URL when the source hasn't changed and we already stored it
+      const alreadyMirrored = prev.includes("/storage/v1/object/") && prev.includes("product-images");
+      if (alreadyMirrored) {
+        p.image_url = prev;
+        continue;
+      }
+      const mirrored = await mirrorImageToStorage(supabase, p.alegra_id, src);
+      p.image_url = mirrored || prev || "";
+    }
 
     const categoryNames = [...new Set(payloads.map((product) => product.category))];
     await supabase.from("categories").upsert(categoryNames.map((name) => ({ name, slug: slugify(name), active: true })), { onConflict: "slug" });
