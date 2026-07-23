@@ -18,7 +18,7 @@ interface Category {
   slug: string;
 }
 
-const MAX_PRICE = 20000000;
+const MAX_PRICE = 8000000;
 const PAGE_SIZE = 24;
 
 const Products = () => {
