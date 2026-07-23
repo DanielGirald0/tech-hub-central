@@ -129,8 +129,8 @@ const Contact = () => {
                 <Clock className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium text-foreground">Horario</p>
-                  <p>Lunes a Viernes: 9:30 AM – 7:00 PM</p>
-                  <p>Sábado: 9:30 AM – 5:00 PM</p>
+                  <p>Lunes a Viernes: 9:30 AM – 6:00 PM</p>
+                  <p>Sábado: 9:30 AM – 6:00 PM</p>
                 </div>
               </div>
             </div>
