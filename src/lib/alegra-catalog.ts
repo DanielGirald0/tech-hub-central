@@ -1,5 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
-
 export interface CatalogProduct {
   id: string;
   name: string;
@@ -35,12 +33,18 @@ export interface ListParams {
   ids?: string[];
 }
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
 async function callCatalog(qs: URLSearchParams) {
-  const { data, error } = await supabase.functions.invoke(`alegra-catalog?${qs.toString()}`, {
-    method: "GET",
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/alegra-catalog?${qs.toString()}`, {
+    headers: {
+      apikey: SUPABASE_ANON,
+      Authorization: `Bearer ${SUPABASE_ANON}`,
+    },
   });
-  if (error) throw error;
-  return data as any;
+  if (!res.ok) throw new Error(`catalog ${res.status}: ${await res.text()}`);
+  return (await res.json()) as any;
 }
 
 export async function listProducts(params: ListParams = {}) {
