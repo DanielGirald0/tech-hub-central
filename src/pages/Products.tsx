@@ -10,7 +10,7 @@ import SEO from "@/components/SEO";
 import { listCategories, listProducts } from "@/lib/alegra-catalog";
 
 const MAX_PRICE = 8000000;
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 20;
 
 const Products = () => {
   const [searchParams] = useSearchParams();
