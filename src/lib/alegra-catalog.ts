@@ -1,0 +1,83 @@
+import { supabase } from "@/integrations/supabase/client";
+
+export interface CatalogProduct {
+  id: string;
+  name: string;
+  description: string;
+  reference: string;
+  price: number;
+  final_price: number;
+  original_price: number | null;
+  stock: number;
+  category: string;
+  category_id: string;
+  brand: string;
+  image_url: string | null;
+  product_type: "product" | "service";
+  inStock: boolean;
+  tax_percentage: number;
+}
+
+export interface CatalogCategory {
+  id: string;
+  name: string;
+}
+
+export interface ListParams {
+  page?: number;
+  pageSize?: number;
+  category?: string;
+  type?: "" | "product" | "service";
+  search?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  inStockOnly?: boolean;
+  ids?: string[];
+}
+
+async function callCatalog(qs: URLSearchParams) {
+  const { data, error } = await supabase.functions.invoke(`alegra-catalog?${qs.toString()}`, {
+    method: "GET",
+  });
+  if (error) throw error;
+  return data as any;
+}
+
+export async function listProducts(params: ListParams = {}) {
+  const qs = new URLSearchParams();
+  qs.set("action", "list");
+  if (params.page) qs.set("page", String(params.page));
+  if (params.pageSize) qs.set("pageSize", String(params.pageSize));
+  if (params.category) qs.set("category", params.category);
+  if (params.type) qs.set("type", params.type);
+  if (params.search) qs.set("search", params.search);
+  if (params.minPrice != null) qs.set("minPrice", String(params.minPrice));
+  if (params.maxPrice != null) qs.set("maxPrice", String(params.maxPrice));
+  if (params.inStockOnly === false) qs.set("inStockOnly", "false");
+  if (params.ids && params.ids.length) qs.set("ids", params.ids.join(","));
+  const res = await callCatalog(qs);
+  return {
+    items: (res?.items || []) as CatalogProduct[],
+    total: Number(res?.total || 0),
+    inStockTotal: Number(res?.inStockTotal || 0),
+    page: Number(res?.page || 1),
+    pageSize: Number(res?.pageSize || 24),
+  };
+}
+
+export async function getProduct(id: string): Promise<CatalogProduct | null> {
+  const qs = new URLSearchParams({ action: "get", id });
+  const res = await callCatalog(qs);
+  return (res?.item as CatalogProduct) || null;
+}
+
+export async function listCategories(): Promise<CatalogCategory[]> {
+  const qs = new URLSearchParams({ action: "categories" });
+  const res = await callCatalog(qs);
+  return (res?.categories || []) as CatalogCategory[];
+}
+
+export async function listFeatured(limit = 8): Promise<CatalogProduct[]> {
+  const { items } = await listProducts({ pageSize: limit, page: 1 });
+  return items;
+}
