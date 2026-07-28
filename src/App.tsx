@@ -21,11 +21,8 @@ const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
-const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
 const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
-const AdminAlegra = lazy(() => import("./pages/admin/AdminAlegra"));
 const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminRepairsDashboard = lazy(() => import("./pages/admin/repairs/AdminRepairsDashboard"));
@@ -88,11 +85,8 @@ const App = () => (
                 <Route path="/account" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
-                <Route path="/admin/products" element={<ProtectedRoute requiredRole="admin"><AdminProducts /></ProtectedRoute>} />
-                <Route path="/admin/categories" element={<ProtectedRoute requiredRole="admin"><AdminCategories /></ProtectedRoute>} />
                 <Route path="/admin/orders" element={<ProtectedRoute requiredRole="admin"><AdminOrders /></ProtectedRoute>} />
                 <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
-                <Route path="/admin/alegra" element={<ProtectedRoute requiredRole="admin"><AdminAlegra /></ProtectedRoute>} />
                 <Route path="/admin/reviews" element={<ProtectedRoute requiredRole="admin"><AdminReviews /></ProtectedRoute>} />
                 <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
                 <Route path="/admin/repairs" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairsDashboard /></ProtectedRoute>} />

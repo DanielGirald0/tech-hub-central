@@ -6,16 +6,8 @@ import { ChevronLeft, ChevronRight, Filter, Loader2, Search, X } from "lucide-re
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
-
-const db = supabase as any;
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-}
+import { listCategories, listProducts } from "@/lib/alegra-catalog";
 
 const MAX_PRICE = 8000000;
 const PAGE_SIZE = 24;
@@ -33,14 +25,11 @@ const Products = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, MAX_PRICE]);
   const [appliedPriceRange, setAppliedPriceRange] = useState<[number, number]>([0, MAX_PRICE]);
 
-  // Categories: cached for 10 min, rarely change
+  // Categories from Alegra
   const { data: categories = [] } = useQuery({
-    queryKey: ["product-categories"],
+    queryKey: ["alegra-categories"],
     staleTime: 10 * 60 * 1000,
-    queryFn: async () => {
-      const { data } = await db.from("categories").select("id,name,slug").eq("active", true).order("name");
-      return (data as unknown as Category[]) || [];
-    },
+    queryFn: () => listCategories(),
   });
 
   // Apply URL params once categories are loaded
@@ -48,7 +37,7 @@ const Products = () => {
     if (!categories.length) return;
     const categoryParam = searchParams.get("category") || "";
     if (categoryParam) {
-      const matched = categories.find((cat) => cat.id === categoryParam || cat.slug === categoryParam);
+      const matched = categories.find((cat) => cat.id === categoryParam || cat.name === categoryParam);
       setSelectedCategory(matched?.id || "");
       setAppliedCategory(matched?.id || "");
     }
@@ -61,72 +50,26 @@ const Products = () => {
 
   // Products query: cached per filter combo, keeps previous page during transitions
   const { data: productsData, isFetching: loading } = useQuery({
-    queryKey: ["products", { appliedCategory, appliedType, appliedSearch, appliedPriceRange, page }],
+    queryKey: ["catalog", { appliedCategory, appliedType, appliedSearch, appliedPriceRange, page }],
     placeholderData: keepPreviousData,
     staleTime: 60 * 1000,
-    queryFn: async () => {
-      let productIds: string[] | null = null;
-
-      if (appliedCategory) {
-        const { data: links } = await supabase
-          .from("product_categories" as any)
-          .select("product_id")
-          .eq("category_id", appliedCategory);
-        productIds = ((links as unknown as { product_id: string }[]) || []).map((l) => l.product_id);
-        if (productIds.length === 0) return { products: [], totalCount: 0, inStockCount: 0 };
-      }
-
-      const from = (page - 1) * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
-      const isSearching = Boolean(appliedSearch);
-
-      let query = db
-        .from("products")
-        .select("*, product_categories(category_id, categories(id, name, slug))", { count: "exact" })
-        .gte("final_price", appliedPriceRange[0])
-        .lte("final_price", appliedPriceRange[1])
-        .order("stock", { ascending: false })
-        .order("name", { ascending: true })
-        .range(from, to);
-
-      if (!isSearching) query = query.gt("stock", 0);
-      if (productIds) query = query.in("id", productIds);
-      if (appliedType) query = query.eq("product_type", appliedType);
-      if (isSearching) {
-        const term = appliedSearch.replace(/[%_]/g, "");
-        query = query.or(
-          `name.ilike.%${term}%,description.ilike.%${term}%,full_description.ilike.%${term}%,sku.ilike.%${term}%,reference.ilike.%${term}%,brand.ilike.%${term}%,category.ilike.%${term}%`,
-        );
-      }
-
-      const { data, error, count } = await query;
-      if (error) return { products: [], totalCount: 0, inStockCount: 0 };
-
-      let inStockCount = count || 0;
-      if (isSearching) {
-        let countQuery = db
-          .from("products")
-          .select("id", { count: "exact", head: true })
-          .gt("stock", 0)
-          .gte("final_price", appliedPriceRange[0])
-          .lte("final_price", appliedPriceRange[1]);
-        if (productIds) countQuery = countQuery.in("id", productIds);
-        if (appliedType) countQuery = countQuery.eq("product_type", appliedType);
-        const term = appliedSearch.replace(/[%_]/g, "");
-        countQuery = countQuery.or(
-          `name.ilike.%${term}%,description.ilike.%${term}%,full_description.ilike.%${term}%,sku.ilike.%${term}%,reference.ilike.%${term}%,brand.ilike.%${term}%,category.ilike.%${term}%`,
-        );
-        const { count: inStock } = await countQuery;
-        inStockCount = inStock || 0;
-      }
-
-      return { products: data || [], totalCount: count || 0, inStockCount };
-    },
+    queryFn: () =>
+      listProducts({
+        page,
+        pageSize: PAGE_SIZE,
+        category: appliedCategory || undefined,
+        type: (appliedType || undefined) as "product" | "service" | undefined,
+        search: appliedSearch || undefined,
+        minPrice: appliedPriceRange[0],
+        maxPrice: appliedPriceRange[1],
+        // Hide out-of-stock in catalog, show them when user searches explicitly
+        inStockOnly: !appliedSearch,
+      }),
   });
 
-  const products = productsData?.products || [];
-  const totalCount = productsData?.totalCount || 0;
-  const inStockCount = productsData?.inStockCount || 0;
+  const products = productsData?.items || [];
+  const totalCount = productsData?.total || 0;
+  const inStockCount = productsData?.inStockTotal || 0;
 
   // Reset to page 1 whenever filters change
   useEffect(() => {
@@ -158,9 +101,6 @@ const Products = () => {
   };
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-
-  const formatCOP = (value: number) =>
-    new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
 
   const Filters = () => (
     <div className="space-y-6">

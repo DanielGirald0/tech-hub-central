@@ -6,41 +6,17 @@ import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
 import TrackOrderCTA from "@/components/TrackOrderCTA";
 import { services } from "@/data/products";
-import { supabase } from "@/integrations/supabase/client";
+import { listFeatured } from "@/lib/alegra-catalog";
 import GoogleReviews from "@/components/GoogleReviews";
 import { useQuery } from "@tanstack/react-query";
 import SEO from "@/components/SEO";
 
 const featuredServices = services.slice(0, 4);
 
-const fetchFeaturedProducts = async () => {
-  const { data: cats } = await supabase
-    .from("categories" as any)
-    .select("id")
-    .eq("active", true)
-    .or("name.ilike.destacad%,slug.ilike.destacad%");
-  const categoryIds = ((cats as any[]) || []).map((c) => c.id);
-  if (!categoryIds.length) return [];
-  const { data: links } = await supabase
-    .from("product_categories" as any)
-    .select("product_id")
-    .in("category_id", categoryIds);
-  const productIds = Array.from(new Set(((links as any[]) || []).map((l) => l.product_id)));
-  if (!productIds.length) return [];
-  const { data } = await supabase
-    .from("products")
-    .select("*")
-    .in("id", productIds)
-    .gt("stock", 0)
-    .order("name", { ascending: true })
-    .limit(8);
-  return data || [];
-};
-
 const Index = () => {
   const { data: featuredProducts = [], isLoading: loadingFeatured } = useQuery({
     queryKey: ["featured-products"],
-    queryFn: fetchFeaturedProducts,
+    queryFn: () => listFeatured(8),
     staleTime: 10 * 60 * 1000,
   });
 

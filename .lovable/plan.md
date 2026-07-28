@@ -1,47 +1,97 @@
-## Optimización integral — TECNO GZ
+# Migración del catálogo a Alegra (fuente única)
 
-Trabajo dividido en 3 frentes: **Rendimiento**, **Limpieza de código** y **UX/UI + Accesibilidad**. Todo el trabajo se hace sin cambiar la lógica de negocio ni el diseño visual.
+Cambio de arquitectura: la app deja de sincronizar productos a la BD y consulta Alegra en tiempo real vía una edge function proxy con caché.
 
----
+## 1. Nueva edge function `alegra-catalog` (proxy con caché)
 
-### 1. Rendimiento (velocidad de carga)
+Nuevo archivo `supabase/functions/alegra-catalog/index.ts`. Es pública (no requiere JWT) y expone estas acciones vía query param `?action=`:
 
-- **Optimizar imágenes bundled**: Instalar `vite-imagetools` y convertir los assets pesados (logo, hero, imágenes de productos y servicios) a **WebP/AVIF** con variantes responsive. Reducción esperada: 60-80% del peso de imagen.
-- **Preload del LCP**: Añadir `<link rel="preload" as="image">` para la imagen principal del home en `index.html` con `fetchpriority="high"`.
-- **Lazy loading uniforme**: Auditar `<img>` fuera de la vista inicial y añadir `loading="lazy"` + `decoding="async"`. Marcar solo el hero como `eager`.
-- **Code splitting adicional**: Verificar que `Index.tsx` (home) sea liviano; mover `GoogleReviews`, `LocalReviews` y otros bloques below-the-fold a lazy chunks con `Suspense`.
-- **React Query**: Revisar `staleTime`/`gcTime` en queries del panel admin y del taller para evitar refetches innecesarios.
-- **Fuente Iosevka**: Actualmente se carga desde Google Fonts vía `@import` en `index.css`. Migrar a `@fontsource/iosevka` (self-hosted, sin bloqueo de render, cache local).
-- **Prefetch de rutas críticas**: Añadir `<link rel="prefetch">` a `/products` y `/services` desde el home.
+- `list` — parámetros: `page`, `pageSize` (máx 30), `category`, `type`, `search`, `minPrice`, `maxPrice`, `inStockOnly` (default `true`), `featuredOnly`, `ids` (CSV). Recorre paginación de Alegra (30/req) sólo hasta cubrir la página pedida. Devuelve `{ items, total, page, pageSize }`.
+- `get` — `id`: devuelve un producto por id de Alegra.
+- `categories` — lista categorías desde `/item-categories` de Alegra.
+- `featured` — atajo para destacados (usa metadata custom si existe; si no, primeros N con stock).
 
-### 2. Limpieza de código
+Detalles:
+- Autenticación a Alegra con `ALEGRA_EMAIL` / `ALEGRA_API_TOKEN` (ya existen).
+- Búsqueda usa `query` de Alegra (matches por nombre y referencia).
+- Filtro `inStockOnly` aplicado del lado servidor; en modo búsqueda explícita, se omite y se marca `outOfStock: true`.
+- Mapeo de item Alegra → forma que consume el front: `{ id, name, description, price, stock, category, brand, reference, image_url, inStock, product_type }`.
+- Imagen: usa `images[0].url` directamente desde Alegra (sin descargar ni almacenar). Si expira ocasionalmente, se muestra placeholder.
+- **Caché en memoria** dentro de la function (TTL 60s por combinación de params + índice de categorías con TTL 5 min) para reducir llamadas.
+- CORS abierto para el frontend.
 
-- **Eliminar imports muertos** en `Navbar.tsx` (`useRef`, `useEffect` importados y sin usar).
-- **Consolidar utilidades WhatsApp**: `normalizePhone`, `whatsappLink` viven en `src/lib/repairs.ts` pero se usan también en otras pantallas — mover a `src/lib/whatsapp.ts` y reexportar.
-- **Eliminar código no referenciado**: Buscar componentes/funciones sin imports (ripgrep sweep) y quitarlos.
-- **Deduplicar formatters** (`formatCOP`, `formatDate`) — asegurar un único origen en `src/lib/format.ts`.
-- **Revisar dependencias sin uso** en `package.json` con `depcheck`.
+## 2. Configuración de la function
 
-### 3. UX/UI + Accesibilidad
+Añadir a `supabase/config.toml`:
+```
+[functions.alegra-catalog]
+verify_jwt = false
+```
 
-- **Colores semánticos**: Auditar y reemplazar clases hardcoded (`text-white`, `bg-black`, `text-gray-*`) por tokens del design system (`text-foreground`, `bg-background`, `text-muted-foreground`). No cambia el aspecto visual, respeta el theming.
-- **Botones icon-only sin label**: Añadir `aria-label` a los botones de icono en `Navbar` (carrito, usuario, logout, menú móvil) y a los botones de acción en las tablas del admin.
-- **Landmarks**: Verificar que exista **exactamente un `<main>`** por ruta (actualmente vive en `Layout.tsx`, revisar que no haya duplicados en páginas).
-- **Focus visible**: Confirmar que todos los interactivos custom tengan estado `focus-visible` (los primitivos shadcn ya lo traen; auditar los custom).
-- **Tap targets móviles**: Los botones `size="icon"` del Navbar deben ser ≥ 44×44 px en móvil (`min-h-11 min-w-11`).
-- **Alt en imágenes**: Auditar `<img>` sin alt o con alt genérico.
-- **`h-screen` → `h-dvh`** en layouts full-height para evitar el problema del address bar en móviles iOS.
-- **Skip link**: Añadir "Saltar al contenido" para lectores de pantalla.
+## 3. Cambios en el frontend
 
----
+Crear `src/lib/alegra-catalog.ts` con helpers tipados (`listProducts`, `getProduct`, `listCategories`, `listFeatured`) que invocan la edge function vía `supabase.functions.invoke`.
 
-### Detalles técnicos
+Actualizar:
+- `src/pages/Products.tsx` — reemplaza `supabase.from("products")` por `listProducts`. Paginación server-side. Filtros de categoría/tipo/precio siguen igual, pero se envían como params. Lógica de "sin stock oculto salvo búsqueda explícita" implementada activando `inStockOnly` sólo cuando no hay `search`.
+- `src/pages/ProductDetail.tsx` — `getProduct(id)` + productos relacionados vía `listProducts({ category, limit: 4 })`.
+- `src/pages/Index.tsx` — `listFeatured()` para destacados de home.
+- `src/components/ProductCard.tsx` — sin cambios funcionales (mismo shape).
+- `src/pages/Cart.tsx` — el carrito guarda snapshots (id de Alegra, nombre, precio, imagen). Al abrir checkout, re-consulta stock/price actualizados vía `getProduct` para validar.
 
-- Instalaciones: `bun add vite-imagetools @fontsource/iosevka`, `bun add -D depcheck`.
-- Migración de imágenes: script one-shot con `sharp` para pre-generar WebP en `src/assets/` y actualizar imports a `?format=webp&w=800`.
-- Verificación: build de Vite para comprobar tamaño del bundle antes/después, y Playwright para screenshot comparativo del home antes/después (debe verse idéntico).
-- **No se modifica**: rutas, esquema de base de datos, RLS, integraciones (Alegra, WhatsApp), lógica del PDF, o diseño visual.
+## 4. Ajustes en `alegra-create-order`
 
-### Entrega
+- Ya no lee `products` de la BD. Recibe `items` con `alegra_id`, `name`, `price`, `quantity`.
+- Revalida `price` y `stock` consultando `/items/{id}` de Alegra antes de crear la factura.
+- `order_items.product_id` (uuid, FK) queda inviable → migración: hacer `product_id` nullable y agregar columnas `alegra_item_id text`, `product_name text`, `product_reference text`. Se llena con snapshot del item facturado.
 
-Se ejecuta en 3 commits lógicos: (1) rendimiento e imágenes, (2) limpieza de código y deps, (3) accesibilidad y tokens semánticos. Al final, screenshot antes/después del home y un resumen del delta de tamaño del bundle.
+## 5. Admin
+
+- Eliminar página `/admin/products` (CRUD de la tabla local) y su ruta en `App.tsx`.
+- Eliminar `/admin/alegra` (sincronización) y su ruta.
+- `AdminDashboard`: reemplazar contador `products` por conteo obtenido de Alegra (una llamada a `list` con `pageSize=1` para leer `total`), o simplemente ocultar la tarjeta si prefieres — mantengo la tarjeta con conteo Alegra.
+- `AdminCategories`: mantiene categorías locales sólo si se siguen usando para agrupar UI; si no, se elimina. **Propuesta:** eliminarla y usar categorías Alegra.
+
+## 6. Base de datos — migración de limpieza
+
+Migración SQL:
+- `ALTER TABLE public.order_items` → `product_id` nullable, agrega `alegra_item_id text`, `product_name text`, `product_reference text`, `product_image_url text`.
+- Elimina foreign key `order_items.product_id → products.id` (drop constraint).
+- Elimina tabla `product_categories`.
+- Elimina tabla `products`.
+- Elimina tabla `categories` (si confirmamos removerla).
+- Elimina cron job de sincronización si existe.
+- Elimina bucket `product-images` y sus policies.
+- Borra edge function `alegra-sync-products` (archivo y `supabase/functions/alegra-sync-products/`).
+
+Historial de pedidos previos: seguirá mostrando `product_name` desde el snapshot en `order_items` (por eso agregamos las columnas antes de dropear la FK).
+
+## 7. MCP
+
+- `src/lib/mcp/tools/list-products.ts` y `supabase/functions/mcp/index.ts` → cambiar a consultar Alegra vía el helper/edge function.
+
+## 8. Validación
+
+- Verificar que Home, Productos (con y sin filtros), Detalle, Carrito, Checkout y Admin funcionen.
+- Confirmar que un pedido pasado (previo a la migración) se sigue visualizando en `AdminOrders` con nombre de producto (snapshot).
+- Confirmar que buscar un producto sin stock lo muestra como "Agotado" y no se puede añadir al carrito.
+
+## Detalles técnicos
+
+```text
+Frontend ──invoke──▶ edge:alegra-catalog ──HTTPS──▶ Alegra API
+                          │
+                          └── caché en memoria (TTL corto)
+```
+
+- La edge function usa caché por proceso (efímero); no requiere Redis.
+- Todas las llamadas al catálogo pasan por la function; el frontend nunca recibe credenciales de Alegra.
+- Se conservan tablas: `orders`, `order_items` (ajustada), `store_settings`, `profiles`, módulo repairs, reviews, etc.
+
+## Riesgo / puntos a confirmar antes de ejecutar
+
+1. **¿Eliminar tablas `products`, `product_categories` y `categories`?** Se pierden datos que no existen en Alegra (ej. `featured`, `full_description`, `subcategory`, `specifications` JSON). Si quieres conservar "destacados" o specs manuales, dejo una tabla `product_overrides(alegra_id, featured, full_description, specifications)` y la function hace merge. **Recomiendo esta opción.**
+2. **`AdminCategories`** — ¿la eliminamos o queda como categorías propias además de las de Alegra? Recomiendo eliminarla.
+3. Confirmar que quieres eliminar también el bucket `product-images`.
+
+Cuando confirmes esos 3 puntos, ejecuto el plan completo.

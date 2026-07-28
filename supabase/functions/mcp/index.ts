@@ -6,40 +6,54 @@
 import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.23.0";
 
 // src/lib/mcp/tools/list-products.ts
-import { createClient } from "npm:@supabase/supabase-js@^2.99.1";
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z } from "npm:zod@^4.4.3";
 var list_products_default = defineTool({
   name: "list_products",
   title: "List products",
-  description: "List products from the Tecno Gz catalog. Optionally filter by a search term (matches name/brand) and limit the number of results.",
+  description: "List products from the Tecno Gz catalog (sourced live from Alegra). Optionally filter by a search term (matches name/reference/brand) and limit the number of results.",
   inputSchema: {
-    search: z.string().trim().max(100).optional().describe("Optional search term matched against product name or brand."),
+    search: z.string().trim().max(100).optional().describe("Optional search term matched against product name, reference or brand."),
     limit: z.number().int().min(1).max(50).optional().describe("Max number of products to return (default 20).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ search, limit }, ctx) => {
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_PUBLISHABLE_KEY,
-      {
-        global: ctx.isAuthenticated() ? { headers: { Authorization: `Bearer ${ctx.getToken()}` } } : void 0,
-        auth: { persistSession: false, autoRefreshToken: false }
+  handler: async ({ search, limit }) => {
+    const projectRef2 = process.env.SUPABASE_URL?.match(/https:\/\/([^.]+)\./)?.[1] || "";
+    const url = new URL(`${process.env.SUPABASE_URL}/functions/v1/alegra-catalog`);
+    url.searchParams.set("action", "list");
+    url.searchParams.set("pageSize", String(limit ?? 20));
+    if (search) url.searchParams.set("search", search);
+    url.searchParams.set("inStockOnly", "false");
+    const res = await fetch(url.toString(), {
+      headers: {
+        apikey: process.env.SUPABASE_PUBLISHABLE_KEY || "",
+        Authorization: `Bearer ${process.env.SUPABASE_PUBLISHABLE_KEY || ""}`
       }
-    );
-    let query = supabase.from("products").select("id, name, brand, category, price, stock, reference").limit(limit ?? 20);
-    if (search) query = query.or(`name.ilike.%${search}%,brand.ilike.%${search}%`);
-    const { data, error } = await query;
-    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      return { content: [{ type: "text", text: `catalog error ${res.status}: ${text}` }], isError: true };
+    }
+    const data = await res.json();
+    const products = (data?.items || []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      brand: p.brand,
+      category: p.category,
+      price: p.final_price ?? p.price,
+      stock: p.stock,
+      reference: p.reference
+    }));
+    void projectRef2;
     return {
-      content: [{ type: "text", text: JSON.stringify(data ?? [], null, 2) }],
-      structuredContent: { products: data ?? [] }
+      content: [{ type: "text", text: JSON.stringify(products, null, 2) }],
+      structuredContent: { products }
     };
   }
 });
 
 // src/lib/mcp/tools/get-my-orders.ts
-import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.99.1";
+import { createClient } from "npm:@supabase/supabase-js@^2.99.1";
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.23.0";
 import { z as z2 } from "npm:zod@^4.4.3";
 var get_my_orders_default = defineTool2({
@@ -54,7 +68,7 @@ var get_my_orders_default = defineTool2({
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
-    const supabase = createClient2(
+    const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_PUBLISHABLE_KEY,
       {
@@ -72,7 +86,7 @@ var get_my_orders_default = defineTool2({
 });
 
 // src/lib/mcp/tools/get-my-repair-orders.ts
-import { createClient as createClient3 } from "npm:@supabase/supabase-js@^2.99.1";
+import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.99.1";
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.23.0";
 var get_my_repair_orders_default = defineTool3({
   name: "get_my_repair_orders",
@@ -84,7 +98,7 @@ var get_my_repair_orders_default = defineTool3({
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
-    const supabase = createClient3(
+    const supabase = createClient2(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_PUBLISHABLE_KEY,
       {

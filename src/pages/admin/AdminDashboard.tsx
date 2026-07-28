@@ -2,23 +2,21 @@ import BackButton from "@/components/BackButton";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Users, ShoppingCart, BarChart3, RefreshCw, Tags, Star, ClipboardList, Settings as SettingsIcon } from "lucide-react";
+import { Users, ShoppingCart, BarChart3, Star, ClipboardList, Settings as SettingsIcon } from "lucide-react";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import logo from "@/assets/logo-tecnogz.webp";
 
 const AdminDashboard = () => {
   const { settings } = useStoreSettings();
-  const { data: stats = { products: 0, orders: 0, users: 0, categories: 0, reviews: 0, repairs: 0 } } = useQuery({
+  const { data: stats = { orders: 0, users: 0, reviews: 0, repairs: 0 } } = useQuery({
     queryKey: ["admin", "dashboard-stats"],
     staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await (supabase.rpc as any)("get_admin_dashboard_stats");
-      if (error || !data) return { products: 0, orders: 0, users: 0, categories: 0, reviews: 0, repairs: 0 };
+      if (error || !data) return { orders: 0, users: 0, reviews: 0, repairs: 0 };
       return {
-        products: Number(data.products) || 0,
         orders: Number(data.orders) || 0,
         users: Number(data.users) || 0,
-        categories: Number(data.categories) || 0,
         reviews: Number(data.reviews) || 0,
         repairs: Number(data.repairs) || 0,
       };
@@ -26,13 +24,10 @@ const AdminDashboard = () => {
   });
 
   const cards = [
-    { label: "Productos", count: stats.products, icon: Package, href: "/admin/products", color: "text-blue-400" },
-    { label: "Categorías", count: stats.categories, icon: Tags, href: "/admin/categories", color: "text-primary" },
     { label: "Pedidos", count: stats.orders, icon: ShoppingCart, href: "/admin/orders", color: "text-green-400" },
     { label: "Usuarios", count: stats.users, icon: Users, href: "/admin/users", color: "text-purple-400" },
     { label: "Reseñas pendientes", count: stats.reviews, icon: Star, href: "/admin/reviews", color: "text-yellow-400" },
     { label: "Servicio técnico", count: stats.repairs, icon: ClipboardList, href: "/admin/repairs", color: "text-pink-400" },
-    { label: "Alegra Sync", count: 0, icon: RefreshCw, href: "/admin/alegra", color: "text-red-400" },
     { label: settings.show_prices ? "Config: Precios visibles" : "Config: Precios ocultos", count: 0, icon: SettingsIcon, href: "/admin/settings", color: settings.show_prices ? "text-green-400" : "text-yellow-400" },
   ];
 
