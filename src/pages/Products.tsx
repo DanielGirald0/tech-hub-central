@@ -68,8 +68,8 @@ const Products = () => {
   });
 
   const products = productsData?.items || [];
-  const totalCount = productsData?.total || 0;
-  const inStockCount = productsData?.inStockTotal || 0;
+  const hasMore = Boolean(productsData?.hasMore);
+  const pageCount = products.length;
 
   // Reset to page 1 whenever filters change
   useEffect(() => {
@@ -99,8 +99,6 @@ const Products = () => {
     setAppliedPriceRange(priceRange);
     setFiltersOpen(false);
   };
-
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const Filters = () => (
     <div className="space-y-6">
@@ -172,17 +170,8 @@ const Products = () => {
             </Button>
             <div className="text-sm text-muted-foreground ml-auto text-right min-w-0">
               <div className="whitespace-nowrap">
-                {totalCount.toLocaleString("es-CO")} {totalCount === 1 ? "producto" : "productos"}
-                {totalPages > 1 && ` · Pág. ${page}/${totalPages}`}
+                {pageCount} {pageCount === 1 ? "producto" : "productos"} · Pág. {page}
               </div>
-              {appliedSearch && totalCount > 0 && (
-                <div className="text-xs mt-0.5 whitespace-nowrap">
-                  <span className="text-green-500">{inStockCount} disponibles</span>
-                  {totalCount - inStockCount > 0 && (
-                    <span className="text-destructive"> · {totalCount - inStockCount} agotados</span>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
@@ -195,7 +184,7 @@ const Products = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {products.map((product) => <ProductCard key={product.id} product={product} />)}
               </div>
-              {totalPages > 1 && (
+              {(page > 1 || hasMore) && (
                 <div className="flex items-center justify-center gap-2 mt-8">
                   <Button
                     variant="outline"
@@ -207,13 +196,13 @@ const Products = () => {
                     <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
                   </Button>
                   <span className="text-sm text-muted-foreground px-3">
-                    {page} / {totalPages}
+                    Página {page}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={page >= totalPages || loading}
-                    onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                    disabled={!hasMore || loading}
+                    onClick={() => { setPage((p) => p + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                     className="border-border text-foreground"
                   >
                     Siguiente <ChevronRight className="w-4 h-4 ml-1" />
