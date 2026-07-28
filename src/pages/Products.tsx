@@ -68,7 +68,8 @@ const Products = () => {
   });
 
   const products = productsData?.items || [];
-  const hasMore = Boolean(productsData?.hasMore);
+  // Fallback: si llenó la página completa, asumimos que hay más aunque el backend no lo indique.
+  const hasMore = Boolean(productsData?.hasMore) || (productsData?.items?.length ?? 0) >= PAGE_SIZE;
   const pageCount = products.length;
 
   // Reset to page 1 whenever filters change
