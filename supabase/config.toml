@@ -2,3 +2,6 @@ project_id = "bnnnjwqwsshuoctwishy"
 
 [functions.google-reviews]
 verify_jwt = false
+
+[functions.alegra-catalog]
+verify_jwt = false

@@ -1,9 +1,8 @@
 // Runs before `vite dev` and `vite build` (predev/prebuild hooks); writes public/sitemap.xml.
-// Pulls dynamic product URLs from Supabase when available; falls back to static routes only.
+// Static routes only — product URLs are served dynamically from Alegra at request time.
 
 import { writeFileSync } from "fs";
 import { resolve } from "path";
-import { createClient } from "@supabase/supabase-js";
 
 const BASE_URL = process.env.SITE_URL || "https://tecnogz.lovable.app";
 
@@ -23,28 +22,6 @@ const staticEntries: SitemapEntry[] = [
   { path: "/contact", changefreq: "monthly", priority: "0.6" },
   { path: "/seguimiento", changefreq: "monthly", priority: "0.5" },
 ];
-
-async function fetchProductEntries(): Promise<SitemapEntry[]> {
-  const url = process.env.VITE_SUPABASE_URL;
-  const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) return [];
-  try {
-    const supabase = createClient(url, key);
-    const { data } = await supabase
-      .from("products")
-      .select("id, updated_at")
-      .gt("stock", 0)
-      .limit(1000);
-    return ((data as { id: string; updated_at: string | null }[]) || []).map((p) => ({
-      path: `/products/${p.id}`,
-      lastmod: p.updated_at ? p.updated_at.slice(0, 10) : undefined,
-      changefreq: "weekly",
-      priority: "0.7",
-    }));
-  } catch {
-    return [];
-  }
-}
 
 function generateSitemap(entries: SitemapEntry[]) {
   const urls = entries.map((e) =>
@@ -69,8 +46,7 @@ function generateSitemap(entries: SitemapEntry[]) {
 }
 
 (async () => {
-  const dynamic = await fetchProductEntries();
-  const entries = [...staticEntries, ...dynamic];
+  const entries = [...staticEntries];
   writeFileSync(resolve("public/sitemap.xml"), generateSitemap(entries));
   console.log(`sitemap.xml written (${entries.length} entries)`);
 })();

@@ -114,27 +114,35 @@ Deno.serve(async (req) => {
       userId = data.user?.id || null;
     }
 
-    // Resolve product info from db (price authoritative)
-    const productIds = items.map((i: any) => i.id);
-    const { data: dbProducts } = await supabase.from("products").select("id, name, price, stock, alegra_id").in("id", productIds);
-
-    const enrichedItems = items.map((i: any) => {
-      const p = (dbProducts || []).find((dp: any) => dp.id === i.id);
-      return {
-        product_id: i.id,
-        alegra_id: p?.alegra_id,
-        name: p?.name || i.name,
-        price: Number(p?.price ?? i.price),
-        quantity: Number(i.quantity || 1),
-        stock: Number(p?.stock ?? 0),
-      };
-    });
-
-    // Stock check
-    const insufficient = enrichedItems.find((i) => i.stock < i.quantity);
-    if (insufficient) {
-      return new Response(JSON.stringify({ error: `Stock insuficiente para ${insufficient.name}` }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Resolve product info directly from Alegra (Alegra is the source of truth).
+    const authAlegra = alegraAuth();
+    const enrichedItems: Array<{ alegra_id: string; name: string; reference: string; image_url: string | null; price: number; quantity: number }> = [];
+    for (const i of items) {
+      const alegraId = String(i.id || i.alegra_id || "");
+      if (!alegraId) continue;
+      const res = await fetch(`${ALEGRA_BASE}/items/${alegraId}`, {
+        headers: { Authorization: authAlegra, Accept: "application/json" },
+      });
+      if (!res.ok) throw new Error(`Producto no disponible en Alegra: ${i.name || alegraId}`);
+      const it = await res.json();
+      const priceEntry = Array.isArray(it?.price) ? it.price[0] : it?.price;
+      const price = Number(priceEntry?.price ?? priceEntry ?? 0) || 0;
+      const type = it?.type === "service" || it?.type === "kit" ? "service" : "product";
+      const invQty = Number(it?.inventory?.availableQuantity ?? 0);
+      const stock = type === "service" ? 9999 : (Number.isFinite(invQty) ? invQty : 0);
+      const qty = Number(i.quantity || 1);
+      if (stock < qty) {
+        return new Response(JSON.stringify({ error: `Stock insuficiente para ${it.name}` }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      enrichedItems.push({
+        alegra_id: alegraId,
+        name: String(it.name || ""),
+        reference: String(it.reference || ""),
+        image_url: Array.isArray(it?.images) && it.images.length ? (it.images[0]?.url || null) : null,
+        price,
+        quantity: qty,
       });
     }
 
@@ -162,19 +170,18 @@ Deno.serve(async (req) => {
       .single();
     if (orderErr) throw orderErr;
 
-    // 2. Order items
+    // 2. Order items — snapshot of the Alegra items at the time of purchase
     const orderItemsRows = enrichedItems.map((i) => ({
       order_id: order.id,
-      product_id: i.product_id,
+      alegra_item_id: i.alegra_id,
+      product_name: i.name,
+      product_reference: i.reference,
+      product_image_url: i.image_url,
       quantity: i.quantity,
       unit_price: i.price,
     }));
     await supabase.from("order_items").insert(orderItemsRows);
-
-    // 3. Decrement local stock
-    for (const i of enrichedItems) {
-      await supabase.from("products").update({ stock: i.stock - i.quantity }).eq("id", i.product_id);
-    }
+    // Stock is managed by Alegra directly; nothing to decrement locally.
 
     // 4. Push to Alegra (best-effort)
     let invoiceId: string | null = null;
