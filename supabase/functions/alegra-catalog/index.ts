@@ -12,8 +12,8 @@ const corsHeaders = {
 
 const ALEGRA_BASE = "https://api.alegra.com/api/v1";
 const ALEGRA_MAX_LIMIT = 30; // Alegra caps every response at 30 rows.
-const CACHE_TTL_MS = 3 * 60 * 1000; // 3 min short cache — Alegra changes surface automatically after that.
-const CATEGORIES_TTL_MS = 10 * 60 * 1000;
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 min cache — reduces upstream latency notably.
+const CATEGORIES_TTL_MS = 30 * 60 * 1000;
 
 function alegraAuth() {
   const email = Deno.env.get("ALEGRA_EMAIL");
@@ -183,24 +183,56 @@ async function listItems(url: URL) {
 
   const needed = page * pageSize; // fetch enough to serve the requested page
   const collected: CatalogItem[] = [];
-  let upstreamCursor = 0;
   let upstreamExhausted = false;
 
   // Safety cap on how many upstream batches we walk per request.
   const MAX_BATCHES = 20;
-  let batches = 0;
+  const hasLocalFilter = enforceStock || minPrice > 0 || maxPrice !== Infinity;
+  // If we don't need to filter locally we can jump straight to the offset.
+  const startOffset = hasLocalFilter ? 0 : (page - 1) * pageSize;
+  const targetCollected = hasLocalFilter ? needed + pageSize : pageSize;
+  const initialBatches = Math.min(
+    MAX_BATCHES,
+    Math.max(1, Math.ceil(targetCollected / ALEGRA_MAX_LIMIT)),
+  );
 
-  while (collected.length < needed + pageSize && !upstreamExhausted && batches < MAX_BATCHES) {
+  const fetchBatch = async (batchIdx: number) => {
     const path = buildItemsUrl({
-      start: upstreamCursor,
+      start: startOffset + batchIdx * ALEGRA_MAX_LIMIT,
       limit: ALEGRA_MAX_LIMIT,
       query: search || undefined,
       idItemCategory: category || undefined,
       type: type === "product" || type === "service" ? type : undefined,
     });
     const data = await alegraFetch(path);
-    const batch: any[] = Array.isArray(data) ? data : (data?.data || []);
-    batches += 1;
+    return Array.isArray(data) ? data : (data?.data || []);
+  };
+
+  // Fire the first wave in parallel.
+  const firstWave = await Promise.all(
+    Array.from({ length: initialBatches }, (_, i) => fetchBatch(i)),
+  );
+  let batchesRun = initialBatches;
+  for (const batch of firstWave) {
+    if (batch.length === 0) { upstreamExhausted = true; continue; }
+    for (const raw of batch) {
+      const it = mapItem(raw);
+      if (enforceStock && !it.inStock) continue;
+      if (it.final_price < minPrice || it.final_price > maxPrice) continue;
+      collected.push(it);
+    }
+    if (batch.length < ALEGRA_MAX_LIMIT) upstreamExhausted = true;
+  }
+
+  // If local filters dropped many rows, top up sequentially (rare case).
+  while (
+    hasLocalFilter &&
+    collected.length < needed + pageSize &&
+    !upstreamExhausted &&
+    batchesRun < MAX_BATCHES
+  ) {
+    const batch = await fetchBatch(batchesRun);
+    batchesRun += 1;
     if (batch.length === 0) { upstreamExhausted = true; break; }
     for (const raw of batch) {
       const it = mapItem(raw);
@@ -208,15 +240,14 @@ async function listItems(url: URL) {
       if (it.final_price < minPrice || it.final_price > maxPrice) continue;
       collected.push(it);
     }
-    upstreamCursor += batch.length;
     if (batch.length < ALEGRA_MAX_LIMIT) { upstreamExhausted = true; break; }
   }
 
-  const start = (page - 1) * pageSize;
-  const items = collected.slice(start, start + pageSize);
+  const sliceStart = hasLocalFilter ? (page - 1) * pageSize : 0;
+  const items = collected.slice(sliceStart, sliceStart + pageSize);
   // hasMore is true when we could not confirm end of upstream, or when we
   // already have more collected items than the current page consumes.
-  const hasMore = collected.length > start + pageSize || !upstreamExhausted;
+  const hasMore = collected.length > sliceStart + pageSize || !upstreamExhausted;
   const body = { items, page, pageSize, hasMore };
   cacheSet(cacheKey, body);
   return body;
