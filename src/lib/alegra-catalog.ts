@@ -30,7 +30,6 @@ export interface ListParams {
   minPrice?: number;
   maxPrice?: number;
   inStockOnly?: boolean;
-  ids?: string[];
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
@@ -58,14 +57,12 @@ export async function listProducts(params: ListParams = {}) {
   if (params.minPrice != null) qs.set("minPrice", String(params.minPrice));
   if (params.maxPrice != null) qs.set("maxPrice", String(params.maxPrice));
   if (params.inStockOnly === false) qs.set("inStockOnly", "false");
-  if (params.ids && params.ids.length) qs.set("ids", params.ids.join(","));
   const res = await callCatalog(qs);
   return {
     items: (res?.items || []) as CatalogProduct[],
-    total: Number(res?.total || 0),
-    inStockTotal: Number(res?.inStockTotal || 0),
     page: Number(res?.page || 1),
     pageSize: Number(res?.pageSize || 24),
+    hasMore: Boolean(res?.hasMore),
   };
 }
 
