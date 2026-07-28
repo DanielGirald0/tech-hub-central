@@ -62,74 +62,41 @@ export type Database = {
         }
         Relationships: []
       }
-      categories: {
-        Row: {
-          active: boolean
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       order_items: {
         Row: {
+          alegra_item_id: string | null
           id: string
           order_id: string
-          product_id: string
+          product_id: string | null
+          product_image_url: string | null
+          product_name: string | null
+          product_reference: string | null
           quantity: number
           unit_price: number
         }
         Insert: {
+          alegra_item_id?: string | null
           id?: string
           order_id: string
-          product_id: string
+          product_id?: string | null
+          product_image_url?: string | null
+          product_name?: string | null
+          product_reference?: string | null
           quantity?: number
           unit_price?: number
         }
         Update: {
+          alegra_item_id?: string | null
           id?: string
           order_id?: string
-          product_id?: string
+          product_id?: string | null
+          product_image_url?: string | null
+          product_name?: string | null
+          product_reference?: string | null
           quantity?: number
           unit_price?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "order_items_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_items_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       orders: {
         Row: {
@@ -184,120 +151,6 @@ export type Database = {
           status?: string
           subtotal?: number
           total_price?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      product_categories: {
-        Row: {
-          category_id: string
-          created_at: string
-          product_id: string
-        }
-        Insert: {
-          category_id: string
-          created_at?: string
-          product_id: string
-        }
-        Update: {
-          category_id?: string
-          created_at?: string
-          product_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "product_categories_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_categories_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      products: {
-        Row: {
-          alegra_id: string | null
-          base_price: number | null
-          brand: string | null
-          category: string
-          created_at: string
-          description: string | null
-          featured: boolean | null
-          final_price: number | null
-          full_description: string | null
-          id: string
-          image_url: string | null
-          last_synced_at: string | null
-          name: string
-          original_price: number | null
-          price: number
-          product_type: string
-          rating: number | null
-          reference: string | null
-          sku: string | null
-          specifications: Json | null
-          stock: number
-          subcategory: string | null
-          tax_percentage: number
-          updated_at: string
-        }
-        Insert: {
-          alegra_id?: string | null
-          base_price?: number | null
-          brand?: string | null
-          category?: string
-          created_at?: string
-          description?: string | null
-          featured?: boolean | null
-          final_price?: number | null
-          full_description?: string | null
-          id?: string
-          image_url?: string | null
-          last_synced_at?: string | null
-          name: string
-          original_price?: number | null
-          price?: number
-          product_type?: string
-          rating?: number | null
-          reference?: string | null
-          sku?: string | null
-          specifications?: Json | null
-          stock?: number
-          subcategory?: string | null
-          tax_percentage?: number
-          updated_at?: string
-        }
-        Update: {
-          alegra_id?: string | null
-          base_price?: number | null
-          brand?: string | null
-          category?: string
-          created_at?: string
-          description?: string | null
-          featured?: boolean | null
-          final_price?: number | null
-          full_description?: string | null
-          id?: string
-          image_url?: string | null
-          last_synced_at?: string | null
-          name?: string
-          original_price?: number | null
-          price?: number
-          product_type?: string
-          rating?: number | null
-          reference?: string | null
-          sku?: string | null
-          specifications?: Json | null
-          stock?: number
-          subcategory?: string | null
-          tax_percentage?: number
           updated_at?: string
         }
         Relationships: []
