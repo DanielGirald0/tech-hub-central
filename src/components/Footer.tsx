@@ -50,15 +50,15 @@ const Footer = () => {
 
           {/* Contacto */}
           <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Contacto</h4>
-            <div className="flex flex-col gap-3 text-sm text-muted-foreground">
+            <h4 className="font-display font-semibold text-white mb-4">Contacto</h4>
+            <div className="flex flex-col gap-3 text-sm text-white/70">
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 mt-0.5 text-primary flex-shrink-0" />
                 <a 
                   href="https://maps.google.com/maps?q=Centro+Comercial+La+Convenci%C3%B3n,+Cl+49+%2348-63+Local+226,+Rionegro,+Antioquia+054040"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-destructive transition-colors"
+                  className="text-sm text-white/70 hover:text-primary transition-colors"
                 >
                   Centro Comercial La Convención, Cl 49 #48-63 Local 226, Rionegro, Antioquia 054040
                 </a>
@@ -82,7 +82,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-6 text-center text-sm text-muted-foreground">
+        <div className="border-t border-white/10 mt-8 pt-6 text-center text-sm text-white/70">
           © {new Date().getFullYear()} Tecno Gz. Todos los derechos reservados.
         </div>
       </div>
