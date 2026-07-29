@@ -50,7 +50,7 @@ const Navbar = () => {
               <Link
                 key={l.path}
                 to={l.path}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive(l.path) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive(l.path) ? "text-primary bg-white/10" : "text-white/70 hover:text-white hover:bg-white/10"}`}
               >
                 {l.label}
               </Link>
@@ -58,7 +58,7 @@ const Navbar = () => {
             {user && userRole === "admin" && (
               <Link
                 to="/admin"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname === "/admin" || (location.pathname.startsWith("/admin") && !location.pathname.startsWith("/admin/repairs")) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname === "/admin" || (location.pathname.startsWith("/admin") && !location.pathname.startsWith("/admin/repairs")) ? "text-primary bg-white/10" : "text-white/70 hover:text-white hover:bg-white/10"}`}
               >
                 Admin
               </Link>
@@ -66,7 +66,7 @@ const Navbar = () => {
             {user && (userRole === "admin" || userRole === "technician") && (
               <Link
                 to="/admin/repairs"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname.startsWith("/admin/repairs") ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${location.pathname.startsWith("/admin/repairs") ? "text-primary bg-white/10" : "text-white/70 hover:text-white hover:bg-white/10"}`}
               >
                 Taller
               </Link>
