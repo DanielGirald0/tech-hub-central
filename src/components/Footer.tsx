@@ -4,23 +4,23 @@ import logo from "@/assets/logo-tecnogz.webp";
 
 const Footer = () => {
   return (
-    <footer className="bg-card border-t border-border">
+    <footer className="bg-black border-t border-white/10 text-white">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div>
             <div className="flex items-center gap-3 mb-4">
               <img src={logo} alt="Tecno Gz" className="w-12 h-12 object-contain" />
-              <span className="font-display font-bold text-lg text-foreground uppercase">TECNO GZ</span>
+              <span className="font-display font-bold text-lg text-white uppercase">TECNO GZ</span>
             </div>
-            <p className="text-muted-foreground text-sm leading-relaxed">
+            <p className="text-white/70 text-sm leading-relaxed">
               Expertos en servicio técnico y venta de tecnología. Pasión y servicio de confianza.
             </p>
           </div>
 
           {/* Enlaces rápidos */}
           <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Enlaces rápidos</h4>
+            <h4 className="font-display font-semibold text-white mb-4">Enlaces rápidos</h4>
             <div className="flex flex-col gap-2">
               {[
                 { label: "Productos", path: "/products" },
@@ -29,7 +29,7 @@ const Footer = () => {
                 { label: "Nosotros", path: "/about" },
                 { label: "Contacto", path: "/contact" },
               ].map((link) => (
-                <Link key={link.path} to={link.path} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link key={link.path} to={link.path} className="text-sm text-white/70 hover:text-primary transition-colors">
                   {link.label}
                 </Link>
               ))}
@@ -38,8 +38,8 @@ const Footer = () => {
 
           {/* Servicios */}
           <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Servicios</h4>
-            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+            <h4 className="font-display font-semibold text-white mb-4">Servicios</h4>
+            <div className="flex flex-col gap-2 text-sm text-white/70">
               <span>Servicio técnico de computadores</span>
               <span>Servicio técnico de celulares</span>
               <span>Instalación de cámaras</span>
@@ -50,15 +50,15 @@ const Footer = () => {
 
           {/* Contacto */}
           <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Contacto</h4>
-            <div className="flex flex-col gap-3 text-sm text-muted-foreground">
+            <h4 className="font-display font-semibold text-white mb-4">Contacto</h4>
+            <div className="flex flex-col gap-3 text-sm text-white/70">
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 mt-0.5 text-primary flex-shrink-0" />
                 <a 
                   href="https://maps.google.com/maps?q=Centro+Comercial+La+Convenci%C3%B3n,+Cl+49+%2348-63+Local+226,+Rionegro,+Antioquia+054040"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-destructive transition-colors"
+                  className="text-sm text-white/70 hover:text-primary transition-colors"
                 >
                   Centro Comercial La Convención, Cl 49 #48-63 Local 226, Rionegro, Antioquia 054040
                 </a>
@@ -82,7 +82,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-6 text-center text-sm text-muted-foreground">
+        <div className="border-t border-white/10 mt-8 pt-6 text-center text-sm text-white/70">
           © {new Date().getFullYear()} Tecno Gz. Todos los derechos reservados.
         </div>
       </div>
