@@ -39,7 +39,7 @@ const Navbar = () => {
               decoding="async"
               className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 object-contain shrink-0"
             />
-            <span className="font-display font-bold text-base sm:text-lg lg:text-xl tracking-wider text-foreground hidden md:block uppercase truncate">
+            <span className="font-display font-bold text-base sm:text-lg lg:text-xl tracking-wider text-white hidden md:block uppercase truncate">
               TECNO GZ
             </span>
           </Link>
