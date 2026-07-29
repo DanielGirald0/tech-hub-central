@@ -11,9 +11,9 @@ const Footer = () => {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <img src={logo} alt="Tecno Gz" className="w-12 h-12 object-contain" />
-              <span className="font-display font-bold text-lg text-foreground uppercase">TECNO GZ</span>
+              <span className="font-display font-bold text-lg text-white uppercase">TECNO GZ</span>
             </div>
-            <p className="text-muted-foreground text-sm leading-relaxed">
+            <p className="text-white/70 text-sm leading-relaxed">
               Expertos en servicio técnico y venta de tecnología. Pasión y servicio de confianza.
             </p>
           </div>
