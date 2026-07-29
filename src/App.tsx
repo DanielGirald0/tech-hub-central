@@ -85,17 +85,17 @@ const App = () => (
                 <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                 <Route path="/account" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
-                <Route path="/admin/orders" element={<ProtectedRoute requiredRole="admin"><AdminOrders /></ProtectedRoute>} />
-                <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminUsers /></ProtectedRoute>} />
-                <Route path="/admin/reviews" element={<ProtectedRoute requiredRole="admin"><AdminReviews /></ProtectedRoute>} />
-                <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettings /></ProtectedRoute>} />
-                <Route path="/admin/repairs" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairsDashboard /></ProtectedRoute>} />
-                <Route path="/admin/repairs/orders" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairOrders /></ProtectedRoute>} />
-                <Route path="/admin/repairs/orders/new" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairOrderNew /></ProtectedRoute>} />
-                <Route path="/admin/repairs/orders/:id" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairOrderDetail /></ProtectedRoute>} />
-                <Route path="/admin/repairs/customers" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairCustomers /></ProtectedRoute>} />
-                <Route path="/admin/repairs/reports" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminRepairReports /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/orders" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminOrders /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminUsers /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/reviews" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminReviews /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/repairs" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairsDashboard /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/repairs/orders" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairOrders /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/repairs/orders/new" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairOrderNew /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/repairs/orders/:id" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairOrderDetail /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/repairs/customers" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairCustomers /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/repairs/reports" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairReports /></AdminLayout></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               </Suspense>
