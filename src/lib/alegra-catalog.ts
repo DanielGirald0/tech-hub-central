@@ -95,5 +95,35 @@ export async function listFeatured(limit = 8): Promise<CatalogProduct[]> {
   if (picked.length < limit) {
     picked.push(...withoutImage.slice(0, limit - picked.length));
   }
-  return picked;
+  // Diversify by first letter so featured products don't all start with the
+  // same letter (Alegra returns items sorted alphabetically).
+  return diversifyByLetter(picked, limit);
+}
+
+function diversifyByLetter(list: CatalogProduct[], limit: number): CatalogProduct[] {
+  const buckets = new Map<string, CatalogProduct[]>();
+  for (const p of list) {
+    const letter = (p.name?.trim()[0] || "#").toUpperCase();
+    if (!buckets.has(letter)) buckets.set(letter, []);
+    buckets.get(letter)!.push(p);
+  }
+  const result: CatalogProduct[] = [];
+  const seen = new Set<string>();
+  // First pass: one product per distinct letter.
+  for (const [letter, arr] of buckets) {
+    if (result.length >= limit) break;
+    result.push(arr[0]);
+    seen.add(arr[0].id);
+  }
+  // Fill remaining slots with the rest, preserving original order.
+  if (result.length < limit) {
+    for (const p of list) {
+      if (result.length >= limit) break;
+      if (!seen.has(p.id)) {
+        result.push(p);
+        seen.add(p.id);
+      }
+    }
+  }
+  return result;
 }
