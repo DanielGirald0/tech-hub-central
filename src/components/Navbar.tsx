@@ -26,7 +26,7 @@ const Navbar = () => {
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
   return (
-    <header className="sticky top-0 z-50 glass border-b border-border">
+    <header className="sticky top-0 z-50 bg-black border-b border-white/10">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           <Link to="/" className="flex items-center gap-2 sm:gap-3 min-w-0" aria-label="Tecno Gz — Inicio">
