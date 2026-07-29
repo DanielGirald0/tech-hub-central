@@ -153,7 +153,7 @@ export function BrandCarousel() {
                       key={brand.name}
                       className="group flex items-center justify-center h-20 sm:h-24 px-3 sm:px-4 border-r border-border last:border-r-0 hover:bg-secondary/30 transition-colors"
                     >
-                      <div className="h-10 sm:h-12 w-full flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity">
+                      <div className="h-10 sm:h-12 w-full flex items-center justify-center">
                         <BrandLogo brand={brand} />
                       </div>
                     </div>
