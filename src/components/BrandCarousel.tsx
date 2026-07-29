@@ -1,40 +1,50 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import jblLogo from "@/assets/brands/jbl.png";
+import adataLogo from "@/assets/brands/adata.png";
+import kingstonLogo from "@/assets/brands/kingston.png";
+import tplinkLogo from "@/assets/brands/tp-link.png";
+import crucialLogo from "@/assets/brands/crucial.png";
+import samsungLogo from "@/assets/brands/samsung.png";
+import appleLogo from "@/assets/brands/apple.png";
+import lenovoLogo from "@/assets/brands/lenovo.png";
+import asusLogo from "@/assets/brands/asus.png";
+import hpLogo from "@/assets/brands/hp.png";
+import dellLogo from "@/assets/brands/dell.png";
+import tendaLogo from "@/assets/brands/tenda.png";
+import hikvisionLogo from "@/assets/brands/hikvision.png";
+import ezvizLogo from "@/assets/brands/ezviz.png";
+import imouLogo from "@/assets/brands/imou.png";
+import wdLogo from "@/assets/brands/westerndigital.png";
 
 interface Brand {
   name: string;
-  domain: string;
+  logo: string;
 }
 
 const brands: Brand[] = [
-  { name: "JBL", domain: "jbl.com" },
-  { name: "ADATA", domain: "adata.com" },
-  { name: "Kingston", domain: "kingston.com" },
-  { name: "TP-Link", domain: "tp-link.com" },
-  { name: "Crucial", domain: "crucial.com" },
-  { name: "Samsung", domain: "samsung.com" },
-  { name: "Apple", domain: "apple.com" },
-  { name: "Lenovo", domain: "lenovo.com" },
-  { name: "ASUS", domain: "asus.com" },
-  { name: "HP", domain: "hp.com" },
-  { name: "Dell", domain: "dell.com" },
-  { name: "Tenda", domain: "tenda.com" },
-  { name: "Hikvision", domain: "hikvision.com" },
-  { name: "EZVIZ", domain: "ezviz.com" },
-  { name: "IMOU", domain: "imou.com" },
-  { name: "Western Digital", domain: "westerndigital.com" },
+  { name: "JBL", logo: jblLogo },
+  { name: "ADATA", logo: adataLogo },
+  { name: "Kingston", logo: kingstonLogo },
+  { name: "TP-Link", logo: tplinkLogo },
+  { name: "Crucial", logo: crucialLogo },
+  { name: "Samsung", logo: samsungLogo },
+  { name: "Apple", logo: appleLogo },
+  { name: "Lenovo", logo: lenovoLogo },
+  { name: "ASUS", logo: asusLogo },
+  { name: "HP", logo: hpLogo },
+  { name: "Dell", logo: dellLogo },
+  { name: "Tenda", logo: tendaLogo },
+  { name: "Hikvision", logo: hikvisionLogo },
+  { name: "EZVIZ", logo: ezvizLogo },
+  { name: "IMOU", logo: imouLogo },
+  { name: "Western Digital", logo: wdLogo },
 ];
-
-const logoDevKey = import.meta.env.VITE_LOVABLE_CONNECTOR_LOGO_DEV_API_KEY;
-
-function getLogoUrl(domain: string) {
-  return `https://img.logo.dev/${domain}?token=${logoDevKey}&format=png&size=128`;
-}
 
 function BrandLogo({ brand }: { brand: Brand }) {
   const [error, setError] = useState(false);
 
-  if (!logoDevKey || error) {
+  if (error) {
     return (
       <div className="flex items-center justify-center h-full w-full px-2">
         <span className="font-display font-semibold text-sm sm:text-base text-foreground uppercase tracking-wider text-center">
@@ -46,7 +56,7 @@ function BrandLogo({ brand }: { brand: Brand }) {
 
   return (
       <img
-        src={getLogoUrl(brand.domain)}
+        src={brand.logo}
         alt={`Logo de ${brand.name}`}
         loading="lazy"
         decoding="async"
