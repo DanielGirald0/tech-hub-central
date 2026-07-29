@@ -1,21 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import jblLogo from "@/assets/brands/jbl.png";
-import adataLogo from "@/assets/brands/adata.png";
-import kingstonLogo from "@/assets/brands/kingston.png";
-import tplinkLogo from "@/assets/brands/tp-link.png";
-import crucialLogo from "@/assets/brands/crucial.png";
-import samsungLogo from "@/assets/brands/samsung.png";
-import appleLogo from "@/assets/brands/apple.png";
-import lenovoLogo from "@/assets/brands/lenovo.png";
-import asusLogo from "@/assets/brands/asus.png";
-import hpLogo from "@/assets/brands/hp.png";
-import dellLogo from "@/assets/brands/dell.png";
-import tendaLogo from "@/assets/brands/tenda.png";
-import hikvisionLogo from "@/assets/brands/hikvision.png";
-import ezvizLogo from "@/assets/brands/ezviz.png";
-import imouLogo from "@/assets/brands/imou.png";
-import wdLogo from "@/assets/brands/westerndigital.png";
 
 interface Brand {
   name: string;
@@ -23,28 +7,28 @@ interface Brand {
 }
 
 const brands: Brand[] = [
-  { name: "JBL", logo: jblLogo },
-  { name: "ADATA", logo: adataLogo },
-  { name: "Kingston", logo: kingstonLogo },
-  { name: "TP-Link", logo: tplinkLogo },
-  { name: "Crucial", logo: crucialLogo },
-  { name: "Samsung", logo: samsungLogo },
-  { name: "Apple", logo: appleLogo },
-  { name: "Lenovo", logo: lenovoLogo },
-  { name: "ASUS", logo: asusLogo },
-  { name: "HP", logo: hpLogo },
-  { name: "Dell", logo: dellLogo },
-  { name: "Tenda", logo: tendaLogo },
-  { name: "Hikvision", logo: hikvisionLogo },
-  { name: "EZVIZ", logo: ezvizLogo },
-  { name: "IMOU", logo: imouLogo },
-  { name: "Western Digital", logo: wdLogo },
+  { name: "JBL", logo: "/__l5e/assets-v1/b6a3d7fe-954c-435c-84c2-731618458559/jbl.png" },
+  { name: "ADATA", logo: "/__l5e/assets-v1/2589c3af-ef6a-48df-911d-88f81de0c642/adata.png" },
+  { name: "Kingston", logo: "/__l5e/assets-v1/3174c993-8904-4eb0-9881-5e27c3080e12/kingston.png" },
+  { name: "TP-Link", logo: "/__l5e/assets-v1/71e11ea8-29b5-4091-b21d-fa8dfe2717f9/tp-link.png" },
+  { name: "Crucial", logo: "/__l5e/assets-v1/79f1c18f-f80a-422d-ab93-3c45d753236a/crucial.png" },
+  { name: "Samsung", logo: "/__l5e/assets-v1/151963d7-c93a-47ea-b538-4c7558ada4e8/samsung.png" },
+  { name: "Apple", logo: "/__l5e/assets-v1/e948d13e-3413-4d74-bebb-8eb6c3dae14d/apple.png" },
+  { name: "Lenovo", logo: "/__l5e/assets-v1/00ec4344-d341-4b4d-8af1-d73b21b1d07d/lenovo.png" },
+  { name: "ASUS", logo: "/__l5e/assets-v1/3fc5cd50-ed56-4179-a8f5-fdef34303582/asus.png" },
+  { name: "HP", logo: "/__l5e/assets-v1/ccdc6ee6-1dcf-457a-bf29-1afefe7ef13a/hp.png" },
+  { name: "Dell", logo: "/__l5e/assets-v1/8ca40920-1378-449f-9aa5-2932bef0dbe5/dell.png" },
+  { name: "Tenda", logo: "/__l5e/assets-v1/ccb97cce-07cf-4fda-b6cf-a305c705e5bc/tenda.png" },
+  { name: "Hikvision", logo: "/__l5e/assets-v1/bcf0aeda-99aa-4974-a7b9-90b68ae8e12b/hikvision.png" },
+  { name: "EZVIZ", logo: "/__l5e/assets-v1/f9dfb053-b7aa-468c-84a7-d8695085767a/ezviz.png" },
+  { name: "IMOU", logo: "" },
+  { name: "Western Digital", logo: "/__l5e/assets-v1/f9b6bb19-139a-41be-89f7-f1dccd411276/westerndigital.png" },
 ];
 
 function BrandLogo({ brand }: { brand: Brand }) {
   const [error, setError] = useState(false);
 
-  if (error) {
+  if (error || !brand.logo) {
     return (
       <div className="flex items-center justify-center h-full w-full px-2">
         <span className="font-display font-semibold text-sm sm:text-base text-foreground uppercase tracking-wider text-center">
