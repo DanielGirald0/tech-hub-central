@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
 import TrackOrderCTA from "@/components/TrackOrderCTA";
-import BrandCarousel from "@/components/BrandCarousel";
 import { services } from "@/data/products";
 import { listFeatured } from "@/lib/alegra-catalog";
 import GoogleReviews from "@/components/GoogleReviews";
@@ -117,8 +116,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Brands Carousel */}
-      <BrandCarousel />
 
       {/* Featured Products */}
       <section className="py-16 bg-card/50">
