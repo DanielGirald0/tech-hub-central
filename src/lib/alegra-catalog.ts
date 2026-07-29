@@ -79,25 +79,19 @@ export async function listCategories(): Promise<CatalogCategory[]> {
 }
 
 export async function listFeatured(limit = 8): Promise<CatalogProduct[]> {
-  // Prioritize products that already have an image. Pull several pages
-  // (Alegra caps at 30 per request) and pick the first N with image_url.
-  const withImage: CatalogProduct[] = [];
-  const withoutImage: CatalogProduct[] = [];
-  for (let page = 1; page <= 4 && withImage.length < limit; page++) {
-    const { items, hasMore } = await listProducts({ pageSize: 30, page });
-    for (const it of items) {
-      if (it.image_url) withImage.push(it);
-      else withoutImage.push(it);
-    }
-    if (!hasMore) break;
-  }
-  const picked = withImage.slice(0, limit);
-  if (picked.length < limit) {
-    picked.push(...withoutImage.slice(0, limit - picked.length));
-  }
-  // Diversify by first letter so featured products don't all start with the
-  // same letter (Alegra returns items sorted alphabetically).
-  return diversifyByLetter(picked, limit);
+  // Pull a broad sample across the alphabet (Alegra returns items sorted
+  // alphabetically, so page 1 is all "A"). We fetch several pages in parallel
+  // to get letter variety, then prioritize items with an image and diversify
+  // by first letter.
+  const pages = await Promise.all(
+    [1, 2, 3, 4, 5, 6, 7, 8].map((p) =>
+      listProducts({ pageSize: 30, page: p }).catch(() => ({ items: [] as CatalogProduct[], hasMore: false }))
+    )
+  );
+  const all: CatalogProduct[] = pages.flatMap((p) => p.items);
+  const withImage = all.filter((p) => p.image_url);
+  const pool = withImage.length >= limit ? withImage : [...withImage, ...all.filter((p) => !p.image_url)];
+  return diversifyByLetter(pool, limit);
 }
 
 function diversifyByLetter(list: CatalogProduct[], limit: number): CatalogProduct[] {
