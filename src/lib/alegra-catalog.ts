@@ -79,6 +79,21 @@ export async function listCategories(): Promise<CatalogCategory[]> {
 }
 
 export async function listFeatured(limit = 8): Promise<CatalogProduct[]> {
-  const { items } = await listProducts({ pageSize: limit, page: 1 });
-  return items;
+  // Prioritize products that already have an image. Pull several pages
+  // (Alegra caps at 30 per request) and pick the first N with image_url.
+  const withImage: CatalogProduct[] = [];
+  const withoutImage: CatalogProduct[] = [];
+  for (let page = 1; page <= 4 && withImage.length < limit; page++) {
+    const { items, hasMore } = await listProducts({ pageSize: 30, page });
+    for (const it of items) {
+      if (it.image_url) withImage.push(it);
+      else withoutImage.push(it);
+    }
+    if (!hasMore) break;
+  }
+  const picked = withImage.slice(0, limit);
+  if (picked.length < limit) {
+    picked.push(...withoutImage.slice(0, limit - picked.length));
+  }
+  return picked;
 }
