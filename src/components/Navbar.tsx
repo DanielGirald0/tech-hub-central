@@ -121,29 +121,29 @@ const Navbar = () => {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <nav id="mobile-nav" aria-label="Navegación móvil" className="lg:hidden pb-4 border-t border-border mt-1 pt-3 flex flex-col gap-1">
+          <nav id="mobile-nav" aria-label="Navegación móvil" className="lg:hidden pb-4 border-t border-white/10 mt-1 pt-3 flex flex-col gap-1">
             {navLinks.map((l) => (
               <Link
                 key={l.path}
                 to={l.path}
                 onClick={() => setMobileOpen(false)}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive(l.path) ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary"}`}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive(l.path) ? "text-primary bg-white/10" : "text-white/70 hover:text-white hover:bg-white/10"}`}
               >
                 {l.label}
               </Link>
             ))}
 
             {user && userRole === "admin" && (
-              <Link to="/admin" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">Admin</Link>
+              <Link to="/admin" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-white/70 hover:text-white hover:bg-white/10">Admin</Link>
             )}
             {user && (userRole === "admin" || userRole === "technician") && (
-              <Link to="/admin/repairs" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">Taller</Link>
+              <Link to="/admin/repairs" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-white/70 hover:text-white hover:bg-white/10">Taller</Link>
             )}
 
             {user ? (
               <>
-                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">Mi cuenta</Link>
-                <button onClick={() => { handleLogout(); setMobileOpen(false); }} className="px-3 py-2 rounded-md text-sm font-medium text-left text-muted-foreground hover:text-foreground hover:bg-secondary">Cerrar sesión</button>
+                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-white/70 hover:text-white hover:bg-white/10">Mi cuenta</Link>
+                <button onClick={() => { handleLogout(); setMobileOpen(false); }} className="px-3 py-2 rounded-md text-sm font-medium text-left text-white/70 hover:text-white hover:bg-white/10">Cerrar sesión</button>
               </>
             ) : (
               <Link to="/login" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-primary">Iniciar sesión</Link>
