@@ -25,14 +25,16 @@ const brands: Brand[] = [
   { name: "Western Digital", domain: "westerndigital.com" },
 ];
 
+const logoDevKey = import.meta.env.VITE_LOVABLE_CONNECTOR_LOGO_DEV_API_KEY;
+
 function getLogoUrl(domain: string) {
-  return `https://logo.clearbit.com/${domain}`;
+  return `https://img.logo.dev/${domain}?token=${logoDevKey}&format=png&size=128`;
 }
 
 function BrandLogo({ brand }: { brand: Brand }) {
   const [error, setError] = useState(false);
 
-  if (error) {
+  if (!logoDevKey || error) {
     return (
       <div className="flex items-center justify-center h-full w-full px-2">
         <span className="font-display font-semibold text-sm sm:text-base text-foreground uppercase tracking-wider text-center">
@@ -45,7 +47,7 @@ function BrandLogo({ brand }: { brand: Brand }) {
   return (
     <img
       src={getLogoUrl(brand.domain)}
-      alt={brand.name}
+      alt={`Logo de ${brand.name}`}
       loading="lazy"
       decoding="async"
       className="max-h-full max-w-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
