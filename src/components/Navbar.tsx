@@ -78,7 +78,7 @@ const Navbar = () => {
             <Link
               to="/cart"
               aria-label={`Carrito de compras${totalItems > 0 ? ` (${totalItems} artículos)` : ""}`}
-              className="p-2 min-h-11 min-w-11 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="p-2 min-h-11 min-w-11 inline-flex items-center justify-center rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <ShoppingCart className="w-5 h-5" />
               {totalItems > 0 && (
@@ -91,7 +91,7 @@ const Navbar = () => {
             <button
               onClick={handleUserClick}
               aria-label={user ? "Mi cuenta" : "Iniciar sesión"}
-              className="p-2 min-h-11 min-w-11 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="p-2 min-h-11 min-w-11 inline-flex items-center justify-center rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <User className="w-5 h-5" />
             </button>
@@ -100,7 +100,7 @@ const Navbar = () => {
               <button
                 onClick={handleLogout}
                 aria-label="Cerrar sesión"
-                className="p-2 min-h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors hidden sm:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="p-2 min-h-11 min-w-11 items-center justify-center rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors hidden sm:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 title="Cerrar sesión"
               >
                 <LogOut className="w-5 h-5" />
@@ -112,7 +112,7 @@ const Navbar = () => {
               aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
               aria-expanded={mobileOpen}
               aria-controls="mobile-nav"
-              className="p-2 min-h-11 min-w-11 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="p-2 min-h-11 min-w-11 inline-flex items-center justify-center rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
