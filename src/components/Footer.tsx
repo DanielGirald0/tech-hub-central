@@ -20,7 +20,7 @@ const Footer = () => {
 
           {/* Enlaces rápidos */}
           <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Enlaces rápidos</h4>
+            <h4 className="font-display font-semibold text-white mb-4">Enlaces rápidos</h4>
             <div className="flex flex-col gap-2">
               {[
                 { label: "Productos", path: "/products" },
@@ -29,7 +29,7 @@ const Footer = () => {
                 { label: "Nosotros", path: "/about" },
                 { label: "Contacto", path: "/contact" },
               ].map((link) => (
-                <Link key={link.path} to={link.path} className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link key={link.path} to={link.path} className="text-sm text-white/70 hover:text-primary transition-colors">
                   {link.label}
                 </Link>
               ))}
@@ -38,8 +38,8 @@ const Footer = () => {
 
           {/* Servicios */}
           <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Servicios</h4>
-            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+            <h4 className="font-display font-semibold text-white mb-4">Servicios</h4>
+            <div className="flex flex-col gap-2 text-sm text-white/70">
               <span>Servicio técnico de computadores</span>
               <span>Servicio técnico de celulares</span>
               <span>Instalación de cámaras</span>
