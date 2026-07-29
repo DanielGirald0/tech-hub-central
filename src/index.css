@@ -91,7 +91,71 @@
   .text-fluid-lead { font-size: clamp(1rem, 1vw + 0.75rem, 1.25rem); line-height: 1.55; }
 }
 
+@layer base {
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 350 96% 43%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 214 12% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 350 96% 43%;
+
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 350 96% 43%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 350 96% 43%;
+
+    /* Custom tokens */
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 7%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(350, 96%, 43%), hsl(350, 80%, 55%));
+    --gradient-card: linear-gradient(145deg, hsl(0, 0%, 7%), hsl(0, 0%, 4%));
+    --gradient-hero: linear-gradient(160deg, hsl(0, 0%, 0%), hsl(0, 0%, 5%) 50%, hsl(350, 20%, 8%));
+
+    --shadow-glow: 0 0 30px -5px hsl(350 96% 43% / 0.35);
+    --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.5);
+    --shadow-elevated: 0 8px 40px -8px hsl(0 0% 0% / 0.6);
+
+    --font-display: 'Geist', system-ui, -apple-system, sans-serif;
+    --font-body: 'Geist', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  }
+}
+
 @layer utilities {
+  .dark .glass {
+    background: hsl(0 0% 7% / 0.85);
+    border: 1px solid hsl(0 0% 18% / 0.5);
+  }
+
   .text-gradient {
     background: var(--gradient-primary);
     -webkit-background-clip: text;
