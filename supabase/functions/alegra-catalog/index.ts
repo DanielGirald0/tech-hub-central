@@ -108,14 +108,25 @@ function cacheSet(key: string, body: unknown) {
 }
 
 async function alegraFetch(path: string): Promise<any> {
-  const res = await fetch(`${ALEGRA_BASE}${path}`, {
-    headers: { Authorization: alegraAuth(), Accept: "application/json" },
-  });
-  if (!res.ok) {
+  const maxAttempts = 4;
+  let lastErr = "";
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const res = await fetch(`${ALEGRA_BASE}${path}`, {
+      headers: { Authorization: alegraAuth(), Accept: "application/json" },
+    });
+    if (res.ok) return await res.json();
     const body = await res.text();
-    throw new Error(`Alegra ${path} → ${res.status}: ${body.slice(0, 200)}`);
+    lastErr = `${res.status}: ${body.slice(0, 200)}`;
+    // Retry on rate limiting / transient upstream errors with exponential backoff.
+    if (res.status === 429 || res.status >= 500) {
+      const retryAfter = Number(res.headers.get("retry-after")) || 0;
+      const wait = retryAfter > 0 ? retryAfter * 1000 : Math.min(2000, 300 * 2 ** (attempt - 1));
+      await new Promise((r) => setTimeout(r, wait));
+      continue;
+    }
+    break;
   }
-  return await res.json();
+  throw new Error(`Alegra ${path} → ${lastErr}`);
 }
 
 function buildItemsUrl(params: {
@@ -208,10 +219,15 @@ async function listItems(url: URL) {
     return Array.isArray(data) ? data : (data?.data || []);
   };
 
-  // Fire the first wave in parallel.
-  const firstWave = await Promise.all(
-    Array.from({ length: initialBatches }, (_, i) => fetchBatch(i)),
-  );
+  // Fire the first wave with limited concurrency to avoid Alegra 429s.
+  const CONCURRENCY = 3;
+  const firstWave: any[][] = new Array(initialBatches);
+  for (let i = 0; i < initialBatches; i += CONCURRENCY) {
+    const slice = await Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, initialBatches - i) }, (_, k) => fetchBatch(i + k)),
+    );
+    for (let k = 0; k < slice.length; k++) firstWave[i + k] = slice[k];
+  }
   let batchesRun = initialBatches;
   for (const batch of firstWave) {
     if (batch.length === 0) { upstreamExhausted = true; continue; }
