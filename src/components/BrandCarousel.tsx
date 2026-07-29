@@ -45,14 +45,14 @@ function BrandLogo({ brand }: { brand: Brand }) {
   }
 
   return (
-    <img
-      src={getLogoUrl(brand.domain)}
-      alt={`Logo de ${brand.name}`}
-      loading="lazy"
-      decoding="async"
-      className="max-h-full max-w-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
-      onError={() => setError(true)}
-    />
+      <img
+        src={getLogoUrl(brand.domain)}
+        alt={`Logo de ${brand.name}`}
+        loading="lazy"
+        decoding="async"
+        className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+        onError={() => setError(true)}
+      />
   );
 }
 
