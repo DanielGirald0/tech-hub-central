@@ -47,13 +47,17 @@ const openWhatsApp = (service: Service, data: FormData, orderNumber: string) => 
 };
 
 const ServiceCard = ({ service }: ServiceCardProps) => {
-  const { user, profile } = useAuth();
+  const { user, profile, userRole } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const isRepair = service.category === "reparacion" || service.category === "mantenimiento";
+  const isStaff = userRole === "admin" || userRole === "technician";
+  // Solo el personal (admin/técnico) puede crear órdenes de servicio.
+  // Visitantes y clientes solicitan información por WhatsApp.
+  const isRepair =
+    isStaff && (service.category === "reparacion" || service.category === "mantenimiento");
   const [form, setForm] = useState<FormData>({
     full_name: "",
     email: "",
