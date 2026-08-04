@@ -26,6 +26,7 @@ const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminFeatured = lazy(() => import("./pages/admin/AdminFeatured"));
 const AdminRepairsDashboard = lazy(() => import("./pages/admin/repairs/AdminRepairsDashboard"));
 const AdminRepairOrders = lazy(() => import("./pages/admin/repairs/AdminRepairOrders"));
 const AdminRepairOrderNew = lazy(() => import("./pages/admin/repairs/AdminRepairOrderNew"));
@@ -90,6 +91,7 @@ const App = () => (
                 <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminUsers /></AdminLayout></ProtectedRoute>} />
                 <Route path="/admin/reviews" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminReviews /></AdminLayout></ProtectedRoute>} />
                 <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/featured" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminFeatured /></AdminLayout></ProtectedRoute>} />
                 <Route path="/admin/repairs" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairsDashboard /></AdminLayout></ProtectedRoute>} />
                 <Route path="/admin/repairs/orders" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairOrders /></AdminLayout></ProtectedRoute>} />
                 <Route path="/admin/repairs/orders/new" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairOrderNew /></AdminLayout></ProtectedRoute>} />
