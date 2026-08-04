@@ -175,12 +175,27 @@ async function featuredItems(url: URL) {
   const cached = cacheGet(cacheKey);
   if (cached) return cached;
 
-  // One upstream request replaces the previous eight simultaneous catalog
-  // requests from the browser, which were exhausting Alegra's rate limit.
-  const data = await alegraFetch(buildItemsUrl({ start: 0, limit: ALEGRA_MAX_LIMIT }));
-  const rawItems: any[] = Array.isArray(data) ? data : (data?.data || []);
+  // Targeted queries so featured products are consoles, headphones and laptops.
+  const queries = ["consola", "audifono", "portatil", "diadema"];
+  const rawItems: any[] = [];
+  for (const q of queries) {
+    try {
+      const data = await alegraFetch(buildItemsUrl({ start: 0, limit: ALEGRA_MAX_LIMIT, query: q }));
+      const arr: any[] = Array.isArray(data) ? data : (data?.data || []);
+      rawItems.push(...arr);
+    } catch (e) {
+      console.error("alegra-catalog featured query error", q, e);
+    }
+  }
+  if (!rawItems.length) {
+    const data = await alegraFetch(buildItemsUrl({ start: 0, limit: ALEGRA_MAX_LIMIT }));
+    rawItems.push(...(Array.isArray(data) ? data : (data?.data || [])));
+  }
+
+  const seen = new Set<string>();
   const mapped = rawItems
     .map(mapItem)
+    .filter((item) => (seen.has(item.id) ? false : (seen.add(item.id), true)))
     .filter((item) => item.inStock)
     .filter((item) => {
       const hay = itemHaystack(item);
