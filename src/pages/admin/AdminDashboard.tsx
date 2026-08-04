@@ -2,7 +2,7 @@ import BackButton from "@/components/BackButton";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, ShoppingCart, BarChart3, Star, ClipboardList, Settings as SettingsIcon } from "lucide-react";
+import { Users, ShoppingCart, BarChart3, Star, ClipboardList, Settings as SettingsIcon, Sparkles } from "lucide-react";
 import { useStoreSettings } from "@/contexts/StoreSettingsContext";
 import logo from "@/assets/logo-tecnogz.webp";
 
@@ -29,6 +29,7 @@ const AdminDashboard = () => {
     { label: "Reseñas pendientes", count: stats.reviews, icon: Star, href: "/admin/reviews", color: "text-yellow-400" },
     { label: "Servicio técnico", count: stats.repairs, icon: ClipboardList, href: "/admin/repairs", color: "text-pink-400" },
     { label: settings.show_prices ? "Config: Precios visibles" : "Config: Precios ocultos", count: 0, icon: SettingsIcon, href: "/admin/settings", color: settings.show_prices ? "text-green-400" : "text-yellow-400" },
+    { label: "Productos destacados", count: 0, icon: Sparkles, href: "/admin/featured", color: "text-blue-400" },
   ];
 
   return (
