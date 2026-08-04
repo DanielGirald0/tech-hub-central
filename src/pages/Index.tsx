@@ -94,6 +94,9 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Track Order CTA */}
+      <TrackOrderCTA />
+
       {/* Stats */}
       <section className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-8">
@@ -228,9 +231,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* Track Order CTA */}
-      <TrackOrderCTA />
 
       {/* Google Reviews */}
       <GoogleReviews />
