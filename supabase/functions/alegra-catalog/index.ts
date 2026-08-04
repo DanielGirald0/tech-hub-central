@@ -108,7 +108,7 @@ function cacheSet(key: string, body: unknown) {
 }
 
 async function alegraFetch(path: string): Promise<any> {
-  const maxAttempts = 4;
+  const maxAttempts = 6;
   let lastErr = "";
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const res = await fetch(`${ALEGRA_BASE}${path}`, {
@@ -118,15 +118,42 @@ async function alegraFetch(path: string): Promise<any> {
     const body = await res.text();
     lastErr = `${res.status}: ${body.slice(0, 200)}`;
     // Retry on rate limiting / transient upstream errors with exponential backoff.
-    if (res.status === 429 || res.status >= 500) {
-      const retryAfter = Number(res.headers.get("retry-after")) || 0;
-      const wait = retryAfter > 0 ? retryAfter * 1000 : Math.min(2000, 300 * 2 ** (attempt - 1));
+    if ((res.status === 429 || res.status >= 500) && attempt < maxAttempts) {
+      const retryHeader = res.headers.get("retry-after");
+      const retrySeconds = Number(retryHeader);
+      const retryDate = retryHeader && !Number.isFinite(retrySeconds)
+        ? Math.max(0, Date.parse(retryHeader) - Date.now())
+        : 0;
+      const serverDelay = Number.isFinite(retrySeconds) ? retrySeconds * 1000 : retryDate;
+      const exponentialDelay = Math.min(10000, 750 * 2 ** (attempt - 1));
+      const jitter = Math.floor(Math.random() * 400);
+      const wait = Math.max(serverDelay, exponentialDelay) + jitter;
       await new Promise((r) => setTimeout(r, wait));
       continue;
     }
     break;
   }
   throw new Error(`Alegra ${path} → ${lastErr}`);
+}
+
+async function featuredItems(url: URL) {
+  const limit = Math.min(12, Math.max(1, Number(url.searchParams.get("limit") || "8")));
+  const cacheKey = `featured:${limit}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  // One upstream request replaces the previous eight simultaneous catalog
+  // requests from the browser, which were exhausting Alegra's rate limit.
+  const data = await alegraFetch(buildItemsUrl({ start: 0, limit: ALEGRA_MAX_LIMIT }));
+  const rawItems: any[] = Array.isArray(data) ? data : (data?.data || []);
+  const mapped = rawItems.map(mapItem).filter((item) => item.inStock);
+  const withImage = mapped.filter((item) => item.image_url);
+  const pool = withImage.length >= limit
+    ? withImage
+    : [...withImage, ...mapped.filter((item) => !item.image_url)];
+  const body = { items: pool.slice(0, limit) };
+  cacheSet(cacheKey, body);
+  return body;
 }
 
 function buildItemsUrl(params: {
@@ -298,18 +325,23 @@ Deno.serve(async (req) => {
       if (!out) return json({ error: "not_found" }, 404);
       return json(out);
     }
+    if (action === "featured") {
+      return json(await featuredItems(url));
+    }
     // Default action: list (also used for featured / related).
     const body = await listItems(url);
     return json(body);
   } catch (e: any) {
     console.error("alegra-catalog error", e);
-    return json({ error: e?.message || String(e) }, 500);
+    const message = e?.message || String(e);
+    const status = message.includes("→ 429:") ? 503 : 500;
+    return json({ error: message }, status, status === 503 ? { "Retry-After": "10" } : undefined);
   }
 });
 
-function json(body: unknown, status = 200) {
+function json(body: unknown, status = 200, extraHeaders?: Record<string, string>) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders, ...extraHeaders, "Content-Type": "application/json" },
   });
 }
