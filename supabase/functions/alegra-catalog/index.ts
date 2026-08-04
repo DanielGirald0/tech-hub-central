@@ -136,84 +136,43 @@ async function alegraFetch(path: string): Promise<any> {
   throw new Error(`Alegra ${path} → ${lastErr}`);
 }
 
-const FEATURED_EXCLUDE = ["adaptador", "adaptadores", "adapter"];
-const FEATURED_PREFER = [
-  "consola",
-  "consolas",
-  "audifono",
-  "audífono",
-  "audifonos",
-  "audífonos",
-  "diadema",
-  "portatil",
-  "portátil",
-  "portatiles",
-  "portátiles",
-  "laptop",
-];
+// Featured products are curated manually by admins in public.featured_products.
+const FEATURED_TTL_MS = 60 * 1000;
 
-function normalizeText(value: string) {
-  return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
-
-function itemHaystack(item: CatalogItem) {
-  return normalizeText(`${item.name} ${item.category} ${item.description}`);
-}
-
-function shuffle<T>(arr: T[]): T[] {
-  const out = [...arr];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
+async function fetchFeaturedIds(): Promise<string[]> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY");
+  if (!supabaseUrl || !key) return [];
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/featured_products?select=alegra_id,position&order=position.asc`,
+    { headers: { apikey: key, Authorization: `Bearer ${key}` } },
+  );
+  if (!res.ok) {
+    console.error("featured_products read failed", res.status, await res.text());
+    return [];
   }
-  return out;
+  const rows = await res.json();
+  return (Array.isArray(rows) ? rows : []).map((r: any) => String(r.alegra_id));
 }
 
 async function featuredItems(url: URL) {
-  const limit = Math.min(12, Math.max(1, Number(url.searchParams.get("limit") || "8")));
+  const limit = Math.min(24, Math.max(1, Number(url.searchParams.get("limit") || "8")));
   const cacheKey = `featured:${limit}`;
-  const cached = cacheGet(cacheKey);
+  const cached = cacheGet(cacheKey, FEATURED_TTL_MS);
   if (cached) return cached;
 
-  // Targeted queries so featured products are consoles, headphones and laptops.
-  const queries = ["consola", "audifono", "portatil", "diadema"];
-  const rawItems: any[] = [];
-  for (const q of queries) {
+  const ids = (await fetchFeaturedIds()).slice(0, limit);
+  const items: CatalogItem[] = [];
+  for (const id of ids) {
     try {
-      const data = await alegraFetch(buildItemsUrl({ start: 0, limit: ALEGRA_MAX_LIMIT, query: q }));
-      const arr: any[] = Array.isArray(data) ? data : (data?.data || []);
-      rawItems.push(...arr);
+      const out = await getItem(id);
+      if (out?.item) items.push(out.item);
     } catch (e) {
-      console.error("alegra-catalog featured query error", q, e);
+      console.error("featured item fetch failed", id, e);
     }
   }
-  if (!rawItems.length) {
-    const data = await alegraFetch(buildItemsUrl({ start: 0, limit: ALEGRA_MAX_LIMIT }));
-    rawItems.push(...(Array.isArray(data) ? data : (data?.data || [])));
-  }
 
-  const seen = new Set<string>();
-  const mapped = rawItems
-    .map(mapItem)
-    .filter((item) => (seen.has(item.id) ? false : (seen.add(item.id), true)))
-    .filter((item) => item.inStock)
-    .filter((item) => {
-      const hay = itemHaystack(item);
-      return !FEATURED_EXCLUDE.some((word) => hay.includes(normalizeText(word)));
-    });
-
-  const preferred = mapped.filter((item) => {
-    const hay = itemHaystack(item);
-    return FEATURED_PREFER.some((word) => hay.includes(normalizeText(word)));
-  });
-  const rest = mapped.filter((item) => !preferred.includes(item));
-
-  const rank = (list: CatalogItem[]) => [
-    ...shuffle(list.filter((i) => i.image_url)),
-    ...shuffle(list.filter((i) => !i.image_url)),
-  ];
-  const pool = [...rank(preferred), ...rank(rest)];
-  const body = { items: shuffle(pool.slice(0, limit)) };
+  const body = { items };
   cacheSet(cacheKey, body);
   return body;
 }
