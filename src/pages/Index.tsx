@@ -97,24 +97,6 @@ const Index = () => {
       {/* Track Order CTA */}
       <TrackOrderCTA />
 
-      {/* Stats */}
-      <section className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[
-              { value: "1000+", label: "Productos" },
-              { value: "10+", label: "Servicios" },
-              { value: "5000+", label: "Clientes felices" },
-              { value: "5+", label: "Años de experiencia" },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <p className="font-display text-2xl md:text-3xl font-bold text-primary">{stat.value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
 
       {/* Featured Products */}
@@ -226,6 +208,25 @@ const Index = () => {
                 </div>
                 <h3 className="font-display font-semibold text-foreground mb-2">{item.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="border-b border-border bg-card">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {[
+              { value: "1000+", label: "Productos" },
+              { value: "10+", label: "Servicios" },
+              { value: "5000+", label: "Clientes felices" },
+              { value: "5+", label: "Años de experiencia" },
+            ].map((stat) => (
+              <div key={stat.label}>
+                <p className="font-display text-2xl md:text-3xl font-bold text-primary">{stat.value}</p>
+                <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
               </div>
             ))}
           </div>
