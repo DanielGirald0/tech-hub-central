@@ -62,6 +62,30 @@ export type Database = {
         }
         Relationships: []
       }
+      featured_products: {
+        Row: {
+          alegra_id: string
+          created_at: string
+          id: string
+          name: string | null
+          position: number
+        }
+        Insert: {
+          alegra_id: string
+          created_at?: string
+          id?: string
+          name?: string | null
+          position?: number
+        }
+        Update: {
+          alegra_id?: string
+          created_at?: string
+          id?: string
+          name?: string | null
+          position?: number
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           alegra_item_id: string | null
