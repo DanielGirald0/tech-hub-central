@@ -7,9 +7,9 @@ import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SEO from "@/components/SEO";
-import { listCategories, listProducts } from "@/lib/alegra-catalog";
+import { listProducts } from "@/lib/alegra-catalog";
 
-const MAX_PRICE = 8000000;
+const MAX_PRICE = 5000000;
 const PAGE_SIZE = 20;
 
 const Products = () => {
@@ -18,46 +18,29 @@ const Products = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [appliedCategory, setAppliedCategory] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [appliedType, setAppliedType] = useState("");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, MAX_PRICE]);
   const [appliedPriceRange, setAppliedPriceRange] = useState<[number, number]>([0, MAX_PRICE]);
 
-  // Categories from Alegra
-  const { data: categories = [] } = useQuery({
-    queryKey: ["alegra-categories"],
-    staleTime: 10 * 60 * 1000,
-    queryFn: () => listCategories(),
-  });
-
-  // Apply URL params once categories are loaded
+  // Apply URL params once
   useEffect(() => {
-    if (!categories.length) return;
-    const categoryParam = searchParams.get("category") || "";
-    if (categoryParam) {
-      const matched = categories.find((cat) => cat.id === categoryParam || cat.name === categoryParam);
-      setSelectedCategory(matched?.id || "");
-      setAppliedCategory(matched?.id || "");
-    }
     const typeParam = searchParams.get("type") || "";
     if (["product", "service"].includes(typeParam)) {
       setSelectedType(typeParam);
       setAppliedType(typeParam);
     }
-  }, [categories, searchParams]);
+  }, [searchParams]);
 
   // Products query: cached per filter combo, keeps previous page during transitions
   const { data: productsData, isFetching: loading } = useQuery({
-    queryKey: ["catalog", { appliedCategory, appliedType, appliedSearch, appliedPriceRange, page }],
+    queryKey: ["catalog", { appliedType, appliedSearch, appliedPriceRange, page }],
     placeholderData: keepPreviousData,
     staleTime: 60 * 1000,
     queryFn: () =>
       listProducts({
         page,
         pageSize: PAGE_SIZE,
-        category: appliedCategory || undefined,
         type: (appliedType || undefined) as "product" | "service" | undefined,
         search: appliedSearch || undefined,
         minPrice: appliedPriceRange[0],
@@ -75,27 +58,24 @@ const Products = () => {
   // Reset to page 1 whenever filters change
   useEffect(() => {
     setPage(1);
-  }, [appliedCategory, appliedType, appliedPriceRange, appliedSearch]);
+  }, [appliedType, appliedPriceRange, appliedSearch]);
 
   const activeFilters = useMemo(
-    () => Boolean(selectedCategory || selectedType || searchTerm || priceRange[0] > 0 || priceRange[1] < MAX_PRICE),
-    [selectedCategory, selectedType, searchTerm, priceRange],
+    () => Boolean(selectedType || searchTerm || priceRange[0] > 0 || priceRange[1] < MAX_PRICE),
+    [selectedType, searchTerm, priceRange],
   );
 
   const resetFilters = () => {
     setSearchTerm("");
-    setSelectedCategory("");
     setSelectedType("");
     setPriceRange([0, MAX_PRICE]);
     setAppliedSearch("");
-    setAppliedCategory("");
     setAppliedType("");
     setAppliedPriceRange([0, MAX_PRICE]);
   };
 
   const applyFilters = () => {
     setAppliedSearch(searchTerm.trim());
-    setAppliedCategory(selectedCategory);
     setAppliedType(selectedType);
     setAppliedPriceRange(priceRange);
     setFiltersOpen(false);
@@ -103,13 +83,6 @@ const Products = () => {
 
   const Filters = () => (
     <div className="space-y-6">
-      <div>
-        <h3 className="font-display font-semibold text-foreground text-sm mb-3 uppercase tracking-wider">Categoría</h3>
-        <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
-          <option value="">Todas</option>
-          {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-        </select>
-      </div>
       <div>
         <h3 className="font-display font-semibold text-foreground text-sm mb-3 uppercase tracking-wider">Tipo</h3>
         <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm text-foreground">
