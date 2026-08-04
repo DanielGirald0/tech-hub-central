@@ -136,6 +136,39 @@ async function alegraFetch(path: string): Promise<any> {
   throw new Error(`Alegra ${path} → ${lastErr}`);
 }
 
+const FEATURED_EXCLUDE = ["adaptador", "adaptadores", "adapter"];
+const FEATURED_PREFER = [
+  "consola",
+  "consolas",
+  "audifono",
+  "audífono",
+  "audifonos",
+  "audífonos",
+  "diadema",
+  "portatil",
+  "portátil",
+  "portatiles",
+  "portátiles",
+  "laptop",
+];
+
+function normalizeText(value: string) {
+  return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function itemHaystack(item: CatalogItem) {
+  return normalizeText(`${item.name} ${item.category} ${item.description}`);
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 async function featuredItems(url: URL) {
   const limit = Math.min(12, Math.max(1, Number(url.searchParams.get("limit") || "8")));
   const cacheKey = `featured:${limit}`;
@@ -146,12 +179,26 @@ async function featuredItems(url: URL) {
   // requests from the browser, which were exhausting Alegra's rate limit.
   const data = await alegraFetch(buildItemsUrl({ start: 0, limit: ALEGRA_MAX_LIMIT }));
   const rawItems: any[] = Array.isArray(data) ? data : (data?.data || []);
-  const mapped = rawItems.map(mapItem).filter((item) => item.inStock);
-  const withImage = mapped.filter((item) => item.image_url);
-  const pool = withImage.length >= limit
-    ? withImage
-    : [...withImage, ...mapped.filter((item) => !item.image_url)];
-  const body = { items: pool.slice(0, limit) };
+  const mapped = rawItems
+    .map(mapItem)
+    .filter((item) => item.inStock)
+    .filter((item) => {
+      const hay = itemHaystack(item);
+      return !FEATURED_EXCLUDE.some((word) => hay.includes(normalizeText(word)));
+    });
+
+  const preferred = mapped.filter((item) => {
+    const hay = itemHaystack(item);
+    return FEATURED_PREFER.some((word) => hay.includes(normalizeText(word)));
+  });
+  const rest = mapped.filter((item) => !preferred.includes(item));
+
+  const rank = (list: CatalogItem[]) => [
+    ...shuffle(list.filter((i) => i.image_url)),
+    ...shuffle(list.filter((i) => !i.image_url)),
+  ];
+  const pool = [...rank(preferred), ...rank(rest)];
+  const body = { items: shuffle(pool.slice(0, limit)) };
   cacheSet(cacheKey, body);
   return body;
 }
