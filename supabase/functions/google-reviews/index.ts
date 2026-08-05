@@ -31,8 +31,7 @@ Deno.serve(async (req) => {
     const res = await fetch(url, {
       headers: {
         "X-Goog-Api-Key": API_KEY,
-        "X-Goog-FieldMask":
-          "id,displayName,rating,userRatingCount,reviews",
+        "X-Goog-FieldMask": "id,displayName,rating,userRatingCount,reviews",
       },
     });
 
@@ -58,6 +57,37 @@ Deno.serve(async (req) => {
         relativeTime: r.relativePublishTimeDescription ?? "",
       })),
     };
+
+    // Fallback: the new Places API sometimes returns no reviews for a place
+    // (language filtering / field availability). Use the legacy Details API.
+    if (data.reviews.length === 0) {
+      console.log("No reviews from Places v1, trying legacy Details API");
+      const legacyUrl =
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${PLACE_ID}` +
+        `&fields=name,rating,user_ratings_total,reviews&reviews_no_translations=false&key=${API_KEY}`;
+      const legacyRes = await fetch(legacyUrl);
+      if (legacyRes.ok) {
+        const legacyJson = await legacyRes.json();
+        if (legacyJson.status !== "OK") {
+          console.error("Legacy Places error", legacyJson.status, legacyJson.error_message);
+        }
+        const r0 = legacyJson.result;
+        if (r0) {
+          data.name = data.name || r0.name || "";
+          data.rating = data.rating || r0.rating || 0;
+          data.total = data.total || r0.user_ratings_total || 0;
+          data.reviews = (r0.reviews ?? []).map((r: any) => ({
+            author: r.author_name ?? "Anónimo",
+            photo: r.profile_photo_url ?? null,
+            rating: r.rating ?? 0,
+            text: r.text ?? "",
+            relativeTime: r.relative_time_description ?? "",
+          }));
+        }
+      } else {
+        console.error("Legacy Places HTTP error", legacyRes.status);
+      }
+    }
 
     cache = { data, ts: Date.now() };
 
