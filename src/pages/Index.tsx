@@ -10,6 +10,7 @@ import { listFeatured } from "@/lib/alegra-catalog";
 import GoogleReviews from "@/components/GoogleReviews";
 import { useQuery } from "@tanstack/react-query";
 import SEO from "@/components/SEO";
+import FloatingCartButton from "@/components/FloatingCartButton";
 import tiendaAsset from "@/assets/tienda-tecnogz.jpg.asset.json";
 
 const featuredServices = services.slice(0, 4);
@@ -23,6 +24,7 @@ const Index = () => {
 
   return (
     <div>
+      <FloatingCartButton />
       <SEO
         title="Tecno Gz | Tecnología y Servicio Técnico en Rionegro"
         description="Venta de tecnología, reparación de equipos e instalación de seguridad electrónica en Rionegro, Antioquia. Servicio técnico profesional."
