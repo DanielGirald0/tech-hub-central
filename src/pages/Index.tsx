@@ -62,19 +62,19 @@ const Index = () => {
         {/* Foto de la tienda difuminada de fondo */}
         <div
           aria-hidden
-          className="absolute inset-0 bg-cover bg-center scale-105 blur-[2px]"
+          className="absolute inset-0 bg-cover bg-center scale-105 blur-[1px]"
           style={{ backgroundImage: `url(${tiendaAsset.url})` }}
         />
         <div
           aria-hidden
-          className="absolute inset-0 bg-background/80"
+          className="absolute inset-0 bg-background/50"
         />
         <div
           aria-hidden
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to bottom, hsl(var(--background) / 0.92), hsl(var(--background) / 0.6) 50%, hsl(var(--background)))",
+              "linear-gradient(to bottom, hsl(var(--background) / 0.85), hsl(var(--background) / 0.45) 50%, hsl(var(--background)))",
           }}
         />
         <div className="absolute inset-0 opacity-10">
