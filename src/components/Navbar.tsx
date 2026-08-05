@@ -99,7 +99,7 @@ const Navbar = () => {
   );
 
   return (
-    <header className="sticky top-0 z-50 bg-black border-b border-white/10">
+    <header className="sticky top-0 z-50 bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-black/80 border-b border-white/10 shadow-lg">
       <div className="container mx-auto px-4">
         {/* Mobile header: menu left, centered logo + name, cart/user right */}
         <div className="lg:hidden grid grid-cols-[auto_1fr_auto] items-center gap-2 h-20">
@@ -152,7 +152,7 @@ const Navbar = () => {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <nav id="mobile-nav" aria-label="Navegación móvil" className="lg:hidden pb-4 border-t border-white/10 mt-1 pt-3 flex flex-col gap-1">
+          <nav id="mobile-nav" aria-label="Navegación móvil" className="lg:hidden pb-4 border-t border-white/10 mt-1 pt-3 flex flex-col gap-1 max-h-[70dvh] overflow-y-auto">
             {navLinks.map((l) => (
               <Link
                 key={l.path}
