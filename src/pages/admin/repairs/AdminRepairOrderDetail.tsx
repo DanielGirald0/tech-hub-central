@@ -269,17 +269,11 @@ const AdminRepairOrderDetail = () => {
     const digits = (order.repair_customers?.phone || "").replace(/\D/g, "").replace(/^57/, "");
     const phone = `57${digits}`;
     const encoded = encodeURIComponent(msg);
-    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-    if (isMobile) {
-      window.open(`https://wa.me/${phone}?text=${encoded}`, "_blank");
-      return;
+    // wa.me redirige solo a la app o a WhatsApp Web según el dispositivo.
+    const win = window.open(`https://wa.me/${phone}?text=${encoded}`, "_blank", "noopener,noreferrer");
+    if (!win) {
+      toast({ title: "Habilita las ventanas emergentes para abrir WhatsApp", variant: "destructive" });
     }
-    window.location.href = `whatsapp://send?phone=${phone}&text=${encoded}`;
-    setTimeout(() => {
-      if (document.hasFocus()) {
-        window.open(`https://web.whatsapp.com/send?phone=${phone}&text=${encoded}`, "_blank");
-      }
-    }, 2500);
   };
 
   const printHTML = (html: string) => {
