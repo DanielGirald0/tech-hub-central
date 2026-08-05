@@ -161,6 +161,20 @@ const Navbar = () => {
               </Link>
             ))}
 
+            <Link
+              to="/cart"
+              onClick={() => setMobileOpen(false)}
+              className="px-3 py-2 rounded-md text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 flex items-center gap-2"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Carrito
+              {totalItems > 0 && (
+                <span className="ml-auto bg-primary text-primary-foreground text-[10px] font-bold min-w-5 h-5 px-1 rounded-full flex items-center justify-center">
+                  {totalItems > 99 ? "99+" : totalItems}
+                </span>
+              )}
+            </Link>
+
             {user && userRole === "admin" && (
               <Link to="/admin" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-white/70 hover:text-white hover:bg-white/10">Admin</Link>
             )}
