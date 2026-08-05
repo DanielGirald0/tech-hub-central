@@ -7,6 +7,7 @@ import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SEO from "@/components/SEO";
+import FloatingCartButton from "@/components/FloatingCartButton";
 import { listProducts } from "@/lib/alegra-catalog";
 
 const MAX_PRICE = 5000000;
@@ -113,6 +114,7 @@ const Products = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <FloatingCartButton />
       <SEO
         title="Productos | Tecno Gz"
         description="Catálogo completo de tecnología, computadores, accesorios y equipos de seguridad. Precios en COP, envío en Rionegro y Antioquia."
