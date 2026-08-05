@@ -41,10 +41,15 @@ type CatalogItem = {
 };
 
 function mapItem(raw: any): CatalogItem {
-  const priceEntry = Array.isArray(raw?.price) ? raw.price[0] : raw?.price;
-  const price = Number(priceEntry?.price ?? priceEntry ?? 0) || 0;
-  const tax = Array.isArray(raw?.tax) ? raw.tax[0] : raw?.tax;
-  const taxPct = Number(tax?.percentage ?? 0) || 0;
+  // Alegra devuelve varias listas de precio; tomamos la principal (idPriceList 1)
+  // o la primera disponible. `inventory.unitCost` es el COSTO y nunca se usa.
+  const priceList = Array.isArray(raw?.price) ? raw.price : (raw?.price ? [raw.price] : []);
+  const mainPrice = priceList.find((p: any) => String(p?.idPriceList ?? p?.id ?? "") === "1") ?? priceList[0];
+  const basePrice = Number(mainPrice?.price ?? mainPrice ?? 0) || 0;
+  const taxes = Array.isArray(raw?.tax) ? raw.tax : (raw?.tax ? [raw.tax] : []);
+  const taxPct = taxes.reduce((sum: number, t: any) => sum + (Number(t?.percentage ?? 0) || 0), 0);
+  // Precio final al público: base + impuestos, redondeado a pesos.
+  const price = Math.round(basePrice * (1 + taxPct / 100));
   const invQty = Number(
     raw?.inventory?.availableQuantity ??
       raw?.inventory?.unitCost?.availableQuantity ??
