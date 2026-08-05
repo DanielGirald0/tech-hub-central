@@ -157,7 +157,7 @@ const Products = () => {
             <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
           ) : products.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
                 {products.map((product) => <ProductCard key={product.id} product={product} />)}
               </div>
               {(page > 1 || hasMore) && (
