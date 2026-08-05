@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo-tecnogz.webp";
 import SEO from "@/components/SEO";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 const safeNext = (raw: string | null): string | null => {
   if (!raw) return null;
@@ -59,6 +60,13 @@ const Login = () => {
             {loading ? "Ingresando..." : "Iniciar sesión"}
           </Button>
         </form>
+        <div className="relative my-5">
+          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">o</span>
+          </div>
+        </div>
+        <GoogleSignInButton next={next} />
         <div className="flex items-center justify-between text-sm text-muted-foreground mt-4">
           <Link to="/forgot-password" className="text-primary hover:underline">¿Olvidaste tu contraseña?</Link>
         </div>

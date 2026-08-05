@@ -39,6 +39,7 @@ const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -83,6 +84,7 @@ const App = () => (
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                 <Route path="/account" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
