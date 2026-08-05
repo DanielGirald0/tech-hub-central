@@ -115,8 +115,8 @@ const Cart = () => {
           <CartIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="font-display text-xl font-semibold text-foreground mb-2">Tu carrito está vacío</h2>
           <p className="text-muted-foreground mb-6">Explora nuestros productos y agrega artículos a tu carrito.</p>
-          <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-            <Link to="/products">Seguir comprando</Link>
+          <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => navigate("/products")}>
+            Seguir comprando
           </Button>
         </div>
       </div>
