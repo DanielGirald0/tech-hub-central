@@ -89,11 +89,7 @@ const GoogleReviews = () => {
           <div className="flex justify-center py-8">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : error || !data || data.reviews.length === 0 ? (
-          <p className="text-center text-muted-foreground">
-            No se pudieron cargar las reseñas en este momento
-          </p>
-        ) : (
+        ) : error || !data || data.reviews.length === 0 ? null : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {data.reviews.slice(0, 6).map((r, i) => (
               <article
