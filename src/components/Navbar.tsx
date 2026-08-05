@@ -25,10 +25,10 @@ const Navbar = () => {
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
-  const LogoBlock = ({ stacked = false }: { stacked?: boolean }) => (
+  const LogoBlock = ({ compact = false }: { compact?: boolean }) => (
     <Link
       to="/"
-      className={`flex items-center ${stacked ? "flex-col gap-1" : "gap-2 sm:gap-3"} min-w-0`}
+      className={`flex items-center ${compact ? "justify-center" : "gap-2 sm:gap-3"} min-w-0`}
       aria-label="Tecno Gz — Inicio"
     >
       <img
@@ -38,15 +38,13 @@ const Navbar = () => {
         height={56}
         fetchPriority="high"
         decoding="async"
-        className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 object-contain shrink-0"
+        className={`object-contain shrink-0 ${compact ? "w-9 h-9" : "w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14"}`}
       />
-      <span
-        className={`font-display font-bold tracking-wider text-white uppercase truncate ${
-          stacked ? "text-xs text-center" : "hidden md:block text-base sm:text-lg lg:text-xl"
-        }`}
-      >
-        TECNO GZ
-      </span>
+      {!compact && (
+        <span className="font-display font-bold tracking-wider text-white uppercase truncate hidden md:block text-base sm:text-lg lg:text-xl">
+          TECNO GZ
+        </span>
+      )}
     </Link>
   );
 
@@ -99,14 +97,13 @@ const Navbar = () => {
   );
 
   return (
-    <header className="sticky top-0 z-50 bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-black/80 border-b border-white/10 shadow-lg">
+    <header className="sticky top-0 z-50 bg-black border-b border-white/10 shadow-lg">
       <div className="container mx-auto px-4">
-        {/* Mobile header: menu left, centered logo + name, cart/user right */}
-        <div className="lg:hidden grid grid-cols-[auto_1fr_auto] items-center gap-2 h-20">
+        {/* Mobile header: menu left, centered logo, user right */}
+        <div className="lg:hidden grid grid-cols-[auto_1fr_auto] items-center gap-2 h-14">
           <MenuButton />
-          <LogoBlock stacked />
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            <CartButton />
+          <LogoBlock compact />
+          <div className="flex items-center justify-end shrink-0">
             <UserButton />
           </div>
         </div>
@@ -163,6 +160,20 @@ const Navbar = () => {
                 {l.label}
               </Link>
             ))}
+
+            <Link
+              to="/cart"
+              onClick={() => setMobileOpen(false)}
+              className="px-3 py-2 rounded-md text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 flex items-center gap-2"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Carrito
+              {totalItems > 0 && (
+                <span className="ml-auto bg-primary text-primary-foreground text-[10px] font-bold min-w-5 h-5 px-1 rounded-full flex items-center justify-center">
+                  {totalItems > 99 ? "99+" : totalItems}
+                </span>
+              )}
+            </Link>
 
             {user && userRole === "admin" && (
               <Link to="/admin" onClick={() => setMobileOpen(false)} className="px-3 py-2 rounded-md text-sm font-medium text-white/70 hover:text-white hover:bg-white/10">Admin</Link>
