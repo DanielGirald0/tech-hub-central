@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Trash2, Upload, MessageCircle, Loader2, Printer, Tag } from "lucide-react";
-import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus, whatsappLink, buildStatusMessage } from "@/lib/repairs";
+import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus } from "@/lib/repairs";
 import { useAuth } from "@/contexts/AuthContext";
 
 const AdminRepairOrderDetail = () => {
@@ -256,7 +256,7 @@ const AdminRepairOrderDetail = () => {
 
   // Compartir por WhatsApp: mensaje simple con nombre, número de orden, estado
   // y enlace directo al seguimiento público de la orden. Sin PDF ni Storage.
-  const notifyWhatsapp = () => {
+  const getWhatsappUrl = () => {
     const name = (order.repair_customers?.name || "").split(" ")[0] || "cliente";
     const statusLabel = REPAIR_STATUS_LABEL[order.status as RepairStatus];
     const trackUrl = `https://tecnogz.com/seguimiento?orden=${encodeURIComponent(order.order_number)}`;
@@ -268,12 +268,7 @@ const AdminRepairOrderDetail = () => {
       `Gracias por confiar en TECNO GZ.`;
     const digits = (order.repair_customers?.phone || "").replace(/\D/g, "").replace(/^57/, "");
     const phone = `57${digits}`;
-    const encoded = encodeURIComponent(msg);
-    // wa.me redirige solo a la app o a WhatsApp Web según el dispositivo.
-    const win = window.open(`https://wa.me/${phone}?text=${encoded}`, "_blank", "noopener,noreferrer");
-    if (!win) {
-      toast({ title: "Habilita las ventanas emergentes para abrir WhatsApp", variant: "destructive" });
-    }
+    return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
   };
 
   const printHTML = (html: string) => {
@@ -362,7 +357,14 @@ const AdminRepairOrderDetail = () => {
           <p className="text-muted-foreground text-sm">Ingreso: {formatDateTime(order.received_at)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button onClick={notifyWhatsapp} className="bg-[#25D366] text-white px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:opacity-90"><MessageCircle className="w-4 h-4" /> WhatsApp</button>
+          <a
+            href={getWhatsappUrl()}
+            target="_blank"
+            rel="noopener noreferrer external"
+            className="bg-[#25D366] text-white px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:opacity-90"
+          >
+            <MessageCircle className="w-4 h-4" /> WhatsApp
+          </a>
           <button onClick={printTicket} className="bg-secondary text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-secondary/80" title="Ticket adhesivo para el equipo"><Tag className="w-4 h-4" /> Ticket</button>
           <button onClick={printOrder} className="bg-secondary text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-secondary/80" title="Imprimir orden completa"><Printer className="w-4 h-4" /> Imprimir</button>
           {isAdmin && (
