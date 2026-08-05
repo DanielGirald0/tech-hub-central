@@ -10,6 +10,7 @@ import { listFeatured } from "@/lib/alegra-catalog";
 import GoogleReviews from "@/components/GoogleReviews";
 import { useQuery } from "@tanstack/react-query";
 import SEO from "@/components/SEO";
+import tiendaAsset from "@/assets/tienda-tecnogz.jpg.asset.json";
 
 const featuredServices = services.slice(0, 4);
 
@@ -58,6 +59,24 @@ const Index = () => {
       />
       {/* Hero */}
       <section className="relative bg-gradient-hero overflow-hidden">
+        {/* Foto de la tienda difuminada de fondo */}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-cover bg-center scale-105 blur-[2px]"
+          style={{ backgroundImage: `url(${tiendaAsset.url})` }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-background/80"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom, hsl(var(--background) / 0.92), hsl(var(--background) / 0.6) 50%, hsl(var(--background)))",
+          }}
+        />
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
           <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/20 rounded-full blur-3xl" />
