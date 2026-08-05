@@ -113,8 +113,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Track Order CTA */}
-      <TrackOrderCTA />
 
 
 
