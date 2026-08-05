@@ -26,6 +26,7 @@ const Cart = () => {
   const showPrices = settings.show_prices;
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const [form, setForm] = useState({
