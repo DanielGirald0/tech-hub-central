@@ -119,9 +119,9 @@ const Index = () => {
 
 
       {/* Featured Products */}
-      <section className="py-16 bg-card/50">
+      <section className="py-10 bg-card/50">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">
               Productos destacados
             </h2>
