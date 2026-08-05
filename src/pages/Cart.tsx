@@ -1,6 +1,6 @@
 import { ShoppingCart as CartIcon, Trash2, Plus, Minus, Loader2 } from "lucide-react";
 import BackButton from "@/components/BackButton";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
