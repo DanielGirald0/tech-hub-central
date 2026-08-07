@@ -11,7 +11,7 @@ import GoogleReviews from "@/components/GoogleReviews";
 import { useQuery } from "@tanstack/react-query";
 import SEO from "@/components/SEO";
 import FloatingCartButton from "@/components/FloatingCartButton";
-import tiendaAsset from "@/assets/tienda-tecnogz.jpg.asset.json";
+import tiendaAsset from "@/assets/tienda-tecnogz-2.jpg.asset.json";
 
 const featuredServices = services.slice(0, 4);
 
