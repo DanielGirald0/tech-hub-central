@@ -259,7 +259,7 @@ const AdminRepairOrderDetail = () => {
   const getWhatsappUrl = () => {
     const name = (order.repair_customers?.name || "").split(" ")[0] || "cliente";
     const statusLabel = REPAIR_STATUS_LABEL[order.status as RepairStatus];
-    const trackUrl = `https://tecnogz.com/seguimiento?orden=${encodeURIComponent(order.order_number)}`;
+    const trackUrl = `https://tecnogz.lovable.app/seguimiento?orden=${encodeURIComponent(order.order_number)}`;
     const msg =
       `Hola ${name}.\n\n` +
       `Te informamos que tu Orden de Servicio #${order.order_number} se encuentra actualmente en el estado:\n\n` +
@@ -315,7 +315,7 @@ const AdminRepairOrderDetail = () => {
       <div class="small">${(order.reported_issue || "—").replace(/</g,"&lt;")}</div>
       ${order.estimated_date ? `<div class="box small"><b>Entrega estimada:</b> ${formatDate(order.estimated_date)}</div>` : ""}
       <hr/>
-      <div class="center small">Consulta el estado en<br/>tecnogz.com/rastrear-reparacion</div>
+      <div class="center small">Consulta el estado en<br/>tecnogz.lovable.app/seguimiento</div>
       </body></html>`;
     printHTML(html);
   };
