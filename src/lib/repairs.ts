@@ -57,4 +57,4 @@ export const whatsappLink = (phone: string, text: string) =>
   `https://wa.me/57${normalizePhone(phone).replace(/^57/, "")}?text=${encodeURIComponent(text)}`;
 
 export const buildStatusMessage = (orderNumber: string, status: RepairStatus, customerName: string) =>
-  `Hola ${customerName}, tu orden de servicio *${orderNumber}* en TECNO GZ ha cambiado de estado a: *${REPAIR_STATUS_LABEL[status]}*. Puedes consultar el detalle en https://tecnogz.com/seguimiento`;
+  `Hola ${customerName}, tu orden de servicio *${orderNumber}* en TECNO GZ ha cambiado de estado a: *${REPAIR_STATUS_LABEL[status]}*. Puedes consultar el detalle en https://tecnogz.lovable.app/seguimiento`;
