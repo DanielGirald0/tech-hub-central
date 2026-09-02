@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
 
-import { services } from "@/data/products";
+import { services } from "@/data/services";
 import { listFeatured } from "@/lib/alegra-catalog";
 import GoogleReviews from "@/components/GoogleReviews";
 import { useQuery } from "@tanstack/react-query";
