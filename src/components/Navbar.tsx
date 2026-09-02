@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ShoppingCart, Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/contexts/CartContext";
 import logo from "@/assets/logo-tecnogz.webp";
 
 const navLinks = [
   { label: "Inicio", path: "/" },
-  { label: "Productos", path: "/products" },
   { label: "Servicios", path: "/services" },
   { label: "Nosotros", path: "/about" },
 ];
@@ -17,7 +15,6 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, userRole, signOut } = useAuth();
-  const { totalItems } = useCart();
 
   const handleUserClick = () => navigate(user ? "/dashboard" : "/login");
   const handleLogout = async () => { await signOut(); navigate("/"); };
@@ -43,21 +40,6 @@ const Navbar = () => {
       {!compact && (
         <span className="font-display font-bold tracking-wider text-white uppercase truncate hidden md:block text-base sm:text-lg lg:text-xl">
           TECNO GZ
-        </span>
-      )}
-    </Link>
-  );
-
-  const CartButton = () => (
-    <Link
-      to="/cart"
-      aria-label={`Carrito de compras${totalItems > 0 ? ` (${totalItems} artículos)` : ""}`}
-      className="p-2 min-h-11 min-w-11 inline-flex items-center justify-center rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <ShoppingCart className="w-5 h-5" />
-      {totalItems > 0 && (
-        <span aria-hidden="true" className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-          {totalItems > 99 ? "99+" : totalItems}
         </span>
       )}
     </Link>
@@ -141,7 +123,6 @@ const Navbar = () => {
           </nav>
 
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            <CartButton />
             <UserButton />
             {user && <LogoutButton className="hidden sm:inline-flex" />}
           </div>
