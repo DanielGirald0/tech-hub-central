@@ -51,7 +51,7 @@ const RouteFallback = () => (
   </div>
 );
 
-const staff = ["admin", "technician"] as const;
+const staff: ("admin" | "technician")[] = ["admin", "technician"];
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
