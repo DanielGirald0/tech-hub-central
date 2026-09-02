@@ -5,28 +5,22 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { CartProvider } from "@/contexts/CartContext";
-import { StoreSettingsProvider } from "@/contexts/StoreSettingsContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "@/components/AdminLayout";
 import Layout from "./components/Layout";
 import ScrollToTop from "./components/ScrollToTop";
 import Index from "./pages/Index";
-const Products = lazy(() => import("./pages/Products"));
+
 const Services = lazy(() => import("./pages/Services"));
 const Security = lazy(() => import("./pages/Security"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
-const Cart = lazy(() => import("./pages/Cart"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
-const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
-const AdminFeatured = lazy(() => import("./pages/admin/AdminFeatured"));
 const AdminRepairsDashboard = lazy(() => import("./pages/admin/repairs/AdminRepairsDashboard"));
 const AdminRepairOrders = lazy(() => import("./pages/admin/repairs/AdminRepairOrders"));
 const AdminRepairOrderNew = lazy(() => import("./pages/admin/repairs/AdminRepairOrderNew"));
@@ -35,7 +29,6 @@ const AdminRepairCustomers = lazy(() => import("./pages/admin/repairs/AdminRepai
 const AdminRepairReports = lazy(() => import("./pages/admin/repairs/AdminRepairReports"));
 const TrackRepair = lazy(() => import("./pages/TrackRepair"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
@@ -58,6 +51,8 @@ const RouteFallback = () => (
   </div>
 );
 
+const staff: ("admin" | "technician")[] = ["admin", "technician"];
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -66,20 +61,15 @@ const App = () => (
       <BrowserRouter>
         <ScrollToTop />
         <AuthProvider>
-          <StoreSettingsProvider>
-            <CartProvider>
-              <Layout>
-              <Suspense fallback={<RouteFallback />}>
+          <Layout>
+            <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/services" element={<Services />} />
                 <Route path="/security" element={<Security />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/seguimiento" element={<TrackRepair />} />
-                <Route path="/cart" element={<Cart />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
@@ -89,23 +79,18 @@ const App = () => (
                 <Route path="/account" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminDashboard /></AdminLayout></ProtectedRoute>} />
-                <Route path="/admin/orders" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminOrders /></AdminLayout></ProtectedRoute>} />
                 <Route path="/admin/users" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminUsers /></AdminLayout></ProtectedRoute>} />
                 <Route path="/admin/reviews" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminReviews /></AdminLayout></ProtectedRoute>} />
-                <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminSettings /></AdminLayout></ProtectedRoute>} />
-                <Route path="/admin/featured" element={<ProtectedRoute requiredRole="admin"><AdminLayout><AdminFeatured /></AdminLayout></ProtectedRoute>} />
-                <Route path="/admin/repairs" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairsDashboard /></AdminLayout></ProtectedRoute>} />
-                <Route path="/admin/repairs/orders" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairOrders /></AdminLayout></ProtectedRoute>} />
-                <Route path="/admin/repairs/orders/new" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairOrderNew /></AdminLayout></ProtectedRoute>} />
-                <Route path="/admin/repairs/orders/:id" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairOrderDetail /></AdminLayout></ProtectedRoute>} />
-                <Route path="/admin/repairs/customers" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairCustomers /></AdminLayout></ProtectedRoute>} />
-                <Route path="/admin/repairs/reports" element={<ProtectedRoute requiredRole={["admin","technician"]}><AdminLayout><AdminRepairReports /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/repairs" element={<ProtectedRoute requiredRole={staff}><AdminLayout><AdminRepairsDashboard /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/repairs/orders" element={<ProtectedRoute requiredRole={staff}><AdminLayout><AdminRepairOrders /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/repairs/orders/new" element={<ProtectedRoute requiredRole={staff}><AdminLayout><AdminRepairOrderNew /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/repairs/orders/:id" element={<ProtectedRoute requiredRole={staff}><AdminLayout><AdminRepairOrderDetail /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/repairs/customers" element={<ProtectedRoute requiredRole={staff}><AdminLayout><AdminRepairCustomers /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/repairs/reports" element={<ProtectedRoute requiredRole={staff}><AdminLayout><AdminRepairReports /></AdminLayout></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              </Suspense>
-              </Layout>
-            </CartProvider>
-          </StoreSettingsProvider>
+            </Suspense>
+          </Layout>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

@@ -14,7 +14,7 @@ const Footer = () => {
               <span className="font-display font-bold text-lg text-white uppercase">TECNO GZ</span>
             </div>
             <p className="text-white/70 text-sm leading-relaxed">
-              Expertos en servicio técnico y venta de tecnología. Pasión y servicio de confianza.
+              Expertos en servicio técnico, instalación y asesoría tecnológica. Pasión y servicio de confianza.
             </p>
           </div>
 
@@ -23,7 +23,6 @@ const Footer = () => {
             <h4 className="font-display font-semibold text-white mb-4">Enlaces rápidos</h4>
             <div className="flex flex-col gap-2">
               {[
-                { label: "Productos", path: "/products" },
                 { label: "Servicios", path: "/services" },
                 { label: "Seguridad", path: "/security" },
                 { label: "Nosotros", path: "/about" },

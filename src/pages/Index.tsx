@@ -1,40 +1,29 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Shield, Wrench, Zap, Loader2 } from "lucide-react";
+import { ArrowRight, Shield, Wrench, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
-
-import { services } from "@/data/products";
-import { listFeatured } from "@/lib/alegra-catalog";
+import { services } from "@/data/services";
 import GoogleReviews from "@/components/GoogleReviews";
-import { useQuery } from "@tanstack/react-query";
 import SEO from "@/components/SEO";
-import FloatingCartButton from "@/components/FloatingCartButton";
+import TrackOrderCTA from "@/components/TrackOrderCTA";
 import tiendaAsset from "@/assets/tienda-tecnogz-2.jpg.asset.json";
 
 const featuredServices = services.slice(0, 4);
 
 const Index = () => {
-  const { data: featuredProducts = [], isLoading: loadingFeatured } = useQuery({
-    queryKey: ["featured-products"],
-    queryFn: () => listFeatured(8),
-    staleTime: 10 * 60 * 1000,
-  });
-
   return (
     <div>
-      <FloatingCartButton />
       <SEO
-        title="Tecno Gz | Tecnología y Servicio Técnico en Rionegro"
-        description="Venta de tecnología, reparación de equipos e instalación de seguridad electrónica en Rionegro, Antioquia. Servicio técnico profesional."
+        title="Tecno Gz | Servicio Técnico y Seguridad Electrónica en Rionegro"
+        description="Reparación de equipos, mantenimiento, instalación de seguridad electrónica y asesoría tecnológica en Rionegro, Antioquia."
         path="/"
         jsonLd={[
           {
             "@context": "https://schema.org",
             "@type": "LocalBusiness",
             name: "Tecno Gz",
-            description: "Venta de tecnología, servicio técnico y seguridad electrónica en Rionegro, Antioquia.",
+            description: "Servicio técnico, seguridad electrónica y asesoría tecnológica en Rionegro, Antioquia.",
             telephone: "+57 310 747 6909",
             priceRange: "$$",
             address: {
@@ -45,17 +34,6 @@ const Index = () => {
             },
             areaServed: ["Rionegro", "Oriente Antioqueño", "Antioquia"],
             sameAs: ["https://wa.me/573107476909"],
-          },
-          {
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            name: "Tecno Gz",
-            inLanguage: "es-CO",
-            potentialAction: {
-              "@type": "SearchAction",
-              target: "/products?search={search_term_string}",
-              "query-input": "required name=search_term_string",
-            },
           },
         ]}
       />
@@ -97,50 +75,25 @@ const Index = () => {
               Pasión y servicio de confianza
             </p>
             <p className="text-fluid-lead text-muted-foreground mb-8 max-w-xl mx-auto px-2">
-              Productos de vanguardia, instalación profesional y servicio técnico experto.
-              Todo lo que tu hogar y negocio necesitan en Rionegro, Antioquia.
+              Servicio técnico experto, instalación profesional y asesoría tecnológica
+              para tu hogar y tu negocio en Rionegro, Antioquia.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
               <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 font-display">
-                <Link to="/products">Ver productos <ArrowRight className="w-4 h-4 ml-2" /></Link>
+                <Link to="/services">Nuestros servicios <ArrowRight className="w-4 h-4 ml-2" /></Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-border text-foreground hover:bg-secondary">
-                <Link to="/services">Nuestros servicios</Link>
+                <Link to="/seguimiento">Seguir mi orden</Link>
               </Button>
             </div>
           </motion.div>
         </div>
       </section>
 
+      <div className="container mx-auto px-4 pt-8">
+        <TrackOrderCTA />
+      </div>
 
-
-
-      {/* Featured Products */}
-      <section className="py-10 bg-card/50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">
-              Productos destacados
-            </h2>
-            <Link to="/products" className="text-sm text-primary hover:underline flex items-center gap-1">
-              Ver todos <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-            {loadingFeatured ? (
-              <div className="col-span-full flex justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : featuredProducts.length > 0 ? (
-              featuredProducts.map((product: any) => (
-                <ProductCard key={product.id} product={product} />
-              ))
-            ) : (
-              <p className="col-span-full text-center text-muted-foreground">No hay productos destacados.</p>
-            )}
-          </div>
-        </div>
-      </section>
 
       {/* Security Solutions Banner */}
       <section className="py-16">

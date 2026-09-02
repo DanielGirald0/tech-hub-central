@@ -1,7 +1,7 @@
 import ServiceCard from "@/components/ServiceCard";
 import BackButton from "@/components/BackButton";
 import TrackOrderCTA from "@/components/TrackOrderCTA";
-import { services } from "@/data/products";
+import { services } from "@/data/services";
 import SEO from "@/components/SEO";
 
 const serviceCategories = [
