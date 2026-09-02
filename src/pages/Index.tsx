@@ -1,30 +1,19 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Shield, Wrench, Zap, Loader2 } from "lucide-react";
+import { ArrowRight, Shield, Wrench, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import ProductCard from "@/components/ProductCard";
 import ServiceCard from "@/components/ServiceCard";
-
 import { services } from "@/data/services";
-import { listFeatured } from "@/lib/alegra-catalog";
 import GoogleReviews from "@/components/GoogleReviews";
-import { useQuery } from "@tanstack/react-query";
 import SEO from "@/components/SEO";
-import FloatingCartButton from "@/components/FloatingCartButton";
+import TrackOrderCTA from "@/components/TrackOrderCTA";
 import tiendaAsset from "@/assets/tienda-tecnogz-2.jpg.asset.json";
 
 const featuredServices = services.slice(0, 4);
 
 const Index = () => {
-  const { data: featuredProducts = [], isLoading: loadingFeatured } = useQuery({
-    queryKey: ["featured-products"],
-    queryFn: () => listFeatured(8),
-    staleTime: 10 * 60 * 1000,
-  });
-
   return (
     <div>
-      <FloatingCartButton />
       <SEO
         title="Tecno Gz | Tecnología y Servicio Técnico en Rionegro"
         description="Venta de tecnología, reparación de equipos e instalación de seguridad electrónica en Rionegro, Antioquia. Servicio técnico profesional."
