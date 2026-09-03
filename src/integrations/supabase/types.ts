@@ -439,6 +439,13 @@ export type Database = {
           order_number: string
         }[]
       }
+      customer_set_repair_status: {
+        Args: {
+          _order_id: string
+          _status: Database["public"]["Enums"]["repair_status"]
+        }
+        Returns: undefined
+      }
       delete_user_by_admin: { Args: { _user_id: string }; Returns: undefined }
       find_repair_customer_by_document: {
         Args: { _doc: string }
@@ -498,6 +505,26 @@ export type Database = {
           from_status: Database["public"]["Enums"]["repair_status"]
           note: string
           to_status: Database["public"]["Enums"]["repair_status"]
+        }[]
+      }
+      get_repair_order_public: {
+        Args: { _order_id: string }
+        Returns: {
+          brand: string
+          cost: number
+          customer_name: string
+          delivered_at: string
+          device_type: string
+          diagnosis: string
+          estimated_date: string
+          id: string
+          is_owner: boolean
+          model: string
+          order_number: string
+          received_at: string
+          reported_issue: string
+          status: Database["public"]["Enums"]["repair_status"]
+          warranty_days: number
         }[]
       }
       get_repair_report: {
