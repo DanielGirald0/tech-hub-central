@@ -57,7 +57,7 @@ const Contact = () => {
               <label className="block text-sm font-medium text-foreground mb-1">Asunto</label>
               <select className={inputCls} value={form.subject} onChange={(e) => update("subject", e.target.value)}>
                 <option>Consulta general</option>
-                <option>Pregunta sobre producto</option>
+                <option>Asesoría tecnológica</option>
                 <option>Solicitud de servicio</option>
                 <option>Soporte técnico</option>
                 <option>Consulta de seguridad</option>
