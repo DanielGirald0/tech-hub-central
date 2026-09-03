@@ -7,21 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Package, User, LogOut, ShieldCheck, Calendar, ExternalLink } from "lucide-react";
+import { User, LogOut, ShieldCheck, Calendar, ExternalLink } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import { REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, RepairStatus, formatDate, formatCOP as formatCOPLib } from "@/lib/repairs";
 import { Link } from "react-router-dom";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import SEO from "@/components/SEO";
 
 const Dashboard = () => {
@@ -32,21 +21,7 @@ const Dashboard = () => {
   const [editName, setEditName] = useState(profile?.name || "");
   const [editPhone, setEditPhone] = useState(profile?.phone || "");
   const [editDoc, setEditDoc] = useState<string>(profile?.document_number || "");
-  const [tab, setTab] = useState<"orders" | "repairs" | "profile">("repairs");
-
-  const { data: orders = [] } = useQuery({
-    queryKey: ["my-orders", user?.id],
-    enabled: !!user,
-    staleTime: 60 * 1000,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("customer_id", user!.id)
-        .order("created_at", { ascending: false });
-      return data || [];
-    },
-  });
+  const [tab, setTab] = useState<"repairs" | "profile">("repairs");
 
   const { data: repairOrders = [] } = useQuery({
     queryKey: ["my-repair-orders", user?.id, profile?.document_number],
@@ -83,24 +58,7 @@ const Dashboard = () => {
     navigate("/");
   };
 
-  const formatCOP = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(n);
-
-  const cancelOrder = async (id: string) => {
-    const { error } = await supabase.from("orders").update({ status: "cancelado" }).eq("id", id);
-    if (error) {
-      toast({ title: "Error al cancelar", description: error.message, variant: "destructive" });
-      return;
-    }
-    queryClient.setQueryData(["my-orders", user?.id], (prev: any[] = []) =>
-      prev.map((o) => (o.id === id ? { ...o, status: "cancelado" } : o)),
-    );
-    toast({ title: "Pedido cancelado" });
-    const text = encodeURIComponent(`Hola, he cancelado el pedido #${id.slice(0, 8)}`);
-    window.open(`https://wa.me/573107476909?text=${text}`, "_blank");
-  };
-
   const tabs = [
-    { id: "orders" as const, label: "Mis Pedidos", icon: Package },
     { id: "repairs" as const, label: "Servicio Técnico", icon: ShieldCheck },
     { id: "profile" as const, label: "Mi Perfil", icon: User },
   ];
@@ -133,71 +91,6 @@ const Dashboard = () => {
           </button>
         ))}
       </div>
-
-      {tab === "orders" && (
-        <div className="space-y-4">
-          {orders.length === 0 ? (
-            <p className="text-muted-foreground text-center py-12">No tienes pedidos aún.</p>
-          ) : orders.map((o) => {
-            const isPendingPayment = o.status === "pendiente de pago";
-            const showPay = isPendingPayment && o.payment_status !== "pagado";
-            const showCancel = isPendingPayment;
-            return (
-              <div key={o.id} className="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <p className="font-medium text-foreground">{formatCOP(o.total_price)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {o.delivery_type === "domicilio" ? `Domicilio (${formatCOP(o.delivery_cost || 0)})` : "Recoger en tienda"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString("es-CO")}</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${o.status === "completado" ? "bg-green-500/10 text-green-500" : o.status === "cancelado" ? "bg-red-500/10 text-red-500" : o.status === "recibido" ? "bg-purple-500/10 text-purple-400" : o.status === "en proceso" ? "bg-blue-500/10 text-blue-400" : "bg-orange-500/10 text-orange-400"}`}>
-                    {o.status}
-                  </span>
-                  {showPay && (
-                    <Button
-                      size="sm"
-                      className="bg-primary text-primary-foreground hover:bg-primary/90"
-                      onClick={() => {
-                        toast({ title: "Pago pendiente", description: `Total a pagar: ${formatCOP(o.total_price)}. Próximamente integraremos pagos en línea.` });
-                      }}
-                    >
-                      Pagar pedido
-                    </Button>
-                  )}
-                  {showCancel && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="sm" variant="outline" className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive">
-                          Cancelar compra
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>¿Cancelar pedido?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            ¿Estás seguro de que deseas cancelar este pedido? Esta acción no se puede deshacer.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Volver</AlertDialogCancel>
-                          <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={() => cancelOrder(o.id)}
-                          >
-                            Sí, cancelar
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       {tab === "repairs" && (
         <div className="space-y-4">
