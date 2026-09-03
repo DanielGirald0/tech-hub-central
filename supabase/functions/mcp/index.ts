@@ -5,90 +5,10 @@
 // src/lib/mcp/index.ts
 import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.23.0";
 
-// src/lib/mcp/tools/list-products.ts
-import { defineTool } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z } from "npm:zod@^4.4.3";
-var list_products_default = defineTool({
-  name: "list_products",
-  title: "List products",
-  description: "List products from the Tecno Gz catalog (sourced live from Alegra). Optionally filter by a search term (matches name/reference/brand) and limit the number of results.",
-  inputSchema: {
-    search: z.string().trim().max(100).optional().describe("Optional search term matched against product name, reference or brand."),
-    limit: z.number().int().min(1).max(50).optional().describe("Max number of products to return (default 20).")
-  },
-  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ search, limit }) => {
-    const projectRef2 = process.env.SUPABASE_URL?.match(/https:\/\/([^.]+)\./)?.[1] || "";
-    const url = new URL(`${process.env.SUPABASE_URL}/functions/v1/alegra-catalog`);
-    url.searchParams.set("action", "list");
-    url.searchParams.set("pageSize", String(limit ?? 20));
-    if (search) url.searchParams.set("search", search);
-    url.searchParams.set("inStockOnly", "false");
-    const res = await fetch(url.toString(), {
-      headers: {
-        apikey: process.env.SUPABASE_PUBLISHABLE_KEY || "",
-        Authorization: `Bearer ${process.env.SUPABASE_PUBLISHABLE_KEY || ""}`
-      }
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      return { content: [{ type: "text", text: `catalog error ${res.status}: ${text}` }], isError: true };
-    }
-    const data = await res.json();
-    const products = (data?.items || []).map((p) => ({
-      id: p.id,
-      name: p.name,
-      brand: p.brand,
-      category: p.category,
-      price: p.final_price ?? p.price,
-      stock: p.stock,
-      reference: p.reference
-    }));
-    void projectRef2;
-    return {
-      content: [{ type: "text", text: JSON.stringify(products, null, 2) }],
-      structuredContent: { products }
-    };
-  }
-});
-
-// src/lib/mcp/tools/get-my-orders.ts
-import { createClient } from "npm:@supabase/supabase-js@^2.99.1";
-import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.23.0";
-import { z as z2 } from "npm:zod@^4.4.3";
-var get_my_orders_default = defineTool2({
-  name: "get_my_orders",
-  title: "Get my shop orders",
-  description: "Return the signed-in user's shop orders (Tecno Gz store). Scoped by RLS to the current user.",
-  inputSchema: {
-    limit: z2.number().int().min(1).max(50).optional().describe("Max number of orders to return (default 20).")
-  },
-  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ limit }, ctx) => {
-    if (!ctx.isAuthenticated()) {
-      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
-    }
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_PUBLISHABLE_KEY,
-      {
-        global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-        auth: { persistSession: false, autoRefreshToken: false }
-      }
-    );
-    const { data, error } = await supabase.from("orders").select("id, status, payment_status, subtotal, delivery_cost, total_price, delivery_type, created_at").order("created_at", { ascending: false }).limit(limit ?? 20);
-    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
-    return {
-      content: [{ type: "text", text: JSON.stringify(data ?? [], null, 2) }],
-      structuredContent: { orders: data ?? [] }
-    };
-  }
-});
-
 // src/lib/mcp/tools/get-my-repair-orders.ts
-import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.99.1";
-import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.23.0";
-var get_my_repair_orders_default = defineTool3({
+import { createClient } from "npm:@supabase/supabase-js@^2.99.1";
+import { defineTool } from "npm:@lovable.dev/mcp-js@0.23.0";
+var get_my_repair_orders_default = defineTool({
   name: "get_my_repair_orders",
   title: "Get my repair orders",
   description: "Return the signed-in user's service/repair orders at Tecno Gz. Scoped to the current user.",
@@ -98,7 +18,7 @@ var get_my_repair_orders_default = defineTool3({
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
-    const supabase = createClient2(
+    const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_PUBLISHABLE_KEY,
       {
@@ -121,12 +41,12 @@ var mcp_default = defineMcp({
   name: "tecno-gz-mcp",
   title: "Tecno Gz",
   version: "0.1.0",
-  instructions: "Tools for Tecno Gz customers and staff. Use `list_products` to browse the catalog, `get_my_orders` to read the signed-in user's shop orders, and `get_my_repair_orders` to read their service/repair orders. All authenticated tools respect the app's row-level security.",
+  instructions: "Tools for Tecno Gz customers and staff. Use `get_my_repair_orders` to read the signed-in user's service/repair orders. All authenticated tools respect the app's row-level security.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"
   }),
-  tools: [list_products_default, get_my_orders_default, get_my_repair_orders_default]
+  tools: [get_my_repair_orders_default]
 });
 
 // lovable-mcp-supabase-entry.ts

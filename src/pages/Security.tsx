@@ -10,28 +10,24 @@ const solutions = [
     icon: "📷",
     description: "Sistemas de vigilancia profesional para hogares y negocios. Opciones HD y 4K con visualización remota.",
     features: ["Cámaras interiores y exteriores", "Visión nocturna", "App de visualización remota", "Detección de movimiento", "Almacenamiento en la nube"],
-    categoryLink: "camaras-seguridad",
   },
   {
     title: "Sistemas de alarma",
     icon: "🚨",
     description: "Protege tu propiedad con sistemas de alarma modernos. Opciones cableadas, inalámbricas e híbridas.",
     features: ["Detección de intrusos", "Alertas de humo y fuego", "Monitoreo 24/7", "Notificaciones móviles", "Batería de respaldo"],
-    categoryLink: "alarmas",
   },
   {
     title: "Control de acceso",
     icon: "🔐",
     description: "Controla quién entra a tus instalaciones con sistemas biométricos, lectores de tarjeta y teclados.",
     features: ["Lectores biométricos", "Sistemas RFID", "Teclados PIN", "Control de asistencia", "Control multi-puerta"],
-    categoryLink: "control-acceso",
   },
   {
     title: "Videoporteros",
     icon: "🔔",
     description: "Ve y habla con los visitantes antes de abrir la puerta. Modelos cableados e inalámbricos.",
     features: ["Video HD", "Audio bidireccional", "Integración con smartphone", "Múltiples estaciones", "Visión nocturna"],
-    categoryLink: "videoporteros",
   },
 ];
 
@@ -73,8 +69,8 @@ const Security = () => {
                   <h2 className="font-display text-xl font-bold text-foreground mt-3 mb-2">{sol.title}</h2>
                   <p className="text-muted-foreground mb-4">{sol.description}</p>
                   <Button asChild variant="outline" size="sm" className="border-border text-foreground hover:bg-secondary">
-                    <Link to={`/products?category=${sol.categoryLink}`}>
-                      Ver productos <ArrowRight className="w-4 h-4 ml-1" />
+                    <Link to="/contact">
+                      Solicitar cotización <ArrowRight className="w-4 h-4 ml-1" />
                     </Link>
                   </Button>
                 </div>

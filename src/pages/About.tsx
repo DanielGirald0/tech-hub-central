@@ -21,7 +21,7 @@ const About = () => {
           <h2 className="font-display text-xl font-semibold text-foreground mb-4">Nuestra historia</h2>
           <div className="space-y-3 text-muted-foreground text-sm leading-relaxed">
             <p>
-              Tecno Gz nació con una misión sencilla: llevar los mejores productos y servicios de tecnología
+              Tecno Gz nació con una misión sencilla: llevar los mejores servicios de tecnología
               a nuestra comunidad a precios justos con soporte experto.
             </p>
             <p>
@@ -87,7 +87,7 @@ const About = () => {
           </div>
           <div className="text-center">
             <p className="font-display font-bold text-foreground mb-1">Calidad</p>
-            <p className="text-xs text-muted-foreground">Productos originales y servicios profesionales garantizados.</p>
+            <p className="text-xs text-muted-foreground">Servicios profesionales garantizados.</p>
           </div>
           <div className="text-center">
             <p className="font-display font-bold text-foreground mb-1">Compromiso</p>

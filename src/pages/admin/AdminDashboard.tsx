@@ -2,20 +2,17 @@ import BackButton from "@/components/BackButton";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, ShoppingCart, BarChart3, Star, ClipboardList, Settings as SettingsIcon, Sparkles } from "lucide-react";
-import { useStoreSettings } from "@/contexts/StoreSettingsContext";
+import { Users, BarChart3, Star, ClipboardList } from "lucide-react";
 import logo from "@/assets/logo-tecnogz.webp";
 
 const AdminDashboard = () => {
-  const { settings } = useStoreSettings();
-  const { data: stats = { orders: 0, users: 0, reviews: 0, repairs: 0 } } = useQuery({
+  const { data: stats = { users: 0, reviews: 0, repairs: 0 } } = useQuery({
     queryKey: ["admin", "dashboard-stats"],
     staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await (supabase.rpc as any)("get_admin_dashboard_stats");
-      if (error || !data) return { orders: 0, users: 0, reviews: 0, repairs: 0 };
+      if (error || !data) return { users: 0, reviews: 0, repairs: 0 };
       return {
-        orders: Number(data.orders) || 0,
         users: Number(data.users) || 0,
         reviews: Number(data.reviews) || 0,
         repairs: Number(data.repairs) || 0,
@@ -24,12 +21,9 @@ const AdminDashboard = () => {
   });
 
   const cards = [
-    { label: "Pedidos", count: stats.orders, icon: ShoppingCart, href: "/admin/orders", color: "text-green-400" },
     { label: "Usuarios", count: stats.users, icon: Users, href: "/admin/users", color: "text-purple-400" },
     { label: "Reseñas pendientes", count: stats.reviews, icon: Star, href: "/admin/reviews", color: "text-yellow-400" },
     { label: "Servicio técnico", count: stats.repairs, icon: ClipboardList, href: "/admin/repairs", color: "text-pink-400" },
-    { label: settings.show_prices ? "Config: Precios visibles" : "Config: Precios ocultos", count: 0, icon: SettingsIcon, href: "/admin/settings", color: settings.show_prices ? "text-green-400" : "text-yellow-400" },
-    { label: "Productos destacados", count: 0, icon: Sparkles, href: "/admin/featured", color: "text-blue-400" },
   ];
 
   return (

@@ -168,7 +168,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { icon: Zap, title: "Servicio rápido", desc: "Reparaciones el mismo día e instalaciones ágiles. Valoramos tu tiempo." },
-              { icon: Shield, title: "Calidad garantizada", desc: "Todos nuestros productos y servicios cuentan con garantía y soporte." },
+              { icon: Shield, title: "Calidad garantizada", desc: "Todos nuestros servicios cuentan con garantía y soporte." },
               { icon: Wrench, title: "Equipo experto", desc: "Técnicos certificados con más de 5 años de experiencia combinada." },
             ].map((item) => (
               <div key={item.title} className="text-center p-6">
@@ -188,7 +188,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
-              { value: "1000+", label: "Productos" },
+              { value: "1000+", label: "Equipos reparados" },
               { value: "10+", label: "Servicios" },
               { value: "5000+", label: "Clientes felices" },
               { value: "5+", label: "Años de experiencia" },

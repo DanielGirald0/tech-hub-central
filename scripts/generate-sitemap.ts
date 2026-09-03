@@ -1,5 +1,5 @@
 // Runs before `vite dev` and `vite build` (predev/prebuild hooks); writes public/sitemap.xml.
-// Static routes only — product URLs are served dynamically from Alegra at request time.
+// Static routes only.
 
 import { writeFileSync } from "fs";
 import { resolve } from "path";
@@ -15,7 +15,6 @@ interface SitemapEntry {
 
 const staticEntries: SitemapEntry[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
-  { path: "/products", changefreq: "daily", priority: "0.9" },
   { path: "/services", changefreq: "weekly", priority: "0.8" },
   { path: "/security", changefreq: "weekly", priority: "0.8" },
   { path: "/about", changefreq: "monthly", priority: "0.6" },

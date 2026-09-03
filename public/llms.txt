@@ -1,13 +1,12 @@
 # Tecno Gz
 
-> Venta de tecnología, reparación de equipos e instalación de seguridad electrónica en Rionegro, Antioquia (Colombia).
+> Servicio técnico, instalación de seguridad electrónica y asesoría tecnológica en Rionegro, Antioquia (Colombia).
 
-Tecno Gz es una tienda y taller técnico ubicado en Rionegro. Ofrece productos tecnológicos, servicio técnico de reparación, instalación de sistemas de seguridad electrónica (cámaras, alarmas, control de acceso, videoporteros) y asesoría profesional.
+Tecno Gz es un taller técnico ubicado en Rionegro. Ofrece servicio técnico de reparación, instalación de sistemas de seguridad electrónica (cámaras, alarmas, control de acceso, videoporteros) y asesoría profesional.
 
 ## Pages
 
-- [Inicio](/): Resumen de productos destacados y servicios.
-- [Productos](/products): Catálogo de tecnología disponible en tienda.
+- [Inicio](/): Resumen de servicios y seguimiento de órdenes.
 - [Servicios](/services): Servicios técnicos de reparación, mantenimiento e instalación.
 - [Seguridad electrónica](/security): Cámaras, alarmas, control de acceso y videoporteros.
 - [Nosotros](/about): Historia, valores y equipo de Tecno Gz.
