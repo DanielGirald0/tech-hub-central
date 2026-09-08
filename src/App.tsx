@@ -28,6 +28,7 @@ const AdminRepairOrderDetail = lazy(() => import("./pages/admin/repairs/AdminRep
 const AdminRepairCustomers = lazy(() => import("./pages/admin/repairs/AdminRepairCustomers"));
 const AdminRepairReports = lazy(() => import("./pages/admin/repairs/AdminRepairReports"));
 const TrackRepair = lazy(() => import("./pages/TrackRepair"));
+const OrderView = lazy(() => import("./pages/OrderView"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -70,6 +71,7 @@ const App = () => (
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/seguimiento" element={<TrackRepair />} />
+                <Route path="/orden/:id" element={<OrderView />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
