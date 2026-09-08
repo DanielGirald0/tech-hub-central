@@ -280,42 +280,33 @@ const AdminRepairOrderDetail = () => {
     setTimeout(() => { w.print(); }, 300);
   };
 
-  const printTicket = () => {
-    const c = order.repair_customers;
-    const d = order.repair_devices;
+  // Ticket adhesivo: solo nombre del taller, número de orden, fecha y QR.
+  // El QR abre la página pública de la orden (/orden/:id).
+  const printTicket = async () => {
+    const url = `https://tecnogz.lovable.app/orden/${order.id}`;
+    let qr = "";
+    try {
+      qr = await QRCode.toDataURL(url, { margin: 0, width: 320, errorCorrectionLevel: "M" });
+    } catch {
+      toast({ title: "No se pudo generar el código QR", variant: "destructive" });
+      return;
+    }
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>Ticket ${order.order_number}</title>
       <style>
         @page { size: 80mm auto; margin: 3mm; }
         * { box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; width: 74mm; margin: 0; padding: 2mm; color: #000; font-size: 11px; line-height: 1.35; }
-        .center { text-align: center; }
-        h1 { font-size: 14px; margin: 0 0 2px; letter-spacing: 1px; }
-        h2 { font-size: 22px; margin: 4px 0; letter-spacing: 2px; border: 2px solid #000; padding: 4px 0; }
-        .row { display: flex; justify-content: space-between; gap: 4px; margin: 1px 0; }
-        .label { font-weight: bold; text-transform: uppercase; font-size: 9px; }
-        hr { border: none; border-top: 1px dashed #000; margin: 4px 0; }
-        .small { font-size: 9px; }
-        .box { border: 1px solid #000; padding: 3px; margin-top: 3px; }
+        body { font-family: Arial, sans-serif; width: 74mm; margin: 0; padding: 2mm; color: #000; text-align: center; }
+        h1 { font-size: 16px; margin: 0 0 2px; letter-spacing: 1px; font-weight: bold; }
+        .small { font-size: 10px; }
+        h2 { font-size: 26px; margin: 6px 0; letter-spacing: 4px; border: 2px solid #000; padding: 6px 0; }
+        img { width: 34mm; height: 34mm; margin-top: 4px; }
       </style></head><body>
-      <div class="center"><h1>TECNO GZ</h1><div class="small">Servicio Técnico</div></div>
-      <h2 class="center">${order.order_number}</h2>
-      <div class="center small">${formatDateTime(order.received_at)}</div>
-      <hr/>
-      <div class="row"><span class="label">Cliente</span></div>
-      <div>${c.name || "—"}</div>
-      <div class="small">Tel: ${c.phone || "—"}</div>
-      <hr/>
-      <div class="row"><span class="label">Equipo</span></div>
-      <div>${(d.device_type || "") } ${(d.brand || "")} ${(d.model || "")}</div>
-      ${d.serial_imei ? `<div class="small">S/N: ${d.serial_imei}</div>` : ""}
-      ${d.device_password ? `<div class="small">Clave: ${d.device_password}</div>` : ""}
-      ${d.accessories ? `<div class="small">Accesorios: ${d.accessories}</div>` : ""}
-      <hr/>
-      <div class="label">Falla reportada</div>
-      <div class="small">${(order.reported_issue || "—").replace(/</g,"&lt;")}</div>
-      ${order.estimated_date ? `<div class="box small"><b>Entrega estimada:</b> ${formatDate(order.estimated_date)}</div>` : ""}
-      <hr/>
-      <div class="center small">Consulta el estado en<br/>tecnogz.lovable.app/seguimiento</div>
+      <h1>TECNO GZ</h1>
+      <div class="small">Servicio Técnico</div>
+      <h2>${order.order_number}</h2>
+      <div class="small">${formatDateTime(order.received_at)}</div>
+      <img src="${qr}" alt="QR orden ${order.order_number}" />
+      <div class="small">Escanea para ver el estado</div>
       </body></html>`;
     printHTML(html);
   };
