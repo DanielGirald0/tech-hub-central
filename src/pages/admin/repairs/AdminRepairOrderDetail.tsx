@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Save, Trash2, Upload, MessageCircle, Loader2, Printer, Tag } from "lucide-react";
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus } from "@/lib/repairs";
 import { useAuth } from "@/contexts/AuthContext";
+import QRCode from "qrcode";
 
 const AdminRepairOrderDetail = () => {
   const { id } = useParams();
