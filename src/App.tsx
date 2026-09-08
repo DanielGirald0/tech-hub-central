@@ -28,6 +28,7 @@ const AdminRepairOrderDetail = lazy(() => import("./pages/admin/repairs/AdminRep
 const AdminRepairCustomers = lazy(() => import("./pages/admin/repairs/AdminRepairCustomers"));
 const AdminRepairReports = lazy(() => import("./pages/admin/repairs/AdminRepairReports"));
 const TrackRepair = lazy(() => import("./pages/TrackRepair"));
+const OrderView = lazy(() => import("./pages/OrderView"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
