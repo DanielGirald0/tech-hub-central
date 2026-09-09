@@ -18,7 +18,7 @@ const AdminRepairOrderNew = () => {
   const [customer, setCustomer] = useState({ document_number: "", name: "", phone: "", email: "", address: "", notes: "" });
   const [docLookup, setDocLookup] = useState<{ loading: boolean; matched: any | null; checked: boolean }>({ loading: false, matched: null, checked: false });
   const [device, setDevice] = useState({ device_type: "", brand: "", model: "", serial_imei: "", device_password: "", accessories: "", physical_condition: "" });
-  const [order, setOrder] = useState({ reported_issue: "", assigned_technician: "", estimated_date: "", warranty_days: 30, cost: 0 });
+  const [order, setOrder] = useState({ reported_issue: "", assigned_technician: "", estimated_date: "", warranty_days: 30, cost: 0, priority: "normal" });
   const [technicianId, setTechnicianId] = useState<string>("");
 
   useEffect(() => {
@@ -101,6 +101,7 @@ const AdminRepairOrderNew = () => {
         assigned_technician: order.assigned_technician,
         assigned_technician_id: technicianId || null,
         estimated_date: order.estimated_date || null,
+        priority: order.priority,
         warranty_days: Number(order.warranty_days) || 0,
         cost: Number(order.cost) || 0,
       }).select("id, order_number").single();
@@ -210,7 +211,19 @@ const AdminRepairOrderNew = () => {
                 {technicians.map((t) => <option key={t.user_id} value={t.user_id}>{t.name}</option>)}
               </select>
             </div>
-            <Field label="Fecha estimada" type="date" value={order.estimated_date} onChange={(v) => setOrder({ ...order, estimated_date: v })} />
+            <div>
+              <label className="text-xs uppercase tracking-wider text-muted-foreground mb-1 block">Prioridad *</label>
+              <select
+                value={order.priority}
+                onChange={(e) => setOrder({ ...order, priority: e.target.value })}
+                required
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="normal">Normal</option>
+                <option value="prioritaria">Prioritaria</option>
+              </select>
+            </div>
+            <Field label="Fecha prevista de entrega" type="date" value={order.estimated_date} onChange={(v) => setOrder({ ...order, estimated_date: v })} />
             <Field label="Garantía (días)" type="number" value={String(order.warranty_days)} onChange={(v) => setOrder({ ...order, warranty_days: Number(v) })} />
             <Field label="Costo (COP)" type="number" value={String(order.cost)} onChange={(v) => setOrder({ ...order, cost: Number(v) })} />
           </div>
