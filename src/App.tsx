@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminLayout from "@/components/AdminLayout";
 import Layout from "./components/Layout";
 import ScrollToTop from "./components/ScrollToTop";
+import StaffTodaySummary from "./components/StaffTodaySummary";
 import Index from "./pages/Index";
 
 const Services = lazy(() => import("./pages/Services"));
@@ -27,6 +28,7 @@ const AdminRepairOrderNew = lazy(() => import("./pages/admin/repairs/AdminRepair
 const AdminRepairOrderDetail = lazy(() => import("./pages/admin/repairs/AdminRepairOrderDetail"));
 const AdminRepairCustomers = lazy(() => import("./pages/admin/repairs/AdminRepairCustomers"));
 const AdminRepairReports = lazy(() => import("./pages/admin/repairs/AdminRepairReports"));
+const AdminRepairPriorities = lazy(() => import("./pages/admin/repairs/AdminRepairPriorities"));
 const TrackRepair = lazy(() => import("./pages/TrackRepair"));
 const OrderView = lazy(() => import("./pages/OrderView"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -62,6 +64,7 @@ const App = () => (
       <BrowserRouter>
         <ScrollToTop />
         <AuthProvider>
+          <StaffTodaySummary />
           <Layout>
             <Suspense fallback={<RouteFallback />}>
               <Routes>
@@ -88,6 +91,7 @@ const App = () => (
                 <Route path="/admin/repairs/orders/new" element={<ProtectedRoute requiredRole={staff}><AdminLayout><AdminRepairOrderNew /></AdminLayout></ProtectedRoute>} />
                 <Route path="/admin/repairs/orders/:id" element={<ProtectedRoute requiredRole={staff}><AdminLayout><AdminRepairOrderDetail /></AdminLayout></ProtectedRoute>} />
                 <Route path="/admin/repairs/customers" element={<ProtectedRoute requiredRole={staff}><AdminLayout><AdminRepairCustomers /></AdminLayout></ProtectedRoute>} />
+                <Route path="/admin/repairs/prioridades" element={<ProtectedRoute requiredRole={staff}><AdminLayout><AdminRepairPriorities /></AdminLayout></ProtectedRoute>} />
                 <Route path="/admin/repairs/reports" element={<ProtectedRoute requiredRole={staff}><AdminLayout><AdminRepairReports /></AdminLayout></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
