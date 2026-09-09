@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Search, Plus, Filter, X } from "lucide-react";
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, RepairStatus } from "@/lib/repairs";
 import { Skeleton } from "@/components/ui/skeleton";
+import PriorityBadge from "@/components/PriorityBadge";
 
 const PAGE_SIZE = 20;
 
@@ -14,6 +15,7 @@ const AdminRepairOrders = () => {
   const technician = params.get("tech") || "";
   const dateFrom = params.get("from") || "";
   const dateTo = params.get("to") || "";
+  const priority = params.get("priority") || "";
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState<any[]>([]);
@@ -32,11 +34,12 @@ const AdminRepairOrders = () => {
     const load = async () => {
       setLoading(true);
       let q: any = (supabase.from as any)("repair_orders")
-        .select("id, order_number, status, received_at, cost, repair_customers(name, phone), repair_devices(device_type, brand, model, serial_imei)", { count: "exact" })
+        .select("id, order_number, status, priority, received_at, estimated_date, cost, repair_customers(name, phone), repair_devices(device_type, brand, model, serial_imei)", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
       if (status) q = q.eq("status", status);
       if (technician) q = q.eq("assigned_technician_id", technician);
+      if (priority) q = q.eq("priority", priority);
       if (dateFrom) q = q.gte("received_at", new Date(dateFrom + "T00:00:00").toISOString());
       if (dateTo) {
         const end = new Date(dateTo + "T00:00:00"); end.setDate(end.getDate() + 1);
@@ -48,7 +51,7 @@ const AdminRepairOrders = () => {
       setLoading(false);
     };
     load();
-  }, [status, technician, dateFrom, dateTo, page]);
+  }, [status, technician, dateFrom, dateTo, priority, page]);
 
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -57,7 +60,7 @@ const AdminRepairOrders = () => {
     setParams(next);
   };
 
-  const hasFilters = !!(status || technician || dateFrom || dateTo);
+  const hasFilters = !!(status || technician || dateFrom || dateTo || priority);
   const clearFilters = () => { setPage(0); setParams({}); };
 
   const filtered = useMemo(() => {
@@ -113,6 +116,15 @@ const AdminRepairOrders = () => {
           </select>
         </div>
         <select
+          value={priority}
+          onChange={(e) => updateParam("priority", e.target.value)}
+          className="bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+        >
+          <option value="">Todas las prioridades</option>
+          <option value="normal">Normal</option>
+          <option value="prioritaria">Prioritaria</option>
+        </select>
+        <select
           value={technician}
           onChange={(e) => updateParam("tech", e.target.value)}
           className="bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
@@ -147,6 +159,7 @@ const AdminRepairOrders = () => {
                 <th className="p-3 font-medium">Orden</th>
                 <th className="p-3 font-medium">Cliente</th>
                 <th className="p-3 font-medium">Equipo</th>
+                <th className="p-3 font-medium">Prioridad</th>
                 <th className="p-3 font-medium">Estado</th>
                 <th className="p-3 font-medium">Costo</th>
                 <th className="p-3 font-medium">Ingreso</th>
@@ -158,6 +171,7 @@ const AdminRepairOrders = () => {
                   <td className="p-3"><Skeleton className="h-4 w-16" /></td>
                   <td className="p-3"><Skeleton className="h-4 w-32 mb-1" /><Skeleton className="h-3 w-20" /></td>
                   <td className="p-3"><Skeleton className="h-4 w-28" /></td>
+                  <td className="p-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
                   <td className="p-3"><Skeleton className="h-5 w-20 rounded-full" /></td>
                   <td className="p-3"><Skeleton className="h-4 w-16" /></td>
                   <td className="p-3"><Skeleton className="h-4 w-20" /></td>
@@ -175,6 +189,7 @@ const AdminRepairOrders = () => {
                   <td className="p-3 text-muted-foreground">
                     {[r.repair_devices?.device_type, r.repair_devices?.brand, r.repair_devices?.model].filter(Boolean).join(" ")}
                   </td>
+                  <td className="p-3"><PriorityBadge priority={r.priority} /></td>
                   <td className="p-3">
                     <span className={`px-2 py-0.5 rounded-full text-[11px] border ${REPAIR_STATUS_COLOR[r.status as RepairStatus]}`}>
                       {REPAIR_STATUS_LABEL[r.status as RepairStatus]}
@@ -185,7 +200,7 @@ const AdminRepairOrders = () => {
                 </tr>
               ))}
               {!loading && filtered.length === 0 && (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Sin resultados.</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Sin resultados.</td></tr>
               )}
             </tbody>
           </table>

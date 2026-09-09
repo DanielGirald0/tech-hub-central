@@ -229,6 +229,7 @@ export type Database = {
           id: string
           internal_notes: string | null
           order_number: string
+          priority: Database["public"]["Enums"]["repair_priority"]
           received_at: string
           reported_issue: string
           solution: string | null
@@ -249,6 +250,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           order_number: string
+          priority?: Database["public"]["Enums"]["repair_priority"]
           received_at?: string
           reported_issue?: string
           solution?: string | null
@@ -269,6 +271,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           order_number?: string
+          priority?: Database["public"]["Enums"]["repair_priority"]
           received_at?: string
           reported_issue?: string
           solution?: string | null
@@ -541,6 +544,7 @@ export type Database = {
           id: string
           model: string
           order_number: string
+          priority: string
           received_at: string
           status: Database["public"]["Enums"]["repair_status"]
           technician_id: string
@@ -558,6 +562,25 @@ export type Database = {
           name: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
+        }[]
+      }
+      get_today_priorities: {
+        Args: never
+        Returns: {
+          brand: string
+          bucket: number
+          customer_name: string
+          customer_phone: string
+          device_type: string
+          estimated_date: string
+          id: string
+          model: string
+          order_number: string
+          priority: string
+          received_at: string
+          status: Database["public"]["Enums"]["repair_status"]
+          technician_id: string
+          technician_name: string
         }[]
       }
       has_role: {
@@ -603,6 +626,7 @@ export type Database = {
     }
     Enums: {
       app_role: "customer" | "admin" | "technician"
+      repair_priority: "normal" | "prioritaria"
       repair_status:
         | "recibido"
         | "en_diagnostico"
@@ -743,6 +767,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "admin", "technician"],
+      repair_priority: ["normal", "prioritaria"],
       repair_status: [
         "recibido",
         "en_diagnostico",

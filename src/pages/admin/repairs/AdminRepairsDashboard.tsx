@@ -2,7 +2,8 @@ import BackButton from "@/components/BackButton";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Wrench, Plus, Users, ClipboardList, Activity, BarChart3 } from "lucide-react";
+import { Wrench, Plus, Users, ClipboardList, Activity, BarChart3, AlertTriangle, CalendarClock } from "lucide-react";
+import PriorityBadge from "@/components/PriorityBadge";
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, RepairStatus } from "@/lib/repairs";
 
 const AdminRepairsDashboard = () => {
@@ -11,11 +12,14 @@ const AdminRepairsDashboard = () => {
     staleTime: 60 * 1000,
     queryFn: async () => {
       const { data, error } = await (supabase.rpc as any)("get_repair_dashboard_stats");
-      if (error || !data) return { counts: {} as Record<string, number>, recent: [] as any[], revenue: 0 };
+      if (error || !data) return { counts: {} as Record<string, number>, recent: [] as any[], revenue: 0, priorityOpen: 0, dueToday: 0, openTotal: 0 };
       return {
         counts: (data.counts_by_status || {}) as Record<string, number>,
         recent: (data.recent || []) as any[],
         revenue: Number(data.revenue_month) || 0,
+        priorityOpen: Number(data.priority_open) || 0,
+        dueToday: Number(data.due_today) || 0,
+        openTotal: Number(data.open_total) || 0,
       };
     },
   });
@@ -36,6 +40,9 @@ const AdminRepairsDashboard = () => {
           <p className="text-muted-foreground">Gestión de órdenes de reparación</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link to="/admin/repairs/prioridades" className="bg-card border border-primary/40 text-primary px-4 py-2.5 rounded-md text-sm font-medium hover:bg-primary/10 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" /> Prioridades de hoy
+          </Link>
           <Link to="/admin/repairs/customers" className="bg-card border border-border px-4 py-2.5 rounded-md text-sm font-medium hover:border-primary/30 flex items-center gap-2">
             <Users className="w-4 h-4" /> Clientes
           </Link>
@@ -49,6 +56,24 @@ const AdminRepairsDashboard = () => {
             <Plus className="w-4 h-4" /> Nueva orden
           </Link>
         </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <Link to="/admin/repairs/orders?priority=prioritaria" className="bg-card border border-primary/30 rounded-xl p-4 hover:border-primary/60 transition-colors">
+          <AlertTriangle className="w-5 h-5 text-primary mb-2" />
+          <div className="font-display text-2xl font-bold text-foreground">{data?.priorityOpen ?? 0}</div>
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Prioritarias</div>
+        </Link>
+        <Link to="/admin/repairs/prioridades" className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors">
+          <CalendarClock className="w-5 h-5 text-emerald-400 mb-2" />
+          <div className="font-display text-2xl font-bold text-foreground">{data?.dueToday ?? 0}</div>
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Entregas hoy</div>
+        </Link>
+        <Link to="/admin/repairs/orders" className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors">
+          <ClipboardList className="w-5 h-5 text-blue-400 mb-2" />
+          <div className="font-display text-2xl font-bold text-foreground">{data?.openTotal ?? 0}</div>
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Pendientes</div>
+        </Link>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -83,6 +108,7 @@ const AdminRepairsDashboard = () => {
                 <th className="p-3 font-medium">Orden</th>
                 <th className="p-3 font-medium">Cliente</th>
                 <th className="p-3 font-medium">Equipo</th>
+                <th className="p-3 font-medium">Prioridad</th>
                 <th className="p-3 font-medium">Estado</th>
                 <th className="p-3 font-medium">Costo</th>
                 <th className="p-3 font-medium">Ingreso</th>
@@ -98,6 +124,7 @@ const AdminRepairsDashboard = () => {
                   </td>
                   <td className="p-3 text-foreground">{r.repair_customers?.name}</td>
                   <td className="p-3 text-muted-foreground">{[r.repair_devices?.device_type, r.repair_devices?.brand, r.repair_devices?.model].filter(Boolean).join(" ")}</td>
+                  <td className="p-3"><PriorityBadge priority={r.priority} /></td>
                   <td className="p-3">
                     <span className={`px-2 py-0.5 rounded-full text-[11px] border ${REPAIR_STATUS_COLOR[r.status as RepairStatus]}`}>
                       {REPAIR_STATUS_LABEL[r.status as RepairStatus]}
@@ -108,7 +135,7 @@ const AdminRepairsDashboard = () => {
                 </tr>
               ))}
               {recent.length === 0 && (
-                <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No hay órdenes todavía.</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No hay órdenes todavía.</td></tr>
               )}
             </tbody>
           </table>

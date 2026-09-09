@@ -9,6 +9,7 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
+import PriorityBadge from "@/components/PriorityBadge";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -30,6 +31,7 @@ interface ReportRow {
   device_type: string;
   brand: string | null;
   model: string | null;
+  priority: string;
 }
 
 interface Totals { total_orders: number; delivered: number; pending: number; cancelled: number; revenue: number; avg_ticket: number; avg_repair_days: number }
@@ -146,6 +148,7 @@ const AdminRepairReports = () => {
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [prevRows, setPrevRows] = useState<ReportRow[]>([]);
   const [technicianFilter, setTechnicianFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<keyof ReportRow>("received_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -194,14 +197,14 @@ const AdminRepairReports = () => {
     return [...set].sort();
   }, [rows]);
 
-  const scopedRows = useMemo(
-    () => technicianFilter === "all" ? rows : rows.filter((r) => r.technician_name === technicianFilter),
-    [rows, technicianFilter]
-  );
-  const scopedPrevRows = useMemo(
-    () => technicianFilter === "all" ? prevRows : prevRows.filter((r) => r.technician_name === technicianFilter),
-    [prevRows, technicianFilter]
-  );
+  const scope = (list: ReportRow[]) =>
+    list.filter(
+      (r) =>
+        (technicianFilter === "all" || r.technician_name === technicianFilter) &&
+        (priorityFilter === "all" || (r.priority || "normal") === priorityFilter)
+    );
+  const scopedRows = useMemo(() => scope(rows), [rows, technicianFilter, priorityFilter]);
+  const scopedPrevRows = useMemo(() => scope(prevRows), [prevRows, technicianFilter, priorityFilter]);
   const summary = useMemo(() => computeSummary(scopedRows), [scopedRows]);
   const prevSummary = useMemo(() => computeSummary(scopedPrevRows), [scopedPrevRows]);
 
@@ -235,11 +238,12 @@ const AdminRepairReports = () => {
   };
 
   const exportExcel = () => {
-    const headers = ["Orden","Ingreso","Entrega","Cliente","Documento","Técnico","Equipo","Marca","Modelo","Estado","Costo"];
+    const headers = ["Orden","Ingreso","Entrega","Cliente","Documento","Técnico","Equipo","Marca","Modelo","Prioridad","Estado","Costo"];
     const lines = filtered.map((r) => [
       r.order_number, formatDate(r.received_at), formatDate(r.delivered_at),
       r.customer_name, r.customer_document || "", r.technician_name,
       r.device_type, r.brand || "", r.model || "",
+      r.priority === "prioritaria" ? "Prioritaria" : "Normal",
       REPAIR_STATUS_LABEL[r.status], Number(r.cost || 0).toString(),
     ]);
     const csv = [headers, ...lines].map((row) => row.map((c) => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
@@ -274,11 +278,12 @@ const AdminRepairReports = () => {
       });
     }
     autoTable(doc, {
-      head: [["Orden","Ingreso","Entrega","Cliente","Documento","Técnico","Equipo","Estado","Costo"]],
+      head: [["Orden","Ingreso","Entrega","Cliente","Documento","Técnico","Equipo","Prioridad","Estado","Costo"]],
       body: filtered.map((r) => [
         r.order_number, formatDate(r.received_at), formatDate(r.delivered_at),
         r.customer_name, r.customer_document || "—", r.technician_name,
         [r.device_type, r.brand, r.model].filter(Boolean).join(" "),
+        r.priority === "prioritaria" ? "Prioritaria" : "Normal",
         REPAIR_STATUS_LABEL[r.status], formatCOP(Number(r.cost || 0)),
       ]),
       styles: { fontSize: 8 },
@@ -328,6 +333,14 @@ const AdminRepairReports = () => {
           <div>
             <label className="text-xs text-muted-foreground block mb-1">Hasta</label>
             <input type="date" value={to} onChange={(e) => { setPreset("custom"); setTo(e.target.value); }} className="bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">Prioridad</label>
+            <select value={priorityFilter} onChange={(e) => { setPriorityFilter(e.target.value); setPage(1); }} className="bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground">
+              <option value="all">Todas</option>
+              <option value="normal">Normal</option>
+              <option value="prioritaria">Prioritaria</option>
+            </select>
           </div>
           <div>
             <label className="text-xs text-muted-foreground block mb-1">Técnico</label>
@@ -460,6 +473,7 @@ const AdminRepairReports = () => {
                 <Th label="Doc" k="customer_document" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
                 <Th label="Técnico" k="technician_name" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
                 <th className="p-3 font-medium">Equipo</th>
+                <th className="p-3 font-medium">Prioridad</th>
                 <Th label="Estado" k="status" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
                 <Th label="Costo" k="cost" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} className="text-right" />
               </tr>
@@ -474,12 +488,13 @@ const AdminRepairReports = () => {
                   <td className="p-3 text-muted-foreground text-xs">{r.customer_document || "—"}</td>
                   <td className="p-3 text-muted-foreground">{r.technician_name}</td>
                   <td className="p-3 text-muted-foreground text-xs">{[r.device_type, r.brand, r.model].filter(Boolean).join(" ")}</td>
+                  <td className="p-3"><PriorityBadge priority={r.priority} /></td>
                   <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-[11px] border ${REPAIR_STATUS_COLOR[r.status]}`}>{REPAIR_STATUS_LABEL[r.status]}</span></td>
                   <td className="p-3 text-right text-foreground">{formatCOP(Number(r.cost || 0))}</td>
                 </tr>
               ))}
               {filtered.length === 0 && !loading && (
-                <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Sin órdenes en el rango seleccionado.</td></tr>
+                <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Sin órdenes en el rango seleccionado.</td></tr>
               )}
             </tbody>
           </table>

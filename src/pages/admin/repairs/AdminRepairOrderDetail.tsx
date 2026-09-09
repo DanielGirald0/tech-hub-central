@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import BackButton from "@/components/BackButton";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import PriorityBadge from "@/components/PriorityBadge";
+import { getNeighbors } from "@/lib/priorityQueue";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Trash2, Upload, MessageCircle, Loader2, Printer, Tag } from "lucide-react";
+import { Save, Trash2, Upload, MessageCircle, Loader2, Printer, Tag, ChevronLeft, ChevronRight, ListChecks } from "lucide-react";
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus } from "@/lib/repairs";
 import { useAuth } from "@/contexts/AuthContext";
 import QRCode from "qrcode";
@@ -12,6 +15,9 @@ const AdminRepairOrderDetail = () => {
   const { id } = useParams();
   const { toast } = useToast();
   const { userRole } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const nav = getNeighbors(id);
   const isAdmin = userRole === "admin";
   const [order, setOrder] = useState<any>(null);
   const [originalStatus, setOriginalStatus] = useState<RepairStatus | null>(null);
@@ -62,6 +68,7 @@ const AdminRepairOrderDetail = () => {
     setSaving(true);
     const { error } = await (supabase.from as any)("repair_orders").update({
       status: order.status,
+      priority: order.priority || "normal",
       diagnosis: order.diagnosis,
       solution: order.solution,
       assigned_technician: order.assigned_technician,
@@ -91,6 +98,9 @@ const AdminRepairOrderDetail = () => {
       }
     }
     setSaving(false);
+    queryClient.invalidateQueries({ queryKey: ["repair-priorities"] });
+    queryClient.invalidateQueries({ queryKey: ["repair-priorities-summary"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "repair-dashboard"] });
     toast({ title: "Cambios guardados" });
     load();
   };
@@ -343,9 +353,37 @@ const AdminRepairOrderDetail = () => {
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <BackButton />
 
+      {nav.inQueue && (
+        <div className="mb-4 bg-card border border-border rounded-xl p-3 flex flex-wrap items-center gap-2 justify-between">
+          <span className="text-xs text-muted-foreground uppercase tracking-wider">
+            Prioridades de hoy · {nav.position} de {nav.total}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => nav.prev && navigate(`/admin/repairs/orders/${nav.prev}`)}
+              disabled={!nav.prev}
+              className="bg-secondary text-foreground px-3 py-2 rounded-md text-sm flex items-center gap-1 disabled:opacity-50"
+            ><ChevronLeft className="w-4 h-4" /> Anterior</button>
+            <Link to="/admin/repairs/prioridades" className="bg-secondary text-foreground px-3 py-2 rounded-md text-sm flex items-center gap-1">
+              <ListChecks className="w-4 h-4" /> Volver a prioridades
+            </Link>
+            <button
+              onClick={() => {
+                if (nav.next) navigate(`/admin/repairs/orders/${nav.next}`);
+                else toast({ title: "Has revisado todas las órdenes pendientes de hoy." });
+              }}
+              className="bg-primary text-primary-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1"
+            >Siguiente <ChevronRight className="w-4 h-4" /></button>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-start justify-between flex-wrap gap-3 mb-6">
         <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">{order.order_number}</h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="font-display text-3xl font-bold text-foreground">{order.order_number}</h1>
+            <PriorityBadge priority={order.priority} />
+          </div>
           <p className="text-muted-foreground text-sm">Ingreso: {formatDateTime(order.received_at)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -434,6 +472,17 @@ const AdminRepairOrderDetail = () => {
               </div>
             )}
             <div className="mb-3">
+              <label className="text-xs uppercase tracking-wider text-muted-foreground mb-1 block">Prioridad *</label>
+              <select
+                value={order.priority || "normal"}
+                onChange={(e) => setOrder({ ...order, priority: e.target.value })}
+                className="w-full bg-background border border-border rounded-md px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="normal">Normal</option>
+                <option value="prioritaria">Prioritaria</option>
+              </select>
+            </div>
+            <div className="mb-3">
               <label className="text-xs uppercase tracking-wider text-muted-foreground mb-1 block">Técnico asignado</label>
               <select
                 value={order.assigned_technician_id || ""}
@@ -450,7 +499,7 @@ const AdminRepairOrderDetail = () => {
             </div>
             <Editable label="Costo (COP)" type="number" value={order.cost} onChange={(v) => setOrder({ ...order, cost: v })} />
             <Editable label="Garantía (días)" type="number" value={order.warranty_days} onChange={(v) => setOrder({ ...order, warranty_days: v })} />
-            <Editable label="Fecha estimada" type="date" value={order.estimated_date?.slice(0, 10) || ""} onChange={(v) => setOrder({ ...order, estimated_date: v })} />
+            <Editable label="Fecha prevista de entrega" type="date" value={order.estimated_date?.slice(0, 10) || ""} onChange={(v) => setOrder({ ...order, estimated_date: v })} />
             {order.delivered_at && <Info label="Entregado" value={formatDateTime(order.delivered_at)} className="mt-2" />}
             <button onClick={save} disabled={saving} className="mt-4 w-full bg-primary text-primary-foreground font-semibold px-4 py-2.5 rounded-md hover:bg-primary/90 uppercase tracking-wider text-sm flex items-center justify-center gap-2 disabled:opacity-60">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Guardar
