@@ -58,3 +58,22 @@ export const whatsappLink = (phone: string, text: string) =>
 
 export const buildStatusMessage = (orderNumber: string, status: RepairStatus, customerName: string) =>
   `Hola ${customerName}, tu orden de servicio *${orderNumber}* en TECNO GZ ha cambiado de estado a: *${REPAIR_STATUS_LABEL[status]}*. Puedes consultar el detalle en https://tecnogz.lovable.app/seguimiento`;
+export const REPAIR_PRIORITIES = ["normal", "prioritaria"] as const;
+export type RepairPriority = (typeof REPAIR_PRIORITIES)[number];
+
+export const REPAIR_PRIORITY_LABEL: Record<RepairPriority, string> = {
+  normal: "Normal",
+  prioritaria: "Prioritaria",
+};
+
+export const REPAIR_PRIORITY_COLOR: Record<RepairPriority, string> = {
+  normal: "bg-muted/40 text-muted-foreground border-border",
+  prioritaria: "bg-primary/15 text-primary border-primary/40",
+};
+
+export const isActiveStatus = (s: RepairStatus | string) =>
+  s !== "entregado" && s !== "cancelado";
+
+/** Fecha de hoy en la zona horaria de la app (Colombia). */
+export const todayISO = () =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date());
