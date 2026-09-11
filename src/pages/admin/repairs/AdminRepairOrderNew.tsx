@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2, CheckCircle2, Search } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -9,6 +10,7 @@ import BackButton from "@/components/BackButton";
 const AdminRepairOrderNew = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
   const [technicians, setTechnicians] = useState<{ user_id: string; name: string }[]>([]);
@@ -107,6 +109,8 @@ const AdminRepairOrderNew = () => {
       }).select("id, order_number").single();
       if (ordErr) throw ordErr;
 
+      queryClient.invalidateQueries({ queryKey: ["repair-priorities"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "repair-dashboard"] });
       toast({ title: "Orden creada", description: ord.order_number });
       navigate(`/admin/repairs/orders/${ord.id}`);
     } catch (err: any) {
