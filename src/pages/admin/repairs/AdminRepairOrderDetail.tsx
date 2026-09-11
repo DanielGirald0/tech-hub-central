@@ -472,7 +472,21 @@ const AdminRepairOrderDetail = () => {
               </div>
             )}
             <div className="mb-3">
-              <label className="text-xs uppercase tracking-wider text-muted-foreground mb-1 block">Prioridad *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs uppercase tracking-wider text-muted-foreground block">Prioridad *</label>
+                <button
+                  type="button"
+                  onClick={() => setOrder({ ...order, priority: order.priority === "prioritaria" ? "normal" : "prioritaria" })}
+                  className={`text-[11px] font-medium px-2 py-1 rounded-md flex items-center gap-1 transition-colors ${
+                    order.priority === "prioritaria"
+                      ? "bg-muted/40 text-muted-foreground hover:bg-muted/60"
+                      : "bg-primary/15 text-primary border border-primary/40 hover:bg-primary/25"
+                  }`}
+                >
+                  <AlertTriangle className="w-3 h-3" />
+                  {order.priority === "prioritaria" ? "Marcar normal" : "Marcar prioritaria"}
+                </button>
+              </div>
               <select
                 value={order.priority || "normal"}
                 onChange={(e) => setOrder({ ...order, priority: e.target.value })}
