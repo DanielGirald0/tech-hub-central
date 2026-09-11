@@ -65,6 +65,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const refreshProfile = async () => {
+    if (user) await fetchUserData(user.id);
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -74,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, userRole, profile, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, userRole, profile, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
