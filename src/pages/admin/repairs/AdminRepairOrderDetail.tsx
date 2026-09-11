@@ -6,7 +6,7 @@ import PriorityBadge from "@/components/PriorityBadge";
 import { getNeighbors } from "@/lib/priorityQueue";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Trash2, Upload, MessageCircle, Loader2, Printer, Tag, ChevronLeft, ChevronRight, ListChecks } from "lucide-react";
+import { Save, Trash2, Upload, MessageCircle, Loader2, Printer, Tag, ChevronLeft, ChevronRight, ListChecks, AlertTriangle } from "lucide-react";
 import { REPAIR_STATUSES, REPAIR_STATUS_LABEL, REPAIR_STATUS_COLOR, formatCOP, formatDate, formatDateTime, RepairStatus } from "@/lib/repairs";
 import { useAuth } from "@/contexts/AuthContext";
 import QRCode from "qrcode";
