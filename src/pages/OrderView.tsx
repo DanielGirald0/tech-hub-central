@@ -14,11 +14,13 @@ import {
   formatDateTime,
   RepairStatus,
 } from "@/lib/repairs";
+import PriorityBadge from "@/components/PriorityBadge";
 
 interface PublicOrder {
   id: string;
   order_number: string;
   status: RepairStatus;
+  priority?: string | null;
   received_at: string;
   estimated_date: string | null;
   delivered_at: string | null;
@@ -107,9 +109,12 @@ const OrderView = () => {
             <h1 className="font-display text-3xl font-bold text-foreground">{order.order_number}</h1>
             <p className="text-sm text-muted-foreground">Ingreso: {formatDateTime(order.received_at)}</p>
           </div>
-          <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${REPAIR_STATUS_COLOR[order.status]}`}>
-            {REPAIR_STATUS_LABEL[order.status]}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <PriorityBadge priority={order.priority} />
+            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${REPAIR_STATUS_COLOR[order.status]}`}>
+              {REPAIR_STATUS_LABEL[order.status]}
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
