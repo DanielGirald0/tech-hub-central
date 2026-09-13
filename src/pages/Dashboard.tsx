@@ -14,7 +14,7 @@ import { Link } from "react-router-dom";
 import SEO from "@/components/SEO";
 
 const Dashboard = () => {
-  const { user, profile, userRole, signOut } = useAuth();
+  const { user, profile, userRole, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -49,6 +49,7 @@ const Dashboard = () => {
       toast({ title: "Error al actualizar", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Perfil actualizado", description: docDigits ? "Sincronizando tu historial técnico..." : undefined });
+      await refreshProfile();
       queryClient.invalidateQueries({ queryKey: ["my-repair-orders"] });
     }
   };
