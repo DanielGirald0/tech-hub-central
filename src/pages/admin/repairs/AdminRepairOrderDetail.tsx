@@ -271,10 +271,12 @@ const AdminRepairOrderDetail = () => {
     const name = (order.repair_customers?.name || "").split(" ")[0] || "cliente";
     const statusLabel = REPAIR_STATUS_LABEL[order.status as RepairStatus];
     const trackUrl = `https://tecnogz.lovable.app/seguimiento?orden=${encodeURIComponent(order.order_number)}`;
+    const priorityLabel = order.priority === "prioritaria" ? "Prioritaria" : "Normal";
     const msg =
       `Hola ${name}.\n\n` +
       `Te informamos que tu Orden de Servicio #${order.order_number} se encuentra actualmente en el estado:\n\n` +
       `${statusLabel}\n\n` +
+      `Prioridad: ${priorityLabel}\n\n` +
       `Puedes consultar todos los detalles y el historial actualizado desde el siguiente enlace:\n${trackUrl}\n\n` +
       `Gracias por confiar en TECNO GZ.`;
     const digits = (order.repair_customers?.phone || "").replace(/\D/g, "").replace(/^57/, "");
