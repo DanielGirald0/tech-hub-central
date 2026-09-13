@@ -311,12 +311,15 @@ const AdminRepairOrderDetail = () => {
         body { font-family: Arial, sans-serif; width: 74mm; margin: 0; padding: 2mm; color: #000; text-align: center; }
         h1 { font-size: 16px; margin: 0 0 2px; letter-spacing: 1px; font-weight: bold; }
         .small { font-size: 10px; }
-        h2 { font-size: 26px; margin: 6px 0; letter-spacing: 4px; border: 2px solid #000; padding: 6px 0; }
+        h2 { font-size: 26px; margin: 6px 0 0; letter-spacing: 4px; border: 2px solid #000; border-bottom: none; padding: 6px 0; }
+        .prio { font-size: 12px; font-weight: bold; letter-spacing: 2px; border: 2px solid #000; border-top: none; padding: 3px 0; margin: 0 0 6px; }
+        .prio.alta { background: #000; color: #fff; }
         img { width: 34mm; height: 34mm; margin-top: 4px; }
       </style></head><body>
       <h1>TECNO GZ</h1>
       <div class="small">Servicio Técnico</div>
       <h2>${order.order_number}</h2>
+      <div class="prio ${isPrio ? "alta" : ""}">PRIORIDAD: ${isPrio ? "PRIORITARIA" : "NORMAL"}</div>
       <div class="small">${formatDateTime(order.received_at)}</div>
       <img src="${qr}" alt="QR orden ${order.order_number}" />
       <div class="small">Escanea para ver el estado</div>
