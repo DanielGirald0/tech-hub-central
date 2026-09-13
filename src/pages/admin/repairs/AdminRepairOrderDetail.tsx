@@ -296,6 +296,7 @@ const AdminRepairOrderDetail = () => {
   // Ticket adhesivo: solo nombre del taller, número de orden, fecha y QR.
   // El QR abre la página pública de la orden (/orden/:id).
   const printTicket = async () => {
+    const isPrio = order.priority === "prioritaria";
     const url = `https://tecnogz.lovable.app/orden/${order.id}`;
     let qr = "";
     try {
