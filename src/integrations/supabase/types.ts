@@ -524,6 +524,7 @@ export type Database = {
           is_owner: boolean
           model: string
           order_number: string
+          priority: string
           received_at: string
           reported_issue: string
           status: Database["public"]["Enums"]["repair_status"]
