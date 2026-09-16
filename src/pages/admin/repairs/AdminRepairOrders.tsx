@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import BackButton from "@/components/BackButton";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -190,7 +190,7 @@ const AdminRepairOrders = () => {
                   <td className="p-3"><Skeleton className="h-4 w-20" /></td>
                 </tr>
               ))}
-              {!loading && filtered.map((r) => (
+              {!loading && rows.map((r) => (
                 <tr key={r.id} className="border-b border-border/50 hover:bg-secondary/30">
                   <td className="p-3">
                     <Link to={`/admin/repairs/orders/${r.id}`} className="text-primary font-medium hover:underline">{r.order_number}</Link>
@@ -212,7 +212,7 @@ const AdminRepairOrders = () => {
                   <td className="p-3 text-muted-foreground text-xs">{formatDate(r.received_at)}</td>
                 </tr>
               ))}
-              {!loading && filtered.length === 0 && (
+              {!loading && rows.length === 0 && (
                 <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Sin resultados.</td></tr>
               )}
             </tbody>
