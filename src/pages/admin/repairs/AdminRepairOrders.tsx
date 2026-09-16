@@ -80,24 +80,8 @@ const AdminRepairOrders = () => {
     setParams(next);
   };
 
-  const hasFilters = !!(status || technician || dateFrom || dateTo || priority);
-  const clearFilters = () => { setPage(0); setParams({}); };
-
-  const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase();
-    if (!s) return rows;
-    return rows.filter((r) => {
-      const blob = [
-        r.order_number,
-        r.repair_customers?.name,
-        r.repair_customers?.phone,
-        r.repair_devices?.serial_imei,
-        r.repair_devices?.model,
-        r.repair_devices?.brand,
-      ].join(" ").toLowerCase();
-      return blob.includes(s);
-    });
-  }, [rows, search]);
+  const hasFilters = !!(status || technician || dateFrom || dateTo || priority || search);
+  const clearFilters = () => { setPage(0); setParams({}); setSearchInput(""); };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -116,11 +100,20 @@ const AdminRepairOrders = () => {
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por número, cliente, teléfono, IMEI..."
-            className="w-full bg-background border border-border rounded-md pl-9 pr-3 py-2 text-sm focus:border-primary focus:outline-none"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Buscar por N° de orden, cédula, nombre o teléfono..."
+            className="w-full bg-background border border-border rounded-md pl-9 pr-8 py-2 text-sm focus:border-primary focus:outline-none"
           />
+          {searchInput && (
+            <button
+              onClick={() => setSearchInput("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Limpiar búsqueda"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
