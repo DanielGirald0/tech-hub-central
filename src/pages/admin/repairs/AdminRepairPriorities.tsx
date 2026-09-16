@@ -59,7 +59,7 @@ type Tab = "prioritarias" | "hoy" | "todas";
 const AdminRepairPriorities = () => {
   const { data = [], isLoading } = usePriorityOrders();
   const { userRole } = useAuth();
-  const isAdmin = userRole === "admin";
+  const isAdmin = userRole === "admin" || userRole === "technician";
   const queryClient = useQueryClient();
   const today = todayISO();
   const [tab, setTab] = useState<Tab>("prioritarias");
