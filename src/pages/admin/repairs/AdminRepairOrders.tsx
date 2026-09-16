@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import BackButton from "@/components/BackButton";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +16,8 @@ const AdminRepairOrders = () => {
   const dateFrom = params.get("from") || "";
   const dateTo = params.get("to") || "";
   const priority = params.get("priority") || "";
-  const [search, setSearch] = useState("");
+  const search = params.get("q") || "";
+  const [searchInput, setSearchInput] = useState(params.get("q") || "");
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
@@ -34,7 +35,7 @@ const AdminRepairOrders = () => {
     const load = async () => {
       setLoading(true);
       let q: any = (supabase.from as any)("repair_orders")
-        .select("id, order_number, status, priority, received_at, estimated_date, cost, repair_customers(name, phone), repair_devices(device_type, brand, model, serial_imei)", { count: "exact" })
+        .select("id, order_number, status, priority, received_at, estimated_date, cost, repair_customers(name, phone, document_number), repair_devices(device_type, brand, model, serial_imei)", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
       if (status) q = q.eq("status", status);
@@ -45,13 +46,32 @@ const AdminRepairOrders = () => {
         const end = new Date(dateTo + "T00:00:00"); end.setDate(end.getDate() + 1);
         q = q.lt("received_at", end.toISOString());
       }
+      const term = search.trim().replace(/[,%()"']/g, "");
+      if (term) {
+        q = q.or(
+          `order_number.ilike.*${term}*,` +
+          `repair_customers.name.ilike.*${term}*,` +
+          `repair_customers.phone.ilike.*${term}*,` +
+          `repair_customers.document_number.ilike.*${term}*`
+        );
+      }
       const { data, count } = await q;
       setRows(data || []);
       setTotal(count || 0);
       setLoading(false);
     };
     load();
-  }, [status, technician, dateFrom, dateTo, priority, page]);
+  }, [status, technician, dateFrom, dateTo, priority, search, page]);
+
+  // Debounce: espera a que el usuario deje de escribir antes de buscar en el servidor
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (searchInput.trim() !== (params.get("q") || "")) {
+        updateParam("q", searchInput.trim());
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(params);
@@ -60,24 +80,8 @@ const AdminRepairOrders = () => {
     setParams(next);
   };
 
-  const hasFilters = !!(status || technician || dateFrom || dateTo || priority);
-  const clearFilters = () => { setPage(0); setParams({}); };
-
-  const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase();
-    if (!s) return rows;
-    return rows.filter((r) => {
-      const blob = [
-        r.order_number,
-        r.repair_customers?.name,
-        r.repair_customers?.phone,
-        r.repair_devices?.serial_imei,
-        r.repair_devices?.model,
-        r.repair_devices?.brand,
-      ].join(" ").toLowerCase();
-      return blob.includes(s);
-    });
-  }, [rows, search]);
+  const hasFilters = !!(status || technician || dateFrom || dateTo || priority || search);
+  const clearFilters = () => { setPage(0); setParams({}); setSearchInput(""); };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -96,11 +100,20 @@ const AdminRepairOrders = () => {
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por número, cliente, teléfono, IMEI..."
-            className="w-full bg-background border border-border rounded-md pl-9 pr-3 py-2 text-sm focus:border-primary focus:outline-none"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Buscar por N° de orden, cédula, nombre o teléfono..."
+            className="w-full bg-background border border-border rounded-md pl-9 pr-8 py-2 text-sm focus:border-primary focus:outline-none"
           />
+          {searchInput && (
+            <button
+              onClick={() => setSearchInput("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Limpiar búsqueda"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
@@ -177,7 +190,7 @@ const AdminRepairOrders = () => {
                   <td className="p-3"><Skeleton className="h-4 w-20" /></td>
                 </tr>
               ))}
-              {!loading && filtered.map((r) => (
+              {!loading && rows.map((r) => (
                 <tr key={r.id} className="border-b border-border/50 hover:bg-secondary/30">
                   <td className="p-3">
                     <Link to={`/admin/repairs/orders/${r.id}`} className="text-primary font-medium hover:underline">{r.order_number}</Link>
@@ -199,7 +212,7 @@ const AdminRepairOrders = () => {
                   <td className="p-3 text-muted-foreground text-xs">{formatDate(r.received_at)}</td>
                 </tr>
               ))}
-              {!loading && filtered.length === 0 && (
+              {!loading && rows.length === 0 && (
                 <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Sin resultados.</td></tr>
               )}
             </tbody>
