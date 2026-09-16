@@ -16,7 +16,8 @@ const AdminRepairOrders = () => {
   const dateFrom = params.get("from") || "";
   const dateTo = params.get("to") || "";
   const priority = params.get("priority") || "";
-  const [search, setSearch] = useState("");
+  const search = params.get("q") || "";
+  const [searchInput, setSearchInput] = useState(params.get("q") || "");
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
@@ -34,7 +35,7 @@ const AdminRepairOrders = () => {
     const load = async () => {
       setLoading(true);
       let q: any = (supabase.from as any)("repair_orders")
-        .select("id, order_number, status, priority, received_at, estimated_date, cost, repair_customers(name, phone), repair_devices(device_type, brand, model, serial_imei)", { count: "exact" })
+        .select("id, order_number, status, priority, received_at, estimated_date, cost, repair_customers(name, phone, document_number), repair_devices(device_type, brand, model, serial_imei)", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
       if (status) q = q.eq("status", status);
@@ -45,13 +46,32 @@ const AdminRepairOrders = () => {
         const end = new Date(dateTo + "T00:00:00"); end.setDate(end.getDate() + 1);
         q = q.lt("received_at", end.toISOString());
       }
+      const term = search.trim().replace(/[,%()"']/g, "");
+      if (term) {
+        q = q.or(
+          `order_number.ilike.*${term}*,` +
+          `repair_customers.name.ilike.*${term}*,` +
+          `repair_customers.phone.ilike.*${term}*,` +
+          `repair_customers.document_number.ilike.*${term}*`
+        );
+      }
       const { data, count } = await q;
       setRows(data || []);
       setTotal(count || 0);
       setLoading(false);
     };
     load();
-  }, [status, technician, dateFrom, dateTo, priority, page]);
+  }, [status, technician, dateFrom, dateTo, priority, search, page]);
+
+  // Debounce: espera a que el usuario deje de escribir antes de buscar en el servidor
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (searchInput.trim() !== (params.get("q") || "")) {
+        updateParam("q", searchInput.trim());
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(params);
