@@ -65,7 +65,12 @@ const TrackRepair = () => {
     ]);
     setLoading(false);
     if (orderErr || !orderData || (Array.isArray(orderData) && orderData.length === 0)) {
-      setError("No encontramos ninguna orden con esos datos. Verifica el número y el teléfono.");
+      const msg = orderErr?.message || "";
+      setError(
+        msg.includes("Demasiados intentos")
+          ? msg
+          : "No encontramos ninguna orden con esos datos. Verifica el número y el teléfono."
+      );
       return;
     }
     const o = Array.isArray(orderData) ? orderData[0] : orderData;
