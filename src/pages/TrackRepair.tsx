@@ -92,10 +92,12 @@ const TrackRepair = () => {
     }
     toast({ title: "¡Aprobado!", description: "Has aprobado la reparación correctamente." });
     // refresh
-    const [{ data: orderData }, { data: histData }] = await Promise.all([
+    const [{ data: orderData, error: lookupErr }, { data: histData }] = await Promise.all([
       (supabase.rpc as any)("lookup_repair_order", { _order_number: orderNumber.trim(), _phone: phone.trim() }),
       (supabase.rpc as any)("get_repair_order_history", { _order_number: orderNumber.trim(), _phone: phone.trim() }),
     ]);
+    const lookupMsg = lookupErr?.message || "";
+    if (lookupMsg.includes("Demasiados intentos")) setError(lookupMsg);
     const o = Array.isArray(orderData) ? orderData[0] : orderData;
     if (o) setOrder({ ...(o as OrderResult), id: order.id });
     setHistory((histData as HistoryRow[]) || []);
