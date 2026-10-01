@@ -20,11 +20,9 @@ const ResetPassword = () => {
 
   useEffect(() => {
     let cancelled = false;
-    console.log("[reset-password] init", { href: window.location.href });
 
     const finalize = (ok: boolean, msg?: string) => {
       if (cancelled) return;
-      console.log("[reset-password] finalize", { ok, msg });
       setReady(ok);
       if (!ok && msg) setErrorMsg(msg);
       setChecking(false);
@@ -42,7 +40,6 @@ const ResetPassword = () => {
         // 1) PKCE flow: ?code=...
         const code = url.searchParams.get("code");
         if (code) {
-          console.log("[reset-password] exchanging code for session");
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) return finalize(false, error.message);
           window.history.replaceState({}, "", "/reset-password");
@@ -53,7 +50,6 @@ const ResetPassword = () => {
         const tokenHash = url.searchParams.get("token_hash") || hash.get("token_hash");
         const type = url.searchParams.get("type") || hash.get("type");
         if (tokenHash && type === "recovery") {
-          console.log("[reset-password] verifying otp token_hash");
           const { error } = await supabase.auth.verifyOtp({ type: "recovery", token_hash: tokenHash });
           if (error) return finalize(false, error.message);
           window.history.replaceState({}, "", "/reset-password");
@@ -64,7 +60,6 @@ const ResetPassword = () => {
         const accessToken = hash.get("access_token");
         const refreshToken = hash.get("refresh_token");
         if (accessToken && refreshToken && hash.get("type") === "recovery") {
-          console.log("[reset-password] setting session from hash tokens");
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
@@ -77,7 +72,6 @@ const ResetPassword = () => {
         // 4) Already in a recovery session?
         const { data } = await supabase.auth.getSession();
         if (data.session) {
-          console.log("[reset-password] existing session found");
           return finalize(true);
         }
 
@@ -89,7 +83,6 @@ const ResetPassword = () => {
     })();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      console.log("[reset-password] auth event", event);
       if (event === "PASSWORD_RECOVERY") {
         setReady(true);
         setChecking(false);
@@ -112,7 +105,6 @@ const ResetPassword = () => {
       return;
     }
     setLoading(true);
-    console.log("[reset-password] updating password");
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
     if (error) {
