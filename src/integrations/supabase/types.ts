@@ -145,6 +145,24 @@ export type Database = {
           },
         ]
       }
+      repair_lookup_attempts: {
+        Row: {
+          created_at: string
+          id: number
+          key: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          key: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          key?: string
+        }
+        Relationships: []
+      }
       repair_order_history: {
         Row: {
           changed_by: string | null
