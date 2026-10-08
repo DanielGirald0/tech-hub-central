@@ -473,6 +473,15 @@ const AdminRepairOrderDetail = () => {
             <MessageCircle className="w-4 h-4" /> WhatsApp
           </a>
           <button onClick={printTicket} className="bg-secondary text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-secondary/80" title="Ticket adhesivo para el equipo"><Tag className="w-4 h-4" /> Ticket</button>
+          <select
+            value={printFormat}
+            onChange={(e) => setPrintFormat(e.target.value as "carta" | "pos80")}
+            className="bg-secondary text-foreground px-2 py-2 rounded-md text-sm font-medium border border-border"
+            title="Formato de impresión"
+          >
+            <option value="carta">Carta</option>
+            <option value="pos80">POS 80mm</option>
+          </select>
           <button onClick={printOrder} className="bg-secondary text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-secondary/80" title="Imprimir orden completa"><Printer className="w-4 h-4" /> Imprimir</button>
           {isAdmin && (
             <button onClick={remove} className="bg-destructive/20 text-red-300 border border-red-500/30 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2" title="Eliminar orden"><Trash2 className="w-4 h-4" /></button>
