@@ -329,11 +329,81 @@ const AdminRepairOrderDetail = () => {
     printHTML(html);
   };
 
-  // "Imprimir" abre el mismo diseño en una ventana nueva y dispara el diálogo nativo
+  // Versión resumida de la orden para impresora POS térmica de 80mm.
+  const buildOrderPOS80HTML = (): string => {
+    const c = order.repair_customers;
+    const d = order.repair_devices;
+    const esc = (s: any) => String(s ?? "").replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]!));
+    const val = (s: any) => (s && String(s).trim() !== "" ? esc(s) : "—");
+    const isPrio = order.priority === "prioritaria";
+    const row = (k: string, v: string) =>
+      `<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+    return `<!doctype html><html><head><meta charset="utf-8"><title>Orden ${order.order_number}</title>
+      <style>
+        @page { size: 80mm auto; margin: 3mm; }
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; width: 74mm; margin: 0; padding: 2mm; color: #000; font-size: 11px; line-height: 1.3; }
+        .center { text-align: center; }
+        h1 { font-size: 16px; margin: 0; letter-spacing: 1px; }
+        .sub { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
+        .num { font-size: 22px; font-weight: 900; letter-spacing: 3px; border: 2px solid #000; padding: 4px 0; margin: 4px 0 0; }
+        .prio { font-size: 11px; font-weight: bold; letter-spacing: 2px; border: 2px solid #000; border-top: none; padding: 2px 0; margin-bottom: 4px; }
+        .prio.alta { background: #000; color: #fff; }
+        .status { display: inline-block; border: 1px solid #000; padding: 1px 6px; font-size: 9px; font-weight: bold; text-transform: uppercase; margin: 2px 0 4px; }
+        .sec { border-top: 1px dashed #000; margin-top: 5px; padding-top: 4px; }
+        .sec-t { font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+        .row { display: flex; gap: 4px; padding: 1px 0; }
+        .row .k { flex: 0 0 24mm; font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #333; }
+        .row .v { flex: 1; word-break: break-word; }
+        .block { padding: 1px 0; }
+        .block .k { display: block; font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #333; }
+        .block .v { display: block; white-space: pre-wrap; word-break: break-word; }
+        .money { font-weight: bold; font-size: 13px; }
+        .sign { margin-top: 8mm; border-top: 1px solid #000; padding-top: 2px; text-align: center; font-size: 8px; text-transform: uppercase; }
+      </style></head><body>
+      <div class="center">
+        <h1>TECNO GZ</h1>
+        <div class="sub">Orden de Servicio Técnico</div>
+        <div class="num">N° ${esc(order.order_number)}</div>
+        <div class="prio ${isPrio ? "alta" : ""}">PRIORIDAD: ${isPrio ? "PRIORITARIA" : "NORMAL"}</div>
+        <div class="sub">Ingreso: ${esc(formatDateTime(order.received_at))}</div>
+        <div class="status">${esc(REPAIR_STATUS_LABEL[order.status as RepairStatus])}</div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-t">Cliente</div>
+        ${row("Nombre", val(c.name))}
+        ${row("Teléfono", val(c.phone))}
+        ${row("Documento", val(c.document_number))}
+      </div>
+
+      <div class="sec">
+        <div class="sec-t">Equipo</div>
+        ${row("Equipo", esc([d.device_type, d.brand, d.model].filter(Boolean).join(" ")) || "—")}
+        ${row("Serial/IMEI", val(d.serial_imei))}
+        ${row("Accesorios", val(d.accessories))}
+      </div>
+
+      <div class="sec">
+        <div class="sec-t">Servicio</div>
+        <div class="block"><span class="k">Falla reportada</span><span class="v">${val(order.reported_issue)}</span></div>
+        ${order.diagnosis ? `<div class="block"><span class="k">Diagnóstico</span><span class="v">${val(order.diagnosis)}</span></div>` : ""}
+        ${order.solution ? `<div class="block"><span class="k">Solución</span><span class="v">${val(order.solution)}</span></div>` : ""}
+        ${row("Técnico", val(order.assigned_technician))}
+        ${row("Fecha estimada", esc(formatDate(order.estimated_date)))}
+        ${row("Garantía", order.warranty_days ? esc(order.warranty_days) + " días" : "—")}
+        ${row("Valor", `<span class="money">${esc(formatCOP(Number(order.cost) || 0))}</span>`)}
+        ${order.delivered_at ? row("Entregado", esc(formatDateTime(order.delivered_at))) : ""}
+      </div>
+
+      <div class="sign">Firma cliente</div>
+      </body></html>`;
+  };
+
+  // "Imprimir" abre el diseño en una ventana nueva y dispara el diálogo nativo
   // de impresión (el usuario elige imprimir o guardar como PDF).
-  // "WhatsApp" sube el PDF renderizado con EXACTAMENTE el mismo HTML.
   const printOrder = () => {
-    const html = buildOrderHTML().replace(
+    const html = (printFormat === "pos80" ? buildOrderPOS80HTML() : buildOrderHTML()).replace(
       "</body>",
       `<script>window.addEventListener('load',function(){setTimeout(function(){window.focus();window.print();},250);});<\/script></body>`
     );
