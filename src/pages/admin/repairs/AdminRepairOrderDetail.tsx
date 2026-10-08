@@ -26,6 +26,7 @@ const AdminRepairOrderDetail = () => {
   const [photos, setPhotos] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [printFormat, setPrintFormat] = useState<"carta" | "pos80">("carta");
   const [technicians, setTechnicians] = useState<{ user_id: string; name: string }[]>([]);
   const fileBefore = useRef<HTMLInputElement>(null);
   const fileAfter = useRef<HTMLInputElement>(null);
